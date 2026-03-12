@@ -253,8 +253,4 @@ onMounted(fetchArticles)
   color: var(--el-color-primary);
   text-decoration: underline;
 }
-
-.unread-badge {
-  margin-left: 10px;
-}
 </style>

@@ -1324,7 +1324,7 @@ func (s *ArticleService) fetchImage(ctx context.Context, imgURL string) ([]byte,
 // buildArticleURL 构建文章链接
 func (s *ArticleService) buildArticleURL(article *model.Article) string {
 	if s.config.Basic.BlogURL != "" {
-		return strings.TrimRight(s.config.Basic.BlogURL, "/") + "/posts/" + article.Slug
+		return s.config.Basic.BlogURL + "/posts/" + article.Slug
 	}
 	return ""
 }

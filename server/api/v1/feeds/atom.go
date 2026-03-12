@@ -3,7 +3,6 @@ package feeds
 import (
 	"encoding/xml"
 	"fmt"
-	"strings"
 	"time"
 
 	"flec_blog/config"
@@ -73,13 +72,8 @@ func (c *AtomController) GetAtomFeed(ctx *gin.Context) {
 
 	// 转换文章为Atom Entry
 	for _, article := range articles {
-		// 构建文章URL，处理 baseURL 可能以 / 结尾的情况
-		articleURL := baseURL
-		if !strings.HasSuffix(baseURL, "/") {
-			articleURL += "/"
-		}
-		// article.URL 以 /posts/ 开头，所以直接拼接
-		articleURL += strings.TrimPrefix(article.URL, "/")
+		// 构建文章URL（article.URL 以 /posts/ 开头）
+		articleURL := baseURL + article.URL
 
 		// 构建链接数组，包含文章链接和封面
 		links := []AtomLink{{Href: articleURL}}

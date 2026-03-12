@@ -141,7 +141,7 @@ func (c *UserController) AuthCallback(ctx *gin.Context) {
 	host := upload.ExtractHostFromContext(ctx)
 
 	// 获取前端基础URL（公共逻辑）
-	frontendBaseURL := strings.TrimSuffix(c.config.Basic.BlogURL, "/")
+	frontendBaseURL := c.config.Basic.BlogURL
 	if frontendBaseURL == "" {
 		frontendBaseURL = "http://localhost:3000"
 	}

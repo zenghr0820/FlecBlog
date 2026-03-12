@@ -8,14 +8,11 @@
                     <!-- 前工具栏 -->
                     <slot name="toolbar-before" />
                     <el-button v-if="showCreate" type="primary" @click="$emit('create')">
-                        <el-icon>
-                            <Plus />
-                        </el-icon>
                         {{ createText }}
                     </el-button>
                     <!-- 后工具栏 -->
                     <slot name="toolbar-after" />
-                    <el-button @click="$emit('refresh')">
+                    <el-button class="refresh-btn" @click="$emit('refresh')">
                         <el-icon>
                             <Refresh />
                         </el-icon>
@@ -50,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Refresh } from '@element-plus/icons-vue'
+import { Refresh } from '@element-plus/icons-vue'
 
 withDefaults(defineProps<{
     title: string
@@ -112,6 +109,10 @@ defineEmits<{
         .actions {
             display: flex;
             gap: 12px;
+
+            :deep(.el-button + .el-button) {
+                margin-left: 0;
+            }
         }
 
         @media (max-width: 767px) {
@@ -126,6 +127,10 @@ defineEmits<{
             .actions {
                 width: 100%;
                 flex-wrap: wrap;
+
+                .refresh-btn {
+                    display: none;
+                }
             }
         }
     }
@@ -133,6 +138,10 @@ defineEmits<{
     .table-wrapper {
         flex: 1;
         overflow: auto;
+
+        :deep(.el-table__header th .cell) {
+            text-align: center;
+        }
     }
 
     .pagination {

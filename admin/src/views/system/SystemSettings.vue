@@ -1,5 +1,5 @@
 <template>
-  <div class="common-list">
+  <div class="system-settings">
     <el-card>
       <!-- 工具栏 -->
       <div class="toolbar">
@@ -12,7 +12,7 @@
         </div>
       </div>
 
-      <!-- 标签页内容 -->
+      <!-- 标签页 -->
       <el-tabs v-model="activeTab" class="setting-tabs">
         <!-- 基本配置标签页 -->
         <el-tab-pane label="基本配置" name="basic">
@@ -531,63 +531,79 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+.system-settings {
+  height: 100%;
+
+  :deep(.el-card) {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .el-card__body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+  }
+}
+
 .toolbar {
+  margin-bottom: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 
   h2 {
     margin: 0;
     font-size: 20px;
     font-weight: 500;
-    color: #303133;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
   }
 }
 
-.actions {
+.setting-tabs {
+  flex: 1;
   display: flex;
-  gap: 12px;
-}
+  flex-direction: column;
+  overflow: hidden;
 
-:deep(.el-card) {
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
+  :deep(.el-tabs__header) {
+    margin: 0 0 12px 0;
+    flex-shrink: 0;
+  }
 
-:deep(.el-tabs__header) {
-  margin: 0 0 30px 0;
-}
+  :deep(.el-tabs__nav-wrap) {
+    justify-content: center;
 
-:deep(.el-tabs__nav-wrap::after) {
-  display: none;
-}
+    &::after {
+      display: none;
+    }
+  }
 
-:deep(.el-tabs__item) {
-  font-weight: 500;
-  font-size: 14px;
-  color: #606266;
-}
+  :deep(.el-tabs__nav) {
+    float: none;
+  }
 
-:deep(.el-tabs__item.is-active) {
-  color: #409EFF;
-}
+  :deep(.el-tabs__content) {
+    flex: 1;
+    overflow: hidden;
+  }
 
-:deep(.el-tabs__active-bar) {
-  background-color: #409EFF;
-}
+  :deep(.el-tab-pane) {
+    height: 100%;
+    overflow-y: auto;
+    padding: 0 16px;
 
-:deep(.el-form-item__label) {
-  font-weight: 500;
-  color: #606266;
-}
-
-:deep(.el-input__inner) {
-  border-radius: 6px;
-}
-
-:deep(.el-button) {
-  border-radius: 6px;
+    .setting-form {
+      max-width: 95%;
+      margin: 0 auto;
+    }
+  }
 }
 
 // 移动端适配
@@ -610,27 +626,45 @@ onMounted(() => {
     }
   }
 
-  :deep(.el-tabs__header) {
-    margin: 0 0 20px 0;
-  }
-
-  :deep(.el-tabs__item) {
-    font-size: 13px;
-    padding: 0 12px;
-  }
-
-  :deep(.el-tabs__nav-wrap.is-scrollable) {
-    padding: 0;
-  }
-
-  :deep(.el-tabs__nav-scroll) {
-    overflow-x: scroll !important;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; // Firefox
-
-    &::-webkit-scrollbar {
-      display: none; // Chrome, Safari
+  .setting-tabs {
+    :deep(.el-tabs__nav-wrap) {
+      justify-content: flex-start;
     }
+
+    :deep(.el-tabs__nav-scroll) {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    :deep(.el-tabs__nav-wrap.is-scrollable) {
+      padding: 0;
+    }
+
+    :deep(.el-tab-pane) {
+      padding: 0 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      .setting-form {
+        max-width: none;
+        min-width: 800px;
+      }
+    }
+  }
+
+  :deep(.el-form-item__label) {
+    width: 120px !important;
+    flex-shrink: 0;
   }
 }
 </style>

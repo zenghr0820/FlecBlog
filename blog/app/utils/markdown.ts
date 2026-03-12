@@ -341,7 +341,7 @@ function customBlocksPlugin(md: MarkdownIt) {
       let currentTab: { name: string; content: string } | null = null
 
       while (nextLine < endLine) {
-        const linePos = (state.bMarks[nextLine] ?? 0) + (state.tShift[nextLine] ?? 0)
+        const linePos = state.bMarks[nextLine] ?? 0
         const lineMax = state.eMarks[nextLine] ?? 0
         const line = state.src.slice(linePos, lineMax).trim()
 
@@ -449,7 +449,7 @@ function customBlocksPlugin(md: MarkdownIt) {
 
     // 处理其他块级标签（note, fold）
     while (nextLine < endLine) {
-      const linePos = (state.bMarks[nextLine] ?? 0) + (state.tShift[nextLine] ?? 0)
+      const linePos = state.bMarks[nextLine] ?? 0
       const lineMax = state.eMarks[nextLine] ?? 0
       const line = state.src.slice(linePos, lineMax).trim()
 
@@ -516,7 +516,7 @@ export function renderMarkdown(markdown: string): string {
     ALLOWED_ATTR: [
       'href', 'title', 'target', 'rel', 'src', 'alt', 'width', 'height',
       'class', 'id', 'colspan', 'rowspan', 'align',
-      'type', 'checked', 'disabled', 'for', 'onclick',
+      'type', 'checked', 'disabled', 'for', 'onclick', 'start',
       'd', 'fill', 'stroke', 'stroke-width', 'x', 'y', 'cx', 'cy', 'r', 'rx', 'ry',
       'x1', 'y1', 'x2', 'y2', 'points', 'transform', 'viewBox', 'xmlns',
       'text-anchor', 'font-size', 'font-family', 'dominant-baseline', 'data-processed'

@@ -30,10 +30,6 @@ defineProps<{
 </script>
 
 <style lang="scss" scoped>
-.setting-form {
-  max-width: 800px;
-}
-
 // 移动端适配
 @media (max-width: 768px) {
   :deep(.el-form-item__label) {

@@ -733,7 +733,7 @@ BEGIN
     RETURNING id INTO zhida_id;
     
     INSERT INTO menus (type, parent_id, title, url, icon, sort, is_enabled) VALUES
-    ('footer', zhida_id, '申请友链', '/friends#apply', '', 1, TRUE);
+    ('footer', zhida_id, '申请友链', '/friend#apply', '', 1, TRUE);
 
     -- 页脚菜单 (footer) - 服务
     INSERT INTO menus (type, parent_id, title, url, icon, sort, is_enabled)

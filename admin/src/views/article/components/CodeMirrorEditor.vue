@@ -137,11 +137,105 @@ import {
   estimateReadingTime,
   type TocItem
 } from '@/utils/markdown'
-import { EditorView, keymap } from '@codemirror/view'
-import { EditorState } from '@codemirror/state'
+import { EditorView, keymap, showPanel } from '@codemirror/view'
+import { EditorState, StateField, StateEffect, RangeSetBuilder } from '@codemirror/state'
+import { Decoration } from '@codemirror/view'
+import type { Panel, DecorationSet } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown } from '@codemirror/lang-markdown'
+import { SearchCursor } from '@codemirror/search'
 import mermaid from 'mermaid'
+
+// 简易搜索功能
+const setSearchQuery = StateEffect.define<string>()
+const setSearchIndex = StateEffect.define<number>()
+
+const searchStateField = StateField.define<{ matches: { from: number; to: number }[]; idx: number }>({
+  create: () => ({ matches: [], idx: 0 }),
+  update: (v, tr) => {
+    for (const e of tr.effects) {
+      if (e.is(setSearchQuery)) {
+        if (!e.value) return { matches: [], idx: 0 }
+        const matches: { from: number; to: number }[] = []
+        const cursor = new SearchCursor(tr.state.doc, e.value, 0, undefined, s => s.toLowerCase())
+        while (!cursor.next().done) matches.push({ from: cursor.value.from, to: cursor.value.to })
+        return { matches, idx: 0 }
+      }
+      if (e.is(setSearchIndex)) return { ...v, idx: e.value }
+    }
+    return v
+  }
+})
+
+const searchDecorations = StateField.define<DecorationSet>({
+  create: () => Decoration.none,
+  update: (_, tr) => {
+    const { matches, idx } = tr.state.field(searchStateField)
+    if (!matches.length) return Decoration.none
+    const builder = new RangeSetBuilder<Decoration>()
+    matches.forEach((m, i) => builder.add(m.from, m.to, Decoration.mark({ class: i === idx ? 'cm-searchMatch-selected' : 'cm-searchMatch' })))
+    return builder.finish()
+  },
+  provide: f => EditorView.decorations.from(f)
+})
+
+let searchPanel: { dom: HTMLElement; show: () => void } | null = null
+
+function createSearchPanel(view: EditorView): Panel {
+  const dom = document.createElement('div')
+  dom.style.cssText = 'display:none;align-items:center;padding:8px;background:#f5f5f5;border-top:1px solid #ddd'
+  dom.innerHTML = `
+    <input placeholder="查找..." style="width:180px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;outline:none">
+    <span style="margin:0 8px;color:#666;font-size:13px"></span>
+    <button style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer">↑</button>
+    <button style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;margin-left:4px">↓</button>
+    <button style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;margin-left:8px">×</button>
+  `
+  const [input, count, prev, next, close] = [dom.querySelector('input')!, dom.querySelector('span')!, ...dom.querySelectorAll('button')] as [HTMLInputElement, HTMLSpanElement, HTMLButtonElement, HTMLButtonElement, HTMLButtonElement]
+
+  const update = () => {
+    const { matches, idx } = view.state.field(searchStateField)
+    count.textContent = matches.length ? `${idx + 1}/${matches.length}` : input.value ? '无匹配' : ''
+  }
+
+  const search = () => {
+    view.dispatch({ effects: setSearchQuery.of(input.value) })
+    update()
+  }
+
+  const go = (d: number) => {
+    const { matches, idx } = view.state.field(searchStateField)
+    if (!matches.length) return
+    const i = (idx + d + matches.length) % matches.length
+    view.dispatch({
+      effects: setSearchIndex.of(i),
+      selection: { anchor: matches[i]!.from, head: matches[i]!.to },
+      scrollIntoView: true
+    })
+    update()
+  }
+
+  input.oninput = search
+  input.onkeydown = e => {
+    if (e.key === 'Enter') { e.preventDefault(); go(e.shiftKey ? -1 : 1) }
+    if (e.key === 'Escape') { view.dispatch({ effects: setSearchQuery.of('') }); input.value = ''; update() }
+  }
+  prev.onclick = () => go(-1)
+  next.onclick = () => go(1)
+  close.onclick = () => {
+    view.dispatch({ effects: setSearchQuery.of('') })
+    input.value = ''
+    dom.style.display = 'none'
+  }
+
+  searchPanel = { dom, show: () => { dom.style.display = 'flex'; input.focus(); input.select() } }
+  return { dom, top: false }
+}
+
+function openSearchPanelCustom() {
+  searchPanel?.show()
+  return true
+}
 
 // 类型定义
 interface ToolbarItem {
@@ -803,12 +897,14 @@ const initEditor = () => {
       extensions: [
         history(),
         markdown(),
+        searchStateField,
+        searchDecorations,
+        showPanel.of(createSearchPanel),
         keymap.of([
-          // 自定义快捷键（优先于默认快捷键）
           { key: 'Mod-b', run: () => (insertText('**', '**'), true), preventDefault: true },
           { key: 'Mod-i', run: () => (insertText('*', '*'), true), preventDefault: true },
           { key: 'Mod-s', run: () => { saveArticle(); return true; }, preventDefault: true },
-          // 默认快捷键
+          { key: 'Mod-f', run: openSearchPanelCustom, preventDefault: true },
           ...defaultKeymap,
           ...historyKeymap
         ]),
@@ -916,6 +1012,17 @@ onBeforeUnmount(() => {
 
 // 引入代码高亮样式
 @import 'highlight.js/styles/github.css';
+
+// 搜索高亮样式
+.cm-searchMatch {
+  background-color: #ffeb3b80;
+  border-radius: 2px;
+}
+
+.cm-searchMatch-selected {
+  background-color: #ff9800;
+  color: white;
+}
 </style>
 
 <style scoped lang="scss">

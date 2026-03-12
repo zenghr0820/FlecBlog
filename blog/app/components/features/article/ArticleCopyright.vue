@@ -5,7 +5,7 @@ const { basicConfig } = useSysConfig()
 
 const articleUrl = computed(() => {
     const blogUrl = basicConfig.value.blog_url
-    return blogUrl ? `${blogUrl.replace(/\/$/, '')}${props.article.url}` : props.article.url
+    return blogUrl ? `${blogUrl}${props.article.url}` : props.article.url
 })
 </script>
 

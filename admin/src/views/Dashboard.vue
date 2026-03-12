@@ -743,6 +743,7 @@ onUnmounted(() => {
         display: flex;
         align-items: center;
         gap: 40px;
+        margin-right: 20px;
 
         .stat-item {
           text-align: center;
@@ -777,10 +778,6 @@ onUnmounted(() => {
 
     .overview-card {
       transition: all 0.3s;
-
-      &:hover {
-        transform: translateY(-2px);
-      }
 
       :deep(.el-card__body) {
         padding: 16px;
@@ -914,8 +911,6 @@ onUnmounted(() => {
 
   // 快捷访问
   .quick-access-card {
-    margin-top: 20px;
-
     :deep(.el-card__body) {
       padding: 24px;
     }
@@ -1013,6 +1008,7 @@ onUnmounted(() => {
         .stats-section {
           width: 100%;
           justify-content: space-around;
+          margin-right: 0;
         }
       }
     }
@@ -1032,8 +1028,6 @@ onUnmounted(() => {
     }
 
     .quick-access-card {
-      margin-top: 12px;
-
       :deep(.el-card__body) {
         padding: 16px;
       }

@@ -5,15 +5,9 @@
     <!-- 额外按钮 -->
     <template #toolbar-after>
       <el-button @click="categoryDialogVisible = true">
-        <el-icon>
-          <Folder />
-        </el-icon>
         分类管理
       </el-button>
       <el-button @click="tagDialogVisible = true">
-        <el-icon>
-          <Collection />
-        </el-icon>
         标签管理
       </el-button>
     </template>
@@ -213,7 +207,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Folder, Collection, View, ChatDotRound, Upload, EditPen, Loading } from '@element-plus/icons-vue'
+import { View, ChatDotRound, Upload, EditPen, Loading } from '@element-plus/icons-vue'
 import CommonList from '@/components/common/CommonList.vue'
 import type { Article } from '@/types/article'
 import type { PaginationQuery } from '@/types/request'

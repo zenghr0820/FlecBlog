@@ -2,6 +2,7 @@ package service
 
 import (
 	"strconv"
+	"strings"
 	"sync"
 
 	"flec_blog/config"
@@ -314,13 +315,13 @@ func (s *SettingService) ApplyDatabaseConfig(cfg *config.Config) error {
 			cfg.Basic.PoliceRecord = v
 		}
 		if v, ok := basicSettings[KeyBasicAdminURL]; ok && v != "" {
-			cfg.Basic.AdminURL = v
+			cfg.Basic.AdminURL = strings.TrimRight(v, "/")
 		}
 		if v, ok := basicSettings[KeyBasicBlogURL]; ok && v != "" {
-			cfg.Basic.BlogURL = v
+			cfg.Basic.BlogURL = strings.TrimRight(v, "/")
 		}
 		if v, ok := basicSettings[KeyBasicHomeURL]; ok && v != "" {
-			cfg.Basic.HomeURL = v
+			cfg.Basic.HomeURL = strings.TrimRight(v, "/")
 		}
 	}
 

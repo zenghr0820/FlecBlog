@@ -5,9 +5,6 @@
     <!-- 额外按钮 -->
     <template #toolbar-after>
       <el-button @click="handleTypeManage">
-        <el-icon>
-          <Grid />
-        </el-icon>
         类型管理
       </el-button>
     </template>
@@ -80,7 +77,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Link, Grid } from '@element-plus/icons-vue'
+import { Link } from '@element-plus/icons-vue'
 import CommonList from '@/components/common/CommonList.vue'
 import type { Friend } from '@/types/friend'
 import type { PaginationQuery } from '@/types/request'

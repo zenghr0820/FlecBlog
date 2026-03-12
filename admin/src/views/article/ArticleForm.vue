@@ -19,7 +19,7 @@
         <el-button @click="drawerVisible = true" :icon="Setting" text>
           文章设置
         </el-button>
-        <el-button type="primary" @click="() => handleSave()" :loading="loading">
+        <el-button type="primary" @click="() => handleSave(false)" :loading="loading">
           {{ loading ? '保存中...' : '保存' }}
         </el-button>
       </div>

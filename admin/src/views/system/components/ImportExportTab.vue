@@ -232,10 +232,6 @@ watch(commentImportVisible, (val) => {
 </script>
 
 <style lang="scss" scoped>
-.setting-form {
-  max-width: 800px;
-}
-
 :deep(.el-icon--upload) {
   font-size: 40px;
   color: #409eff;

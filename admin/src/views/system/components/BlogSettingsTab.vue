@@ -319,8 +319,6 @@ defineExpose({
 
 <style lang="scss" scoped>
 .setting-form {
-  max-width: 800px;
-
   .image-row {
     display: flex;
     gap: 40px;

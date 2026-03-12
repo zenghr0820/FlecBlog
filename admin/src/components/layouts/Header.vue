@@ -10,10 +10,6 @@
         <i class="ri-menu-fold-3-line ri-lg" v-if="!sidebarCollapsed"></i>
         <i class="ri-menu-unfold-3-line ri-lg" v-else></i>
       </div>
-      <el-breadcrumb separator="/" class="hide-on-mobile">
-        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item v-if="route.path !== '/'">{{ route.meta.title }}</el-breadcrumb-item>
-      </el-breadcrumb>
     </div>
     <div class="right">
       <NotificationBell />
@@ -42,14 +38,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, SwitchButton, ArrowDown } from '@element-plus/icons-vue'
 import NotificationBell from '@/components/common/NotificationBell.vue'
 import { logout as logoutApi } from '@/api/user'
 import { removeTokens } from '@/utils/auth'
 
-const route = useRoute()
 const router = useRouter()
 
 const userInfoStr = localStorage.getItem('userInfo')
@@ -186,7 +181,6 @@ const handleLogout = async () => {
   }
 }
 
-// 移动端隐藏
 .hide-on-mobile {
   @media (max-width: 768px) {
     display: none !important;
