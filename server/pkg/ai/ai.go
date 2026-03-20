@@ -31,5 +31,5 @@ func GetProvider(cfg *config.AIConfig) (Provider, error) {
 		return nil, fmt.Errorf("AI Model 未配置")
 	}
 
-	return NewOpenAIClient(cfg.BaseURL, cfg.APIKey, cfg.Model), nil
+	return NewOpenAIClientWithConfig(cfg), nil
 }

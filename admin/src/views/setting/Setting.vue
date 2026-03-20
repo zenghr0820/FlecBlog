@@ -144,7 +144,10 @@ const blogForm = ref({
 const aiForm = ref({
   base_url: '',
   api_key: '',
-  model: ''
+  model: '',
+  summary_prompt: '',
+  ai_summary_prompt: '',
+  title_prompt: ''
 })
 
 // OAuth 配置表单
@@ -306,7 +309,10 @@ const loadAIConfigs = async () => {
     Object.assign(aiForm.value, {
       base_url: configs.base_url || '',
       api_key: configs.api_key || '',
-      model: configs.model || ''
+      model: configs.model || '',
+      summary_prompt: configs.summary_prompt || '',
+      ai_summary_prompt: configs.ai_summary_prompt || '',
+      title_prompt: configs.title_prompt || ''
     })
   } catch {
     ElMessage.error('获取 AI 配置失败')
@@ -471,7 +477,10 @@ const handleSave = async () => {
     const aiPayload: Record<string, string> = {
       'ai.base_url': aiForm.value.base_url,
       'ai.api_key': aiForm.value.api_key,
-      'ai.model': aiForm.value.model
+      'ai.model': aiForm.value.model,
+      'ai.summary_prompt': aiForm.value.summary_prompt,
+      'ai.ai_summary_prompt': aiForm.value.ai_summary_prompt,
+      'ai.title_prompt': aiForm.value.title_prompt
     }
 
     // OAuth 配置

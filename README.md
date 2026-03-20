@@ -14,6 +14,8 @@
     <a href="https://github.com/talen8/FlecBlog/issues/new">问题反馈</a>
     &middot;
     <a href="">赞助支持</a>
+    &middot;
+    <a href="https://ccnlf8xcz6k3.feishu.cn/wiki/space/7618178485001046989">使用文档</a>
   </p>
 </div>
 

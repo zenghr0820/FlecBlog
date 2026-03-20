@@ -54,6 +54,15 @@ const detect = (el: EventTarget | null) => {
 const TOOLTIP_KEY = 'ctx-tip'
 const TOOLTIP_DURATION = 3 * 60 * 1000 // 3分钟
 
+const shouldUseNativeContextMenu = () => {
+    if (typeof window === 'undefined') return true
+
+    const prefersTouchInteraction = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+    const isMobileViewport = window.innerWidth <= 768
+
+    return prefersTouchInteraction || isMobileViewport
+}
+
 // 显示首次提示
 const showFirstTimeTooltip = () => {
     const lastShown = localStorage.getItem(TOOLTIP_KEY)
@@ -257,7 +266,10 @@ const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && close()
 const addListeners = () => { addEventListener('click', onClickOut); addEventListener('keydown', onEsc) }
 const rmListeners = () => { removeEventListener('click', onClickOut); removeEventListener('keydown', onEsc) }
 
-onMounted(() => addEventListener('contextmenu', showMenu))
+onMounted(() => {
+    if (shouldUseNativeContextMenu()) return
+    addEventListener('contextmenu', showMenu)
+})
 onUnmounted(() => { removeEventListener('contextmenu', showMenu); rmListeners() })
 </script>
 

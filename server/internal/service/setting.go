@@ -90,9 +90,12 @@ const (
 
 // 配置键常量 - AI 相关
 const (
-	KeyAIBaseURL = "ai.base_url"
-	KeyAIAPIKey  = "ai.api_key"
-	KeyAIModel   = "ai.model"
+	KeyAIBaseURL         = "ai.base_url"
+	KeyAIAPIKey          = "ai.api_key"
+	KeyAIModel           = "ai.model"
+	KeyAISummaryPrompt   = "ai.summary_prompt"
+	KeyAIAISummaryPrompt = "ai.ai_summary_prompt"
+	KeyAITitlePrompt     = "ai.title_prompt"
 )
 
 // 配置键常量 - OAuth 相关
@@ -168,6 +171,15 @@ func (s *SettingService) GetAIConfig() (*config.AIConfig, error) {
 	}
 	if v, ok := aiSettings[KeyAIModel]; ok && v != "" {
 		cfg.Model = v
+	}
+	if v, ok := aiSettings[KeyAISummaryPrompt]; ok {
+		cfg.SummaryPrompt = v
+	}
+	if v, ok := aiSettings[KeyAIAISummaryPrompt]; ok {
+		cfg.AISummaryPrompt = v
+	}
+	if v, ok := aiSettings[KeyAITitlePrompt]; ok {
+		cfg.TitlePrompt = v
 	}
 
 	return cfg, nil
@@ -460,6 +472,15 @@ func (s *SettingService) ApplyDatabaseConfig(cfg *config.Config) error {
 		}
 		if v, ok := aiSettings[KeyAIModel]; ok && v != "" {
 			cfg.AI.Model = v
+		}
+		if v, ok := aiSettings[KeyAISummaryPrompt]; ok {
+			cfg.AI.SummaryPrompt = v
+		}
+		if v, ok := aiSettings[KeyAIAISummaryPrompt]; ok {
+			cfg.AI.AISummaryPrompt = v
+		}
+		if v, ok := aiSettings[KeyAITitlePrompt]; ok {
+			cfg.AI.TitlePrompt = v
 		}
 	}
 

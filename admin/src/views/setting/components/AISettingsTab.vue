@@ -1,11 +1,14 @@
 <template>
   <el-form :model="form" label-width="120px" class="setting-form">
+    <el-divider content-position="left">基础配置</el-divider>
+
     <el-form-item label="API 端点">
       <el-input v-model="form.base_url" placeholder="例如 https://api.deepseek.com" :disabled="loading" />
     </el-form-item>
 
     <el-form-item label="API 密钥">
-      <el-input v-model="form.api_key" type="password" show-password placeholder="输入 API Key" :disabled="loading" autocomplete="off" />
+      <el-input v-model="form.api_key" type="password" show-password placeholder="输入 API Key" :disabled="loading"
+        autocomplete="off" />
     </el-form-item>
 
     <el-form-item label="模型名称">
@@ -14,6 +17,23 @@
 
     <el-form-item label=" ">
       <el-button :loading="testing" @click="handleTest">测试连接</el-button>
+    </el-form-item>
+
+    <el-divider content-position="left">提示词配置</el-divider>
+
+    <el-form-item label="文章摘要提示词">
+      <el-input v-model="form.summary_prompt" type="textarea" :rows="5" placeholder="用于生成文章摘要，留空时使用系统默认提示词"
+        :disabled="loading" />
+    </el-form-item>
+
+    <el-form-item label="AI 总结提示词">
+      <el-input v-model="form.ai_summary_prompt" type="textarea" :rows="5" placeholder="用于生成 AI 总结，留空时使用系统默认提示词"
+        :disabled="loading" />
+    </el-form-item>
+
+    <el-form-item label="标题提示词">
+      <el-input v-model="form.title_prompt" type="textarea" :rows="5" placeholder="用于生成标题，留空时使用系统默认提示词"
+        :disabled="loading" />
     </el-form-item>
   </el-form>
 </template>
@@ -27,6 +47,9 @@ interface AIForm {
   base_url: string
   api_key: string
   model: string
+  summary_prompt: string
+  ai_summary_prompt: string
+  title_prompt: string
 }
 
 const form = defineModel<AIForm>('form', { required: true })

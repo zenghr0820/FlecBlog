@@ -100,9 +100,12 @@ type UploadConfig struct {
 
 // AIConfig AI服务配置（从数据库动态加载）
 type AIConfig struct {
-	BaseURL string // API 端点 (OpenAI 兼容格式)
-	APIKey  string // API 密钥
-	Model   string // 模型名称
+	BaseURL         string // API 端点 (OpenAI 兼容格式)
+	APIKey          string // API 密钥
+	Model           string // 模型名称
+	SummaryPrompt   string // 文章摘要提示词
+	AISummaryPrompt string // AI 总结提示词
+	TitlePrompt     string // 标题生成提示词
 }
 
 // OAuthConfig OAuth配置（从数据库动态加载）
