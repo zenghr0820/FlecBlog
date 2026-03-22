@@ -3,6 +3,8 @@ package feeds
 import (
 	"encoding/xml"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"flec_blog/config"
@@ -36,7 +38,6 @@ func NewAtomController(articleService *service.ArticleService, config *config.Co
 //	@Success		200	{string}	string	"Atom XML 订阅内容"
 //	@Router			/atom.xml [get]
 func (c *AtomController) GetAtomFeed(ctx *gin.Context) {
-	// 获取所有已发布文章
 	req := &dto.ListArticlesRequest{
 		Page:     1,
 		PageSize: 0,
@@ -48,37 +49,63 @@ func (c *AtomController) GetAtomFeed(ctx *gin.Context) {
 		return
 	}
 
-	// 获取网站URL配置
-	baseURL := c.config.Basic.BlogURL
-
-	// 获取网站标题
+	baseURL := strings.TrimRight(c.config.Basic.BlogURL, "/")
+	canonicalURL := ""
+	if baseURL != "" {
+		canonicalURL = baseURL + "/"
+	}
 	siteName := c.config.Blog.Title
+	fallbackTime := time.Now().UTC().Truncate(time.Second)
 
-	// 构建Atom Feed
+	sort.SliceStable(articles, func(i, j int) bool {
+		updatedI := fallbackTime
+		if articles[i].UpdateTime != nil && !articles[i].UpdateTime.IsZero() {
+			updatedI = articles[i].UpdateTime.Time.UTC().Truncate(time.Second)
+		} else if articles[i].PublishTime != nil && !articles[i].PublishTime.IsZero() {
+			updatedI = articles[i].PublishTime.Time.UTC().Truncate(time.Second)
+		}
+
+		updatedJ := fallbackTime
+		if articles[j].UpdateTime != nil && !articles[j].UpdateTime.IsZero() {
+			updatedJ = articles[j].UpdateTime.Time.UTC().Truncate(time.Second)
+		} else if articles[j].PublishTime != nil && !articles[j].PublishTime.IsZero() {
+			updatedJ = articles[j].PublishTime.Time.UTC().Truncate(time.Second)
+		}
+
+		return updatedI.After(updatedJ)
+	})
+
+	feedUpdatedAt := fallbackTime
+	if len(articles) > 0 {
+		if articles[0].UpdateTime != nil && !articles[0].UpdateTime.IsZero() {
+			feedUpdatedAt = articles[0].UpdateTime.Time.UTC().Truncate(time.Second)
+		} else if articles[0].PublishTime != nil && !articles[0].PublishTime.IsZero() {
+			feedUpdatedAt = articles[0].PublishTime.Time.UTC().Truncate(time.Second)
+		}
+	}
+
 	atom := &Atom{
 		XMLNS:   "http://www.w3.org/2005/Atom",
 		Title:   siteName,
-		ID:      baseURL,
-		Updated: time.Now().Format(time.RFC3339),
+		ID:      canonicalURL,
+		Updated: feedUpdatedAt.Format(time.RFC3339),
 		Author: &AtomAuthor{
 			Name: siteName,
 		},
 		Link: []AtomLink{
-			{Href: baseURL, Rel: "alternate"},
+			{Href: canonicalURL, Rel: "alternate"},
 			{Href: fmt.Sprintf("%s/atom.xml", baseURL), Rel: "self"},
 		},
 		Entries: make([]AtomEntry, 0, len(articles)),
 	}
 
-	// 转换文章为Atom Entry
 	for _, article := range articles {
-		// 构建文章URL（article.URL 以 /posts/ 开头）
-		articleURL := baseURL + article.URL
+		articleURL := article.URL
+		if baseURL != "" {
+			articleURL = baseURL + article.URL
+		}
 
-		// 构建链接数组，包含文章链接和封面
 		links := []AtomLink{{Href: articleURL}}
-
-		// 添加封面链接
 		if article.Cover != "" {
 			links = append(links, AtomLink{
 				Href: article.Cover,
@@ -89,21 +116,23 @@ func (c *AtomController) GetAtomFeed(ctx *gin.Context) {
 		entry := AtomEntry{
 			Title:   article.Title,
 			ID:      articleURL,
+			Updated: feedUpdatedAt.Format(time.RFC3339),
 			Link:    links,
 			Summary: article.Summary,
 		}
 
-		// 添加发布时间和更新时间
-		if article.PublishTime != nil && !article.PublishTime.IsZero() {
-			entry.Published = article.PublishTime.Time.Format(time.RFC3339)
-			entry.Updated = article.PublishTime.Time.Format(time.RFC3339)
-		}
-
 		if article.UpdateTime != nil && !article.UpdateTime.IsZero() {
-			entry.Updated = article.UpdateTime.Time.Format(time.RFC3339)
+			entry.Updated = article.UpdateTime.Time.UTC().Truncate(time.Second).Format(time.RFC3339)
+		} else if article.PublishTime != nil && !article.PublishTime.IsZero() {
+			entry.Updated = article.PublishTime.Time.UTC().Truncate(time.Second).Format(time.RFC3339)
 		}
 
-		// 添加分类
+		if article.PublishTime != nil && !article.PublishTime.IsZero() {
+			entry.Published = article.PublishTime.Time.UTC().Truncate(time.Second).Format(time.RFC3339)
+		} else if article.UpdateTime != nil && !article.UpdateTime.IsZero() {
+			entry.Published = article.UpdateTime.Time.UTC().Truncate(time.Second).Format(time.RFC3339)
+		}
+
 		if article.Category.Name != "" {
 			entry.Category = []AtomCategory{{Term: article.Category.Name}}
 		}
@@ -111,19 +140,14 @@ func (c *AtomController) GetAtomFeed(ctx *gin.Context) {
 		atom.Entries = append(atom.Entries, entry)
 	}
 
-	// 手动构建XML，包含XML声明
 	xmlData, err := xml.MarshalIndent(atom, "", "  ")
 	if err != nil {
 		ctx.XML(500, gin.H{"error": "生成Atom失败"})
 		return
 	}
 
-	// 构建完整的XML文档（包含声明）
-	xmlContent := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + string(xmlData)
-
-	// 设置正确的响应头并写入响应
-	ctx.Header("Content-Type", "application/xml; charset=utf-8")
-	ctx.String(200, xmlContent)
+	ctx.Header("Content-Type", "application/atom+xml; charset=utf-8")
+	ctx.String(200, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+string(xmlData))
 }
 
 // Atom Feed 结构定义

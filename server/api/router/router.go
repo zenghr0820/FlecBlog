@@ -104,12 +104,15 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 	subscriberHandler := v1.NewSubscriberHandler(subscriberService)
 	settingController := v1.NewSettingController(settingService, db.DB, uploadManager)
 	atomController := feeds.NewAtomController(articleService, conf)
+	rssController := feeds.NewRSSController(articleService, conf)
 	toolsHandler := v1.NewToolsController()
 	aiController := v1.NewAIController(settingService)
 	rssFeedController := v1.NewRssFeedController(rssFeedService)
 
 	// Atom 订阅
 	r.GET("/atom.xml", atomController.GetAtomFeed)
+	// RSS 2.0 订阅
+	r.GET("/rss.xml", rssController.GetRSSFeed)
 
 	// ============================
 	// 前台 API 路由组 - 面向普通用户的公开接口

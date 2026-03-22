@@ -140,6 +140,12 @@ useHead({
     // RSS/Atom 订阅
     {
       rel: 'alternate',
+      type: 'application/rss+xml',
+      title: `${blogConfig.value.title} - RSS 2.0 Feed`,
+      href: '/rss.xml'
+    },
+    {
+      rel: 'alternate',
       type: 'application/atom+xml',
       title: `${blogConfig.value.title} - Atom Feed`,
       href: '/atom.xml'

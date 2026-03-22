@@ -5,19 +5,19 @@ export default defineEventHandler(async (event) => {
     .replace(/\/api\/v\d+$/, '')
 
   try {
-    const response = await fetch(`${backendUrl}/atom.xml`)
+    const response = await fetch(`${backendUrl}/rss.xml`)
 
     if (!response.ok) {
       throw new Error(`Backend returned ${response.status}`)
     }
 
-    const atomFeed = await response.text()
-    setResponseHeader(event, 'Content-Type', 'application/atom+xml; charset=utf-8')
-    return atomFeed
+    const rssFeed = await response.text()
+    setResponseHeader(event, 'Content-Type', 'application/rss+xml; charset=utf-8')
+    return rssFeed
   } catch {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to fetch Atom feed'
+      statusMessage: 'Failed to fetch RSS feed'
     })
   }
 })
