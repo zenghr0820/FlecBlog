@@ -78,15 +78,15 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 	feedbackService := service.NewFeedbackService(feedbackRepo, notificationService, fileService)
 	subscriberService := service.NewSubscriberService(subscriberRepo, emailClient, conf)
 	rssFeedService := service.NewRssFeedService(rssFeedRepo, notificationService)
-	systemHandler := v1.NewSystemHandler(db.DB, uploadManager, emailClient, feishuClient)
-	feishu.InitCardHandlers(friendService, commentService, userService, statsService, systemHandler, rssFeedService)
+	systemService := service.NewSystemService(db.DB, uploadManager, emailClient, feishuClient, notificationService)
+	feishu.InitCardHandlers(friendService, commentService, userService, statsService, systemService, rssFeedService)
 	settingService := service.NewSettingService(db.DB)
 	settingService.SetConfig(conf)                         // 设置全局配置对象，用于热重载
 	settingService.SetFileService(fileService)             // 设置文件服务，用于文件状态管理
 	articleService.SetSubscriberService(subscriberService) // 设置订阅服务，用于文章推送
 
 	// 初始化并启动定时任务调度器
-	initScheduler(fileService, userService, verificationService, rssFeedService, friendService)
+	initScheduler(fileService, userService, verificationService, rssFeedService, friendService, systemService)
 
 	// 初始化控制器
 	userController := v1.NewUserController(userService, verificationService, conf)
@@ -103,6 +103,7 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 	feedbackHandler := v1.NewFeedbackHandler(feedbackService)
 	subscriberHandler := v1.NewSubscriberHandler(subscriberService)
 	settingController := v1.NewSettingController(settingService, db.DB, uploadManager)
+	systemController := v1.NewSystemController(systemService)
 	atomController := feeds.NewAtomController(articleService, conf)
 	rssController := feeds.NewRSSController(articleService, conf)
 	toolsHandler := v1.NewToolsController()
@@ -417,8 +418,8 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 
 		// ==================== 系统信息 ====================
 		systemManagement := adminAPI.Group("/system")
-		systemManagement.GET("/static", systemHandler.GetSystemStatic)   // 获取系统静态信息
-		systemManagement.GET("/dynamic", systemHandler.GetSystemDynamic) // 获取系统动态信息
+		systemManagement.GET("/static", systemController.GetSystemStatic)   // 获取系统静态信息
+		systemManagement.GET("/dynamic", systemController.GetSystemDynamic) // 获取系统动态信息
 
 		// ==================== 管理工具相关 ====================
 		toolsManagement := adminAPI.Group("/tools")
@@ -453,7 +454,7 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 }
 
 // initScheduler 初始化并启动定时任务调度器
-func initScheduler(fileService *service.FileService, userService *service.UserService, verificationService *service.VerificationService, rssFeedService *service.RssFeedService, friendService *service.FriendService) {
+func initScheduler(fileService *service.FileService, userService *service.UserService, verificationService *service.VerificationService, rssFeedService *service.RssFeedService, friendService *service.FriendService, systemService *service.SystemService) {
 	s := scheduler.NewScheduler()
 
 	// 注册清理任务
@@ -468,6 +469,8 @@ func initScheduler(fileService *service.FileService, userService *service.UserSe
 
 	// 友链检测任务
 	_ = s.AddJob(scheduler.NewJob("友链状态检测", "0 0 2 * * 3", friendService.CheckAllFriends))
+
+	_ = s.AddJob(scheduler.NewJob("版本更新检测", "0 0 8 * * *", systemService.CheckForUpdates))
 
 	s.Start()
 }

@@ -165,6 +165,10 @@ const handleNotificationClick = async (notification: Notification) => {
   // 跳转
   if (notification.link) {
     visible.value = false
+    if (/^https?:\/\//i.test(notification.link)) {
+      window.open(notification.link, '_blank', 'noopener,noreferrer')
+      return
+    }
     router.push(notification.link)
   }
 }

@@ -133,6 +133,35 @@ func (s *NotificationService) NotifyRssFeedDaily(unreadCount int, articles inter
 	})
 }
 
+// NotifyVersionUpdateToSuperAdmins 版本更新通知超级管理员（仅站内信）
+func (s *NotificationService) NotifyVersionUpdateToSuperAdmins(ctx context.Context, currentVersion, latestVersion, releaseURL string) error {
+	superAdminIDs, err := s.repo.GetAllSuperAdmins(ctx)
+	if err != nil {
+		return err
+	}
+	if len(superAdminIDs) == 0 {
+		return nil
+	}
+
+	content := fmt.Sprintf("当前版本 %s，发现新版本 %s", currentVersion, latestVersion)
+
+	data := map[string]interface{}{
+		"alert_type":      model.AlertTypeVersionUpdate,
+		"message":         content,
+		"severity":        "info",
+		"current_version": currentVersion,
+		"latest_version":  latestVersion,
+		"release_url":     releaseURL,
+	}
+
+	return s.sendInApp(ctx, model.TypeSystemAlert, "发现新版本", content, releaseURL, data, nil, nil, superAdminIDs)
+}
+
+// HasVersionUpdateNotification 检查指定版本是否已经通知过
+func (s *NotificationService) HasVersionUpdateNotification(ctx context.Context, latestVersion string) (bool, error) {
+	return s.repo.ExistsVersionUpdateNotification(ctx, latestVersion)
+}
+
 // ============ 查询方法 ============
 
 // ListForWeb 获取前台用户通知列表（仅评论回复）
@@ -146,6 +175,7 @@ func (s *NotificationService) List(ctx context.Context, userID uint, req *dto.No
 		model.TypeCommentNew,
 		model.TypeFeedbackNew,
 		model.TypeFriendApply,
+		model.TypeSystemAlert,
 	})
 }
 
@@ -162,7 +192,34 @@ func (s *NotificationService) MarkAllAsRead(ctx context.Context, userID uint) er
 // ============ 内部方法 ============
 
 // send 发送通知（站内+邮件）
-func (s *NotificationService) send(ctx context.Context, notifType model.NotificationType, title, content, link string, data interface{}, senderID, targetID *uint, receiverIDs []uint) error {
+func (s *NotificationService) send(ctx context.Context, notifType model.NotificationType, title, content, link string, data any, senderID, targetID *uint, receiverIDs []uint) error {
+	if err := s.sendInApp(ctx, notifType, title, content, link, data, senderID, targetID, receiverIDs); err != nil {
+		return err
+	}
+
+	// 异步发送邮件
+	if s.notificationSvc != nil {
+		notification := &model.Notification{
+			Type:     notifType,
+			Title:    title,
+			Content:  content,
+			Link:     link,
+			SenderID: senderID,
+			TargetID: targetID,
+		}
+		dataJSON, err := json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		notification.Data = string(dataJSON)
+		go s.sendEmails(notification, receiverIDs)
+	}
+
+	return nil
+}
+
+// sendInApp 仅发送站内通知
+func (s *NotificationService) sendInApp(ctx context.Context, notifType model.NotificationType, title, content, link string, data any, senderID, targetID *uint, receiverIDs []uint) error {
 	dataJSON, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -182,17 +239,11 @@ func (s *NotificationService) send(ctx context.Context, notifType model.Notifica
 		return err
 	}
 
-	// 异步发送邮件
-	if s.notificationSvc != nil {
-		go s.sendEmails(notification, receiverIDs)
-	}
-
-	// 创建用户通知关联
 	return s.createUserNotifications(ctx, notification.ID, senderID, receiverIDs)
 }
 
 // sendToAdmins 发送给所有管理员（站内+邮件+飞书）
-func (s *NotificationService) sendToAdmins(ctx context.Context, notifType model.NotificationType, title, content, link string, data interface{}, senderID, targetID, excludeUserID *uint) error {
+func (s *NotificationService) sendToAdmins(ctx context.Context, notifType model.NotificationType, title, content, link string, data any, senderID, targetID, excludeUserID *uint) error {
 	adminIDs, err := s.repo.GetAllAdmins(ctx)
 	if err != nil {
 		return err
@@ -252,7 +303,7 @@ func (s *NotificationService) createUserNotifications(ctx context.Context, notif
 
 // sendEmails 异步发送邮件通知
 func (s *NotificationService) sendEmails(notification *model.Notification, receiverIDs []uint) {
-	var data map[string]interface{}
+	var data map[string]any
 	if err := json.Unmarshal([]byte(notification.Data), &data); err != nil {
 		return
 	}
@@ -285,8 +336,8 @@ func (s *NotificationService) sendEmails(notification *model.Notification, recei
 }
 
 // sendFeishu 异步发送飞书通知
-func (s *NotificationService) sendFeishu(notifType model.NotificationType, title, content, link string, data interface{}) {
-	dataMap, _ := data.(map[string]interface{})
+func (s *NotificationService) sendFeishu(notifType model.NotificationType, title, content, link string, data any) {
+	dataMap, _ := data.(map[string]any)
 	senderName, _ := dataMap["sender_name"].(string)
 
 	notifData := notifier.Data{
@@ -389,6 +440,7 @@ func getNotificationTypeText(notifType string) string {
 		"comment_new":   "新评论",
 		"feedback_new":  "反馈投诉",
 		"friend_apply":  "友链申请",
+		"system_alert":  "系统通知",
 	}
 	if text, ok := typeMap[notifType]; ok {
 		return text

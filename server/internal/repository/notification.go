@@ -117,6 +117,26 @@ func (r *NotificationRepository) GetAllAdmins(ctx context.Context) ([]uint, erro
 	return adminIDs, err
 }
 
+// GetAllSuperAdmins 获取所有超级管理员用户 ID
+func (r *NotificationRepository) GetAllSuperAdmins(ctx context.Context) ([]uint, error) {
+	var adminIDs []uint
+	err := r.db.WithContext(ctx).
+		Model(&model.User{}).
+		Where("role = ? AND is_enabled = ?", model.RoleSuperAdmin, true).
+		Pluck("id", &adminIDs).Error
+	return adminIDs, err
+}
+
+// ExistsVersionUpdateNotification 检查指定版本是否已创建过版本更新通知
+func (r *NotificationRepository) ExistsVersionUpdateNotification(ctx context.Context, latestVersion string) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&model.Notification{}).
+		Where("type = ? AND data::jsonb ->> 'alert_type' = ? AND data::jsonb ->> 'latest_version' = ?", model.TypeSystemAlert, model.AlertTypeVersionUpdate, latestVersion).
+		Count(&count).Error
+	return count > 0, err
+}
+
 // GetUserByID 根据ID获取用户信息
 func (r *NotificationRepository) GetUserByID(ctx context.Context, userID uint) (*model.User, error) {
 	var user model.User

@@ -8,6 +8,28 @@
 
       <!-- 内容区域 -->
       <div class="info-content">
+        <div class="version-block">
+          <div class="version-list">
+            <div class="version-item">
+              <span class="label">博客系统</span>
+              <span class="value">FlecBlog</span>
+            </div>
+            <div class="version-item">
+              <span class="label">当前版本</span>
+              <span class="value">{{ staticInfo.app_version || 'dev' }}</span>
+            </div>
+            <div class="version-item">
+              <span class="label">最新版本</span>
+              <span class="version-value">
+                <span class="value">{{ dynamicInfo.version_latest_version || '尚未检测' }}</span>
+                <el-tooltip v-if="versionCheckErrorMessage" :content="versionCheckErrorMessage" placement="top">
+                  <span class="error-dot"></span>
+                </el-tooltip>
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div class="info-grid">
           <!-- 服务器 -->
           <div class="info-section">
@@ -205,6 +227,7 @@
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </el-card>
@@ -212,11 +235,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   Monitor, Cpu, Coin, DataLine,
-  FolderOpened, Connection
+  FolderOpened, Connection, Bell
 } from '@element-plus/icons-vue'
 import { getSystemStatic, getSystemDynamic } from '@/api/system'
 import type { SystemStatic, SystemDynamic } from '@/types/system'
@@ -238,7 +261,8 @@ const staticInfo = ref<SystemStatic>({
   db_tables: 0,
   storage_status: '',
   email_status: '',
-  feishu_status: ''
+  feishu_status: '',
+  app_version: ''
 })
 
 const dynamicInfo = ref<SystemDynamic>({
@@ -254,7 +278,9 @@ const dynamicInfo = ref<SystemDynamic>({
   disk_free: 0,
   db_status: '',
   db_size: 0,
-  db_conn_count: 0
+  db_conn_count: 0,
+  version_latest_version: '',
+  version_last_check_error: ''
 })
 
 const fetchStaticInfo = async () => {
@@ -296,6 +322,13 @@ const getProgressColor = (percentage: number): string => {
   if (percentage < 80) return '#e6a23c'
   return '#f56c6c'
 }
+
+const versionCheckErrorMessage = computed(() => {
+  if (!dynamicInfo.value.version_last_check_error) {
+    return ''
+  }
+  return `版本检查失败，请检查服务端网络是否可以访问 GitHub Releases API。错误信息：${dynamicInfo.value.version_last_check_error}`
+})
 
 onMounted(() => {
   fetchStaticInfo()
@@ -361,6 +394,57 @@ onUnmounted(() => {
   }
 }
 
+.version-block {
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.version-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 32px;
+  row-gap: 12px;
+}
+
+.version-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  .label {
+    color: #909399;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .value {
+    color: #303133;
+    font-size: 14px;
+    line-height: 1.6;
+    word-break: break-all;
+  }
+}
+
+.version-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.error-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #f56c6c;
+  flex-shrink: 0;
+  cursor: help;
+}
+
 .info-section {
   border: 1px solid #e4e7ed;
   border-radius: 8px;
@@ -416,6 +500,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 8px 0;
   border-bottom: 1px dashed #ebeef5;
 
@@ -436,6 +521,30 @@ onUnmounted(() => {
     word-break: break-all;
   }
 
+  .version-value-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .multiline {
+    white-space: pre-wrap;
+    text-align: right;
+  }
+
+  .link-value {
+    color: #409eff;
+    font-size: 14px;
+    text-align: right;
+    word-break: break-all;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
   :deep(.el-progress__text) {
     min-width: auto;
   }
@@ -446,6 +555,15 @@ onUnmounted(() => {
     h2 {
       font-size: 18px;
     }
+  }
+
+  .version-block {
+    padding: 14px 16px;
+  }
+
+  .version-list {
+    grid-template-columns: 1fr;
+    row-gap: 12px;
   }
 }
 </style>

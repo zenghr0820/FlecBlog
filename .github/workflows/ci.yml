@@ -72,31 +72,31 @@ jobs:
             echo "请将 .env.example 复制为 .env 并配置相关参数" > ${pkg_dir}/README.txt
           }
           
-          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o flec-server ./cmd/main.go
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w -X 'flec_blog/internal/service.AppVersion=${VERSION}'" -o flec-server ./cmd/main.go
           prepare_package "dist/linux_amd64"
           mv flec-server dist/linux_amd64/
           tar -czf dist/flec-server_${VERSION}_linux_amd64.tar.gz -C dist linux_amd64
           rm -rf dist/linux_amd64
           
-          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o flec-server ./cmd/main.go
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w -X 'flec_blog/internal/service.AppVersion=${VERSION}'" -o flec-server ./cmd/main.go
           prepare_package "dist/linux_arm64"
           mv flec-server dist/linux_arm64/
           tar -czf dist/flec-server_${VERSION}_linux_arm64.tar.gz -C dist linux_arm64
           rm -rf dist/linux_arm64
           
-          GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o flec-server ./cmd/main.go
+          GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w -X 'flec_blog/internal/service.AppVersion=${VERSION}'" -o flec-server ./cmd/main.go
           prepare_package "dist/darwin_amd64"
           mv flec-server dist/darwin_amd64/
           tar -czf dist/flec-server_${VERSION}_darwin_amd64.tar.gz -C dist darwin_amd64
           rm -rf dist/darwin_amd64
           
-          GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o flec-server ./cmd/main.go
+          GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w -X 'flec_blog/internal/service.AppVersion=${VERSION}'" -o flec-server ./cmd/main.go
           prepare_package "dist/darwin_arm64"
           mv flec-server dist/darwin_arm64/
           tar -czf dist/flec-server_${VERSION}_darwin_arm64.tar.gz -C dist darwin_arm64
           rm -rf dist/darwin_arm64
           
-          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o flec-server.exe ./cmd/main.go
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w -X 'flec_blog/internal/service.AppVersion=${VERSION}'" -o flec-server.exe ./cmd/main.go
           prepare_package "dist/windows_amd64"
           mv flec-server.exe dist/windows_amd64/
           cd dist && zip -r flec-server_${VERSION}_windows_amd64.zip windows_amd64 && cd ..
@@ -112,6 +112,8 @@ jobs:
           context: ${{ matrix.context }}
           push: true
           tags: ${{ steps.tags.outputs.tags }}
+          build-args: |
+            APP_VERSION=${{ github.ref_name }}
 
       - name: 上传构建产物
         if: matrix.target == 'server'

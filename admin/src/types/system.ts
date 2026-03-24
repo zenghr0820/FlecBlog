@@ -14,6 +14,7 @@ export interface SystemStatic {
   storage_status: string
   email_status: string
   feishu_status: string
+  app_version: string
 }
 
 export interface SystemDynamic {
@@ -30,4 +31,6 @@ export interface SystemDynamic {
   db_status: string
   db_size: number
   db_conn_count: number
+  version_latest_version: string
+  version_last_check_error: string
 }

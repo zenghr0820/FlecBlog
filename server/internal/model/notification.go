@@ -10,6 +10,9 @@ const (
 	TypeCommentNew   NotificationType = "comment_new"   // 评论通知
 	TypeFeedbackNew  NotificationType = "feedback_new"  // 问题反馈
 	TypeFriendApply  NotificationType = "friend_apply"  // 友链申请
+	TypeSystemAlert  NotificationType = "system_alert"  // 系统通知
+
+	AlertTypeVersionUpdate = "version_update" // 版本更新提醒
 )
 
 // Notification 通知模型
