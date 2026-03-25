@@ -169,7 +169,7 @@ const formatWords = (words: string) => {
         <div class="about-layout box-bottom">{{ info.author }}</div>
       </div>
       <div class="information">
-        <div v-if="info.profile.length > 0" class="about-layout Introduction">
+        <div class="about-layout Introduction">
           <div v-for="n in Math.ceil(info.profile.length / 3)" :key="n" class="bar-box-row">
             <div v-for="item in info.profile.slice((n - 1) * 3, n * 3)" :key="item.label" class="bar-box">
               <span class="tips">{{ item.label }}</span>
@@ -186,8 +186,8 @@ const formatWords = (words: string) => {
     </div>
 
     <!-- 性格与座右铭 -->
-    <div v-if="info.personality.type || info.motto.main.length > 0" class="Philosophical">
-      <div v-if="info.personality.type" class="about-layout P-box-left">
+    <div class="Philosophical">
+      <div class="about-layout P-box-left">
         <div class="tips">性格</div>
         <div class="title">{{ info.personality.name }}</div>
         <div class="title" :style="{ color: info.personality.color }">
@@ -200,10 +200,10 @@ const formatWords = (words: string) => {
           了解关于
           <a :href="info.personality.url" target="_blank">{{
             info.personality.name
-            }}</a>&ensp;的更多信息
+          }}</a>&ensp;的更多信息
         </div>
       </div>
-      <div v-if="info.motto.main.length > 0" class="about-layout P-box-right">
+      <div class="about-layout P-box-right">
         <div class="tips">座右铭</div>
         <span v-for="(text, index) in info.motto.main" :key="index" class="title"
           :style="{ opacity: index === info.motto.main.length - 1 ? 1 : 0.6, marginBottom: index < info.motto.main.length - 1 ? '8px' : '0' }">
@@ -214,8 +214,8 @@ const formatWords = (words: string) => {
     </div>
 
     <!-- 联系方式与创作平台 -->
-    <div v-if="info.socialize.length > 0 || info.creation.length > 0" class="Platform">
-      <div v-if="info.socialize.length > 0" class="about-layout Socialize">
+    <div class="Platform">
+      <div class="about-layout Socialize">
         <div class="tips">账号</div>
         <div class="title">联系方式</div>
         <div class="S-box">
@@ -223,7 +223,7 @@ const formatWords = (words: string) => {
             item.name }}</a>
         </div>
       </div>
-      <div v-if="info.creation.length > 0" class="about-layout Creation">
+      <div class="about-layout Creation">
         <div class="tips">订阅</div>
         <div class="title">创作平台</div>
         <div class="S-box">
@@ -243,7 +243,7 @@ const formatWords = (words: string) => {
         <div class="about-layout box-bottom">{{ runTime }}</div>
       </div>
       <div class="information">
-        <div v-if="info.versions.length > 0" class="about-layout Version">
+        <div class="about-layout Version">
           <div v-for="v in info.versions" :key="v.name" class="V-box">
             <div class="title">{{ v.name }}</div>
             <div class="tips-v">V{{ v.version }}</div>
@@ -282,7 +282,7 @@ const formatWords = (words: string) => {
         </div>
         <a class="T-btn" href="/statistics">更多统计</a>
       </div>
-      <div v-if="info.union.length > 0" class="about-layout union">
+      <div class="about-layout union">
         <div class="tips">共创</div>
         <div class="title">站长联盟</div>
         <div class="U-box">

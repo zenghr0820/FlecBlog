@@ -23,7 +23,7 @@ const getTagSize = (count: number) => {
         <div class="item-headline" :class="{ 'is-expanded': isExpanded }">
             <i class="ri-price-tag-3-fill"></i>
             <span>标签</span>
-            <i class="collapse-icon ri-arrow-left-s-fill" :class="{ 'is-expanded': isExpanded }"
+            <i v-if="needsExpand" class="collapse-icon ri-arrow-left-s-fill" :class="{ 'is-expanded': isExpanded }"
                 @click="toggleExpand"></i>
         </div>
         <div ref="tagCloudRef" class="card-tag-cloud" :class="{ 'is-expanded': isExpanded, 'can-expand': needsExpand }">

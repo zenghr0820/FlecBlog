@@ -133,6 +133,9 @@ const blogForm = ref({
   sidebarSocialList: [] as Array<{ name: string; url: string; icon: string }>,
   footerSocialList: [] as Array<{ name: string; url: string; icon: string; position: string }>,
 
+  // 页脚链接
+  footerLinksList: [] as Array<{ name: string; url: string }>,
+
   // 关于页面配置
   about_describe: '',
   about_describe_tips: '',
@@ -276,6 +279,7 @@ const loadBlogConfigs = async () => {
 
     blogForm.value.sidebarSocialList = parseJSON(configs.sidebar_social || '', [])
     blogForm.value.footerSocialList = parseJSON(configs.footer_social || '', [])
+    blogForm.value.footerLinksList = parseJSON(configs.footer_links || '', [])
 
     blogForm.value.profileList = Array(6).fill(null).map((_, i) =>
       parseJSON(configs.about_profile || '', [])[i] || { label: '', value: '', color: '#43a6c6' }
@@ -499,6 +503,7 @@ const handleSave = async () => {
       'blog.typing_texts': JSON.stringify(blogForm.value.typingTextsList.map(item => item.value)),
       'blog.sidebar_social': JSON.stringify(blogForm.value.sidebarSocialList),
       'blog.footer_social': JSON.stringify(blogForm.value.footerSocialList),
+      'blog.footer_links': JSON.stringify(blogForm.value.footerLinksList),
       'blog.about_describe': blogForm.value.about_describe,
       'blog.about_describe_tips': blogForm.value.about_describe_tips,
       'blog.about_exhibition': blogForm.value.about_exhibition,

@@ -68,6 +68,11 @@
         :default-item="{ name: '', url: '', icon: '', position: 'left' }" :disabled="loading" />
     </el-form-item>
 
+    <el-form-item label="页脚链接">
+      <JsonListEditor v-model="form.footerLinksList" :fields="footerLinksFields"
+        :default-item="{ name: '', url: '' }" :disabled="loading" />
+    </el-form-item>
+
     <el-divider content-position="left">关于页面配置</el-divider>
 
     <el-form-item label="个人描述">
@@ -238,6 +243,9 @@ interface BlogFormData {
   sidebarSocialList: Array<{ name: string; url: string; icon: string }>
   footerSocialList: Array<{ name: string; url: string; icon: string; position: string }>
 
+  // 页脚链接
+  footerLinksList: Array<{ name: string; url: string }>
+
   // 关于页面配置
   about_describe: string
   about_describe_tips: string
@@ -314,6 +322,11 @@ const footerSocialFields: FieldConfig[] = [
       { label: '右', value: 'right' }
     ]
   }
+]
+
+const footerLinksFields: FieldConfig[] = [
+  { key: 'name', type: 'text', placeholder: '链接名称', style: 'width: 120px' },
+  { key: 'url', type: 'text', placeholder: '链接地址 (/开头为内链)', style: 'flex: 1; margin: 0 8px' }
 ]
 
 const nameUrlFields: FieldConfig[] = [

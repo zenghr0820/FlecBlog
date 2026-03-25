@@ -98,7 +98,7 @@ const refreshFriends = () => {
           rel="noopener noreferrer" :aria-label="friend.name" :title="friend.description">
           {{ friend.name }}
         </a>
-        <a href="/friend" class="content_link" aria-label="查看更多友链">
+        <a v-if="friendGroups.length > 3" href="/friend" class="content_link" aria-label="查看更多友链">
           更多...
         </a>
       </nav>
