@@ -76,10 +76,10 @@
     <!-- 编辑器主体 -->
     <div class="editor-container">
       <!-- 编辑器面板 -->
-      <div ref="editorPaneRef" class="editor-pane" :class="{
+      <div class="editor-pane" :class="{
         'full-width': viewMode === 'editor',
         'hidden': viewMode === 'preview'
-      }" @scroll="handleEditorScroll" @mousedown="handleEditorPaneMouseDown">
+      }" @mousedown="handleEditorPaneMouseDown">
         <div ref="editorRef" class="cm-host"></div>
       </div>
 
@@ -87,7 +87,7 @@
       <div v-show="viewMode !== 'editor'" ref="previewPaneRef" class="preview-pane" :class="{
         'full-width': viewMode === 'preview',
         'html-mode': viewMode === 'html'
-      }" @scroll="handlePreviewScroll">
+      }">
         <div v-if="viewMode === 'html'" class="html-code">
           <pre><code>{{ renderedHtml }}</code></pre>
         </div>
@@ -130,12 +130,11 @@ import { ElMessage } from 'element-plus'
 import { uploadFile } from '@/api/file'
 import { getSettingGroup } from '@/api/sysconfig'
 import {
-  renderMarkdown,
   renderMarkdownWithSourceMap,
   renderMarkdownWithStyles,
   countWords,
-  extractToc,
   estimateReadingTime,
+  extractToc,
   type TocItem
 } from '@/utils/markdown'
 import { EditorView, keymap, showPanel } from '@codemirror/view'
@@ -249,23 +248,26 @@ interface ToolbarItem {
   mobileOnly?: boolean
 }
 
-interface ScrollNode {
-  line: number
-  previewTop: number
-  editorTop: number
+interface PreviewAnchor {
+  startOffset: number
+  endOffset: number
+  top: number
+  height: number
+  depth: number
+  kind: 'block' | 'text'
 }
 
 type ViewMode = 'split' | 'editor' | 'preview' | 'html'
 
 // 常量
-const SCROLL_DURATION = 100
+const SCROLL_EPSILON = 1
+const PREVIEW_SYNC_DURATION = 90
 
 const props = withDefaults(defineProps<{ modelValue: string }>(), { modelValue: '' })
 const emit = defineEmits<{ 'update:modelValue': [value: string], 'save': [content: string] }>()
 
 // Refs
 const editorRef = ref<HTMLElement>()
-const editorPaneRef = ref<HTMLElement>()
 const previewPaneRef = ref<HTMLElement>()
 const imageInputRef = ref<HTMLInputElement>()
 const viewMode = ref<ViewMode>('split')
@@ -312,231 +314,364 @@ const renderMermaidDiagrams = async () => {
 }
 
 // ==================== 滚动同步 ====================
-let scrollSource: 'editor' | 'preview' | null = null
-let sourceResetTimer: ReturnType<typeof setTimeout> | null = null
-let cachedNodes: ScrollNode[] | null = null
-let currentAnimation: number | null = null
+let cachedPreviewAnchors: PreviewAnchor[] | null = null
+let editorScrollFrame: number | null = null
+let boundEditorScroller: HTMLElement | null = null
+let previewResizeObserver: ResizeObserver | null = null
+let previewProgrammaticScrollFrame: number | null = null
+let previewTweenFrame: number | null = null
+let previewTargetScrollTop: number | null = null
+let isProgrammaticPreviewScroll = false
+let isPreviewManualScrollActive = false
 
 const getEditorScroller = () => editorViewRef.value?.scrollDOM ?? null
 
-const setScrollSource = (source: 'editor' | 'preview') => {
-  scrollSource = source
-  if (sourceResetTimer) clearTimeout(sourceResetTimer)
-  sourceResetTimer = setTimeout(() => {
-    scrollSource = null
-    sourceResetTimer = null
-  }, SCROLL_DURATION + 200)
+const invalidateScrollCache = () => {
+  cachedPreviewAnchors = null
 }
 
-const cancelAnimation = () => {
-  if (currentAnimation !== null) {
-    cancelAnimationFrame(currentAnimation)
-    currentAnimation = null
+const clampNumber = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+
+const getPreviewElementTop = (element: HTMLElement, container: HTMLElement) => {
+  const elementRect = element.getBoundingClientRect()
+  const containerRect = container.getBoundingClientRect()
+  const paddingTop = Number.parseFloat(getComputedStyle(container).paddingTop || '0') || 0
+  return elementRect.top - containerRect.top + container.scrollTop - paddingTop
+}
+
+const getPreviewElementDepth = (element: HTMLElement, container: HTMLElement) => {
+  let depth = 0
+  let current = element.parentElement
+
+  while (current && current !== container) {
+    depth += 1
+    current = current.parentElement
+  }
+
+  return depth
+}
+
+const getPreviewAnchors = (): PreviewAnchor[] => {
+  if (cachedPreviewAnchors) return cachedPreviewAnchors
+
+  const preview = previewPaneRef.value
+  if (!preview) return []
+
+  const anchors = Array.from(preview.querySelectorAll<HTMLElement>('[data-source-start-offset][data-source-end-offset]'))
+    .map((element) => {
+      const startOffset = Number.parseInt(element.dataset.sourceStartOffset || '', 10)
+      const endOffset = Number.parseInt(element.dataset.sourceEndOffset || '', 10)
+      if (Number.isNaN(startOffset) || Number.isNaN(endOffset)) return null
+
+      const rect = element.getBoundingClientRect()
+      return {
+        startOffset,
+        endOffset,
+        top: Math.max(0, getPreviewElementTop(element, preview)),
+        height: Math.max(1, rect.height, element.offsetHeight),
+        depth: getPreviewElementDepth(element, preview),
+        kind: (element.dataset.syncKind === 'text' ? 'text' : 'block') as 'block' | 'text'
+      } satisfies PreviewAnchor
+    })
+    .filter((anchor): anchor is PreviewAnchor => !!anchor)
+    .sort((left, right) => {
+      if (left.startOffset !== right.startOffset) return left.startOffset - right.startOffset
+      const leftSourceSpan = left.endOffset - left.startOffset
+      const rightSourceSpan = right.endOffset - right.startOffset
+      if (leftSourceSpan !== rightSourceSpan) return leftSourceSpan - rightSourceSpan
+      if (left.top !== right.top) return left.top - right.top
+      if (left.depth !== right.depth) return right.depth - left.depth
+      if (left.kind === right.kind) return 0
+      return left.kind === 'text' ? -1 : 1
+    })
+
+  cachedPreviewAnchors = anchors
+  return anchors
+}
+
+const getEditorTopSourceOffset = () => {
+  const editor = editorViewRef.value
+  const editorScroller = getEditorScroller()
+  if (!editor || !editorScroller) return 0
+
+  const scrollerRect = editorScroller.getBoundingClientRect()
+  const contentRect = editor.contentDOM.getBoundingClientRect()
+  const pos = editor.posAtCoords({
+    x: Math.max(contentRect.left + 4, scrollerRect.left + 4),
+    y: scrollerRect.top + 2
+  })
+
+  if (pos !== null) return pos
+  return editor.lineBlockAtHeight(editorScroller.scrollTop).from
+}
+
+const getAnchorSourceSpan = (anchor: PreviewAnchor) => Math.max(0, anchor.endOffset - anchor.startOffset)
+
+const compareAnchorSpecificity = (left: PreviewAnchor, right: PreviewAnchor) => {
+  if (left.kind !== right.kind) return left.kind === 'text' ? 1 : -1
+
+  const leftSourceSpan = getAnchorSourceSpan(left)
+  const rightSourceSpan = getAnchorSourceSpan(right)
+  if (leftSourceSpan !== rightSourceSpan) return rightSourceSpan - leftSourceSpan
+
+  if (left.depth !== right.depth) return left.depth - right.depth
+  if (left.height !== right.height) return right.height - left.height
+  return right.top - left.top
+}
+
+const findBestContainingAnchor = (sourceOffset: number, anchors: PreviewAnchor[]) => {
+  let bestAnchor: PreviewAnchor | null = null
+  let bestIndex = -1
+
+  anchors.forEach((anchor, index) => {
+    if (sourceOffset < anchor.startOffset || sourceOffset > anchor.endOffset) return
+
+    if (!bestAnchor || compareAnchorSpecificity(anchor, bestAnchor) > 0) {
+      bestAnchor = anchor
+      bestIndex = index
+    }
+  })
+
+  return bestAnchor ? { anchor: bestAnchor, index: bestIndex } : null
+}
+
+const getAnchorVisualSpan = (anchor: PreviewAnchor, anchors: PreviewAnchor[], anchorIndex: number) => {
+  let visualSpan = Math.max(1, anchor.height)
+
+  for (let index = anchorIndex + 1; index < anchors.length; index++) {
+    const candidate = anchors[index]!
+    if (candidate.top + SCROLL_EPSILON < anchor.top) continue
+    if (candidate.startOffset < anchor.endOffset) continue
+    visualSpan = Math.max(visualSpan, candidate.top - anchor.top)
+    break
+  }
+
+  return visualSpan
+}
+
+const mapWithinAnchor = (sourceOffset: number, anchor: PreviewAnchor, anchors: PreviewAnchor[], anchorIndex: number) => {
+  const sourceSpan = getAnchorSourceSpan(anchor)
+  if (sourceSpan <= 0) return anchor.top
+
+  const progress = clampNumber((sourceOffset - anchor.startOffset) / sourceSpan, 0, 1)
+  return anchor.top + getAnchorVisualSpan(anchor, anchors, anchorIndex) * progress
+}
+
+const mapSourceOffsetToPreviewTop = (sourceOffset: number, anchors: PreviewAnchor[]) => {
+  if (!anchors.length) return 0
+  const containingAnchor = findBestContainingAnchor(sourceOffset, anchors)
+  if (containingAnchor) {
+    return mapWithinAnchor(sourceOffset, containingAnchor.anchor, anchors, containingAnchor.index)
+  }
+
+  let previousIndex = -1
+  let nextIndex = -1
+
+  anchors.forEach((anchor, index) => {
+    if (anchor.endOffset <= sourceOffset) previousIndex = index
+    if (nextIndex === -1 && anchor.startOffset >= sourceOffset) nextIndex = index
+  })
+
+  if (previousIndex === -1) return mapWithinAnchor(sourceOffset, anchors[0]!, anchors, 0)
+  if (nextIndex === -1) return mapWithinAnchor(sourceOffset, anchors[anchors.length - 1]!, anchors, anchors.length - 1)
+
+  const previous = anchors[previousIndex]!
+  const next = anchors[nextIndex]!
+  const previousTop = mapWithinAnchor(previous.endOffset, previous, anchors, previousIndex)
+  const nextTop = mapWithinAnchor(next.startOffset, next, anchors, nextIndex)
+  const sourceGap = next.startOffset - previous.endOffset
+  if (sourceGap <= 0) return nextTop
+
+  const progress = clampNumber((sourceOffset - previous.endOffset) / sourceGap, 0, 1)
+  return previousTop + (nextTop - previousTop) * progress
+}
+
+const schedulePreviewProgrammaticUnlock = () => {
+  if (previewProgrammaticScrollFrame !== null) {
+    cancelAnimationFrame(previewProgrammaticScrollFrame)
+  }
+  previewProgrammaticScrollFrame = requestAnimationFrame(() => {
+    isProgrammaticPreviewScroll = false
+    previewProgrammaticScrollFrame = null
+  })
+}
+
+const setPreviewScrollTop = (preview: HTMLElement, nextTop: number) => {
+  isProgrammaticPreviewScroll = true
+  preview.scrollTop = nextTop
+  schedulePreviewProgrammaticUnlock()
+}
+
+const stopPreviewTween = () => {
+  if (previewTweenFrame !== null) {
+    cancelAnimationFrame(previewTweenFrame)
+    previewTweenFrame = null
   }
 }
 
-const smoothScroll = (element: HTMLElement, target: number) => {
-  cancelAnimation()
-  const start = element.scrollTop
-  const distance = target - start
-  if (Math.abs(distance) < 2) {
-    element.scrollTop = target
+const easeOutCubic = (progress: number) => 1 - Math.pow(1 - progress, 3)
+
+const startPreviewTween = (preview: HTMLElement, targetTop: number) => {
+  const startTop = preview.scrollTop
+  if (Math.abs(startTop - targetTop) <= SCROLL_EPSILON) {
+    stopPreviewTween()
+    if (Math.abs(startTop - targetTop) > 0) setPreviewScrollTop(preview, targetTop)
     return
   }
+
+  stopPreviewTween()
   const startTime = performance.now()
+
   const animate = (now: number) => {
-    const elapsed = now - startTime
-    const progress = Math.min(elapsed / SCROLL_DURATION, 1)
-    const eased = 1 - (1 - progress) * (1 - progress)
-    element.scrollTop = start + distance * eased
-    if (progress < 1) {
-      currentAnimation = requestAnimationFrame(animate)
-    } else {
-      currentAnimation = null
+    if (viewMode.value !== 'split' || isPreviewManualScrollActive) {
+      previewTweenFrame = null
+      return
     }
+
+    const currentPreview = previewPaneRef.value
+    const latestTargetTop = previewTargetScrollTop
+    if (!currentPreview || latestTargetTop === null) {
+      previewTweenFrame = null
+      return
+    }
+
+    const maxScrollTop = Math.max(0, currentPreview.scrollHeight - currentPreview.clientHeight)
+    const clampedTargetTop = clampNumber(latestTargetTop, 0, maxScrollTop)
+    const progress = clampNumber((now - startTime) / PREVIEW_SYNC_DURATION, 0, 1)
+    const nextTop = startTop + (clampedTargetTop - startTop) * easeOutCubic(progress)
+    setPreviewScrollTop(currentPreview, progress >= 1 ? clampedTargetTop : nextTop)
+
+    if (progress < 1 && Math.abs(clampedTargetTop - currentPreview.scrollTop) > SCROLL_EPSILON) {
+      previewTweenFrame = requestAnimationFrame(animate)
+      return
+    }
+
+    previewTweenFrame = null
   }
-  currentAnimation = requestAnimationFrame(animate)
+
+  previewTweenFrame = requestAnimationFrame(animate)
 }
 
-const invalidateScrollCache = () => {
-  cachedNodes = null
-}
+const syncPreviewToEditorTop = () => {
+  if (viewMode.value !== 'split') return
+  if (isPreviewManualScrollActive) return
 
-const buildNodeMap = (): ScrollNode[] => {
-  if (cachedNodes) return cachedNodes
-  const editor = editorViewRef.value
   const preview = previewPaneRef.value
-  if (!editor || !preview) return []
+  if (!preview) return
 
-  const nodes: ScrollNode[] = []
-  const previewStyle = getComputedStyle(preview)
-  const previewPaddingTop = parseFloat(previewStyle.paddingTop) || 0
+  const anchors = getPreviewAnchors()
+  if (!anchors.length) return
 
-  nodes.push({ line: -1, previewTop: 0, editorTop: 0 })
+  const targetTop = mapSourceOffsetToPreviewTop(getEditorTopSourceOffset(), anchors)
+  const maxScrollTop = Math.max(0, preview.scrollHeight - preview.clientHeight)
+  previewTargetScrollTop = Math.max(0, Math.min(targetTop, maxScrollTop))
+  startPreviewTween(preview, previewTargetScrollTop)
+}
 
-  const elements = preview.querySelectorAll<HTMLElement>('[data-source-line]')
-  elements.forEach((el) => {
-    const line = parseInt(el.dataset.sourceLine || '0', 10)
-    let previewTop = el.offsetTop
-    let parent = el.offsetParent as HTMLElement | null
-    while (parent && parent !== preview && preview.contains(parent)) {
-      previewTop += parent.offsetTop
-      parent = parent.offsetParent as HTMLElement | null
-    }
-    previewTop = Math.max(0, previewTop - previewPaddingTop)
-
-    let editorTop = 0
-    try {
-      const docLine = editor.state.doc.line(line + 1)
-      const block = editor.lineBlockAt(docLine.from)
-      editorTop = block.top
-    } catch {
-      editorTop = line * 22
-    }
-    nodes.push({ line, previewTop, editorTop })
+const requestPreviewSync = () => {
+  if (editorScrollFrame !== null) return
+  editorScrollFrame = requestAnimationFrame(() => {
+    editorScrollFrame = null
+    syncPreviewToEditorTop()
   })
+}
 
-  const editorScrollHeight = editor.scrollDOM?.scrollHeight || editor.contentHeight
-  const previewScrollHeight = preview.scrollHeight
-  const editorClientHeight = editor.scrollDOM?.clientHeight || 0
-  const previewClientHeight = preview.clientHeight
-
-  nodes.push({
-    line: 999999,
-    previewTop: Math.max(0, previewScrollHeight - previewClientHeight),
-    editorTop: Math.max(0, editorScrollHeight - editorClientHeight)
-  })
-
-  nodes.sort((a, b) => a.line - b.line)
-  const uniqueNodes: ScrollNode[] = []
-  let lastLine = -999
-  for (const node of nodes) {
-    if (node.line !== lastLine) {
-      uniqueNodes.push(node)
-      lastLine = node.line
-    }
+const cancelPreviewSync = () => {
+  if (editorScrollFrame !== null) {
+    cancelAnimationFrame(editorScrollFrame)
+    editorScrollFrame = null
   }
-  cachedNodes = uniqueNodes
-  return uniqueNodes
+  stopPreviewTween()
+  previewTargetScrollTop = null
 }
 
-const mapEditorToPreview = (editorScrollTop: number, nodes: ScrollNode[]): number => {
-  if (nodes.length === 0) return 0
-  if (nodes.length === 1) return nodes[0]!.previewTop
-  if (editorScrollTop <= 0) return 0
-
-  let i = 0
-  while (i < nodes.length - 1 && nodes[i + 1]!.editorTop <= editorScrollTop) i++
-
-  const current = nodes[i]!
-  const next = nodes[i + 1]
-  if (!next) return current.previewTop
-
-  const editorRange = next.editorTop - current.editorTop
-  const previewRange = next.previewTop - current.previewTop
-  if (editorRange <= 0) return current.previewTop
-
-  const ratio = Math.max(0, Math.min(1, (editorScrollTop - current.editorTop) / editorRange))
-  return current.previewTop + previewRange * ratio
+const resumePreviewSync = () => {
+  if (!isPreviewManualScrollActive) return
+  isPreviewManualScrollActive = false
+  requestPreviewSync()
 }
-
-const mapPreviewToEditor = (previewScrollTop: number, nodes: ScrollNode[]): number => {
-  if (nodes.length === 0) return 0
-  if (nodes.length === 1) return nodes[0]!.editorTop
-  if (previewScrollTop <= 0) return 0
-
-  let i = 0
-  while (i < nodes.length - 1 && nodes[i + 1]!.previewTop <= previewScrollTop) i++
-
-  const current = nodes[i]!
-  const next = nodes[i + 1]
-  if (!next) return current.editorTop
-
-  const previewRange = next.previewTop - current.previewTop
-  const editorRange = next.editorTop - current.editorTop
-  if (previewRange <= 0) return current.editorTop
-
-  const ratio = Math.max(0, Math.min(1, (previewScrollTop - current.previewTop) / previewRange))
-  return current.editorTop + editorRange * ratio
-}
-
-const syncToPreview = () => {
-  if (scrollSource === 'preview') return
-  const editorScroller = getEditorScroller()
-  const preview = previewPaneRef.value
-  if (!editorScroller || !preview) return
-
-  const nodes = buildNodeMap()
-  if (nodes.length === 0) return
-
-  const targetTop = mapEditorToPreview(editorScroller.scrollTop, nodes)
-  setScrollSource('editor')
-  smoothScroll(preview, targetTop)
-}
-
-const syncToEditor = () => {
-  if (scrollSource === 'editor') return
-  const editorScroller = getEditorScroller()
-  const preview = previewPaneRef.value
-  if (!editorScroller || !preview) return
-
-  const nodes = buildNodeMap()
-  if (nodes.length === 0) return
-
-  const targetTop = mapPreviewToEditor(preview.scrollTop, nodes)
-  setScrollSource('preview')
-  smoothScroll(editorScroller, targetTop)
-}
-
-let editorScrollPending = false
-let previewScrollPending = false
 
 const handleEditorScroll = () => {
-  if (viewMode.value !== 'split' || scrollSource === 'preview') return
-  if (editorScrollPending) return
-  editorScrollPending = true
-  requestAnimationFrame(() => {
-    editorScrollPending = false
-    syncToPreview()
-  })
+  if (isPreviewManualScrollActive) {
+    isPreviewManualScrollActive = false
+  }
+  requestPreviewSync()
 }
 
-const handlePreviewScroll = () => {
-  if (viewMode.value !== 'split' || scrollSource === 'editor') return
-  if (previewScrollPending) return
-  previewScrollPending = true
-  requestAnimationFrame(() => {
-    previewScrollPending = false
-    syncToEditor()
+const handlePreviewInteraction = () => {
+  if (isProgrammaticPreviewScroll) return
+  isPreviewManualScrollActive = true
+  cancelPreviewSync()
+}
+
+const bindPreviewObservers = () => {
+  const preview = previewPaneRef.value
+  if (!preview) return
+
+  previewResizeObserver?.disconnect()
+  previewResizeObserver = new ResizeObserver(() => {
+    invalidateScrollCache()
+    requestPreviewSync()
   })
+
+  const markdownContent = preview.querySelector('.markdown-content')
+  if (markdownContent) {
+    previewResizeObserver.observe(markdownContent)
+  }
 }
 
 const bindScrollEvents = () => {
   const editorScroller = getEditorScroller()
   const preview = previewPaneRef.value
-  editorScroller?.addEventListener('scroll', handleEditorScroll, { passive: true })
-  preview?.addEventListener('scroll', handlePreviewScroll, { passive: true })
+
+  if (boundEditorScroller && boundEditorScroller !== editorScroller) {
+    boundEditorScroller.removeEventListener('scroll', handleEditorScroll)
+    boundEditorScroller = null
+  }
+
+  if (editorScroller && boundEditorScroller !== editorScroller) {
+    editorScroller.addEventListener('scroll', handleEditorScroll, { passive: true })
+    boundEditorScroller = editorScroller
+  }
+
+  preview?.removeEventListener('scroll', handlePreviewInteraction)
+  preview?.removeEventListener('click', handlePreviewInteraction)
+  preview?.removeEventListener('click', togglePreviewImage)
+  preview?.removeEventListener('wheel', handlePreviewInteraction)
+  preview?.addEventListener('scroll', handlePreviewInteraction, { passive: true })
+  preview?.addEventListener('click', handlePreviewInteraction, { passive: true })
+  preview?.addEventListener('click', togglePreviewImage)
+  preview?.addEventListener('wheel', handlePreviewInteraction, { passive: true })
+  bindPreviewObservers()
 }
 
 const unbindScrollEvents = () => {
-  const editorScroller = getEditorScroller()
-  const preview = previewPaneRef.value
-  editorScroller?.removeEventListener('scroll', handleEditorScroll)
-  preview?.removeEventListener('scroll', handlePreviewScroll)
-  cancelAnimation()
-  if (sourceResetTimer) {
-    clearTimeout(sourceResetTimer)
-    sourceResetTimer = null
+  boundEditorScroller?.removeEventListener('scroll', handleEditorScroll)
+  boundEditorScroller = null
+  previewPaneRef.value?.removeEventListener('scroll', handlePreviewInteraction)
+  previewPaneRef.value?.removeEventListener('click', handlePreviewInteraction)
+  previewPaneRef.value?.removeEventListener('click', togglePreviewImage)
+  previewPaneRef.value?.removeEventListener('wheel', handlePreviewInteraction)
+  previewResizeObserver?.disconnect()
+  previewResizeObserver = null
+  cancelPreviewSync()
+  if (previewProgrammaticScrollFrame !== null) {
+    cancelAnimationFrame(previewProgrammaticScrollFrame)
+    previewProgrammaticScrollFrame = null
   }
+  isProgrammaticPreviewScroll = false
+  isPreviewManualScrollActive = false
 }
 
-// 使用带行号映射的渲染函数（用于滚动同步）
+const isPreviewVisible = computed(() => viewMode.value !== 'editor')
+
 const renderedHtml = computed(() => {
+  if (!isPreviewVisible.value) return ''
+
   const html = viewMode.value === 'html'
     ? renderMarkdownWithStyles(props.modelValue)
     : renderMarkdownWithSourceMap(props.modelValue)
 
-  // 替换表情占位符为 img 标签
   if (emojiState.emojiMap.size > 0) {
     return html.replace(/:([^:\s]+):/g, (match, key) => {
       const url = emojiState.emojiMap.get(key)
@@ -550,13 +685,10 @@ const renderedHtml = computed(() => {
   return html
 })
 
-// 计算字数
 const wordCount = computed(() => countWords(props.modelValue))
 
-// 计算阅读时长
 const readingTime = computed(() => estimateReadingTime(props.modelValue))
 
-// 提取目录
 const tableOfContents = computed<TocItem[]>(() => {
   return extractToc(props.modelValue)
 })
@@ -691,34 +823,7 @@ const toolbarItems: ToolbarItem[] = [
   },
 ]
 
-// ==================== 图片上传 ====================
-const handleImageSelect = async (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const files = Array.from(input.files || []).filter(file => {
-    if (!file.type.startsWith('image/')) {
-      ElMessage.error(`${file.name} 不是图片格式`)
-      return false
-    }
-    return true
-  })
-
-  if (!files.length) return
-
-  const loading = ElMessage.info({ message: `正在上传 ${files.length} 张图片...`, duration: 0 })
-  try {
-    const results = await Promise.all(files.map(f => uploadFile(f, '文章图片')))
-    insertText(results.map(r => `![图片](${r.file_url})`).join('\n'))
-    ElMessage.success(`成功上传 ${files.length} 张图片`)
-  } catch (error: any) {
-    ElMessage.error(error.message || '图片上传失败')
-  } finally {
-    loading.close()
-    input.value = ''
-  }
-}
-
-// 处理粘贴图片
-const handlePasteImage = async (files: File[]) => {
+const uploadArticleImages = async (files: File[], onFinally?: () => void) => {
   const imageFiles = files.filter(file => {
     if (!file.type.startsWith('image/')) {
       ElMessage.error(`${file.name} 不是图片格式`)
@@ -727,18 +832,46 @@ const handlePasteImage = async (files: File[]) => {
     return true
   })
 
-  if (!imageFiles.length) return
+  if (!imageFiles.length) {
+    onFinally?.()
+    return []
+  }
 
   const loading = ElMessage.info({ message: `正在上传 ${imageFiles.length} 张图片...`, duration: 0 })
   try {
-    const results = await Promise.all(imageFiles.map(f => uploadFile(f, '文章图片')))
-    insertText(results.map(r => `![图片](${r.file_url})`).join('\n'))
+    const results = await Promise.all(imageFiles.map(file => uploadFile(file, '文章图片')))
+    insertText(results.map(result => `![图片](${result.file_url})`).join('\n'))
     ElMessage.success(`成功上传 ${imageFiles.length} 张图片`)
+    return results
   } catch (error: any) {
     ElMessage.error(error.message || '图片上传失败')
+    return []
   } finally {
     loading.close()
+    onFinally?.()
   }
+}
+
+// ==================== 图片上传 ====================
+const handleImageSelect = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  await uploadArticleImages(Array.from(input.files || []), () => {
+    input.value = ''
+  })
+}
+
+// 处理粘贴图片
+const handlePasteImage = async (files: File[]) => {
+  await uploadArticleImages(files)
+}
+
+function base64ToFile(base64Data: string, contentType: string, fileName: string): File {
+  const byteCharacters = atob(base64Data)
+  const byteNumbers = new Array(byteCharacters.length)
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i)
+  }
+  return new File([new Uint8Array(byteNumbers)], fileName, { type: contentType })
 }
 
 // 处理下载在线图片
@@ -749,8 +882,6 @@ const handleOnlineImageDownload = async () => {
   }
 
   const url = onlineImageUrl.value.trim()
-
-  // 验证URL格式
   if (!url.match(/^https?:\/\/.+/)) {
     ElMessage.error('请输入有效的HTTP/HTTPS图片URL')
     return
@@ -758,36 +889,16 @@ const handleOnlineImageDownload = async () => {
 
   downloadingImage.value = true
   try {
-    // 导入下载图片API
     const { downloadImage } = await import('@/api/tools')
-
-    // 下载图片
     const downloadResult = await downloadImage({ url })
+    const file = base64ToFile(downloadResult.data, downloadResult.content_type, 'image.jpg')
+    const [uploadResult] = await uploadArticleImages([file])
 
-    // 将base64数据转换为Blob
-    const base64Data = downloadResult.data
-    const byteCharacters = atob(base64Data)
-    const byteNumbers = new Array(byteCharacters.length)
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i)
+    if (uploadResult) {
+      onlineImageUrl.value = ''
+      ElMessage.success('图片下载并上传成功')
+      document.body.click()
     }
-    const byteArray = new Uint8Array(byteNumbers)
-    const blob = new Blob([byteArray], { type: downloadResult.content_type })
-
-    // 创建文件对象并上传
-    const file = new File([blob], 'image.jpg', { type: downloadResult.content_type })
-    const uploadResult = await uploadFile(file, '文章图片')
-
-    // 插入到编辑器
-    insertText(`![图片](${uploadResult.file_url})`)
-
-    // 清空输入
-    onlineImageUrl.value = ''
-
-    ElMessage.success('图片下载并上传成功')
-
-    // 关闭 Popover
-    document.body.click()
   } catch (error: any) {
     ElMessage.error(error.message || '图片下载失败')
   } finally {
@@ -914,6 +1025,7 @@ const initEditor = () => {
           if (update.docChanged) {
             emit('update:modelValue', update.state.doc.toString())
             invalidateScrollCache()
+            requestPreviewSync()
           }
         }),
         EditorView.lineWrapping,
@@ -926,6 +1038,7 @@ const initEditor = () => {
   // 编辑器初始化完成后，绑定滚动同步事件
   nextTick(() => {
     bindScrollEvents()
+    requestPreviewSync()
   })
 }
 
@@ -936,11 +1049,14 @@ watch(() => props.modelValue, (newValue) => {
       changes: { from: 0, to: editorViewRef.value.state.doc.length, insert: newValue }
     })
     invalidateScrollCache()
+    requestPreviewSync()
   }
 })
 
 // 监听预览区图片加载完成，使缓存失效
-watch(renderedHtml, async () => {
+watch(renderedHtml, async (html) => {
+  if (!html || !isPreviewVisible.value || viewMode.value === 'html') return
+
   await nextTick()
   const preview = previewPaneRef.value
   if (!preview) return
@@ -948,13 +1064,19 @@ watch(renderedHtml, async () => {
   const images = preview.querySelectorAll('img')
   images.forEach((img) => {
     if (img.complete) return
-    img.addEventListener('load', () => invalidateScrollCache(), { once: true })
+    img.addEventListener('load', () => {
+      invalidateScrollCache()
+      requestPreviewSync()
+    }, { once: true })
   })
-  invalidateScrollCache()
 
-  // 渲染 Mermaid 图表
+  invalidateScrollCache()
   await renderMermaidDiagrams()
+  invalidateScrollCache()
+  bindPreviewObservers()
+  requestPreviewSync()
 })
+
 
 // 监听视图模式变化
 watch(viewMode, (newMode) => {
@@ -962,35 +1084,57 @@ watch(viewMode, (newMode) => {
     nextTick(() => {
       invalidateScrollCache()
       bindScrollEvents()
+      requestPreviewSync()
     })
   } else {
     unbindScrollEvents()
   }
 
-  // 切换到非编辑模式时加载表情数据
-  loadEmojis()
+  if (newMode !== 'editor') {
+    loadEmojis()
+  }
 })
 
 // ==================== 生命周期 ====================
 const handleFullscreenChange = () => isBrowserFullscreen.value = !!document.fullscreenElement
+const handleWindowResize = () => {
+  invalidateScrollCache()
+  requestPreviewSync()
+}
+
+const togglePreviewImage = (event: MouseEvent) => {
+  const target = event.target as HTMLElement | null
+  const image = target?.closest('.preview-collapsible-image') as HTMLImageElement | null
+  if (!image) return
+  if (image.closest('.custom-photo-wall')) return
+  if (image.classList.contains('emoji-image')) return
+
+  image.classList.toggle('is-expanded')
+  invalidateScrollCache()
+  requestPreviewSync()
+}
 
 const handleEditorPaneMouseDown = (event: MouseEvent) => {
   if (event.button !== 0) return
   if (!editorViewRef.value) return
 
+  resumePreviewSync()
+
   const target = event.target as HTMLElement | null
-  // 点击发生在 Codemirror 内部时，让 Codemirror 自己处理（避免影响选择/光标）
   if (target?.closest('.cm-editor')) return
 
-  // 空白处点击：把焦点交给编辑器
   editorViewRef.value.focus()
 }
+
 
 onMounted(() => {
   initMermaid()
   initEditor()
-  loadEmojis()
+  if (viewMode.value !== 'editor') {
+    loadEmojis()
+  }
   document.addEventListener('fullscreenchange', handleFullscreenChange)
+  window.addEventListener('resize', handleWindowResize)
 
   // 移动端默认为纯编辑模式
   if (window.innerWidth <= 768) {
@@ -1003,7 +1147,7 @@ onBeforeUnmount(() => {
   unbindScrollEvents()
   // 销毁编辑器实例
   editorViewRef.value?.destroy()
-  document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  window.removeEventListener('resize', handleWindowResize)
   document.removeEventListener('fullscreenchange', handleFullscreenChange)
 })
 </script>
@@ -1151,6 +1295,7 @@ onBeforeUnmount(() => {
 
         .cm-content {
           padding: 16px;
+          padding-bottom: max(16px, calc(100vh - 150px));
           min-height: 100%;
           box-sizing: border-box;
         }
@@ -1182,6 +1327,7 @@ onBeforeUnmount(() => {
       flex: 1;
       overflow: auto;
       padding: 20px;
+      padding-bottom: max(20px, calc(100vh - 150px));
 
       &.html-mode {
         padding: 0;
@@ -1244,6 +1390,18 @@ onBeforeUnmount(() => {
             border: none;
             display: block;
           }
+        }
+
+        img.preview-collapsible-image {
+          max-height: 160px;
+          width: auto;
+          cursor: zoom-in;
+          transition: max-height 0.2s ease, transform 0.2s ease;
+        }
+
+        img.preview-collapsible-image.is-expanded {
+          max-height: none;
+          cursor: zoom-out;
         }
 
         // 音乐播放器样式
@@ -1393,12 +1551,14 @@ onBeforeUnmount(() => {
         :deep(.cm-editor) {
           .cm-content {
             padding: 12px;
+            padding-bottom: max(12px, calc(100vh - 200px));
           }
         }
       }
 
       .preview-pane {
         padding: 12px;
+        padding-bottom: max(12px, calc(100vh - 200px));
       }
 
       .toc-pane {
