@@ -81,8 +81,5 @@ export interface ImportArticlesResult {
 
 // 微信公众号导出结果
 export interface WeChatExportResult {
-    success: boolean         // 是否成功推送
-    media_id?: string        // 草稿 ID（成功时）
-    html?: string            // 公众号 HTML（失败时）
-    warnings?: string[]      // 警告信息
+    html: string  // 公众号 HTML，用于复制粘贴到微信公众平台
 }

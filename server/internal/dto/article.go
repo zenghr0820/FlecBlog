@@ -203,8 +203,5 @@ type ImportArticleError struct {
 
 // WeChatExportResult 微信导出结果
 type WeChatExportResult struct {
-	Success  bool     `json:"success"`            // 是否成功推送
-	MediaID  string   `json:"media_id,omitempty"` // 草稿 ID（成功时）
-	HTML     string   `json:"html,omitempty"`     // 公众号 HTML（失败时）
-	Warnings []string `json:"warnings,omitempty"` // 警告信息
+	HTML string `json:"html"` // 公众号 HTML，用于复制粘贴到微信公众平台
 }

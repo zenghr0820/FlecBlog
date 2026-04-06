@@ -69,7 +69,7 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 	notificationSvc := notification.NewService(emailClient, feishuClient, conf)
 	userService := service.NewUserService(userRepo, fileService, conf)
 	verificationService := service.NewVerificationService(verificationRepo, userRepo, emailClient, conf)
-	articleService := service.NewArticleService(articleRepo, tagRepo, categoryRepo, commentRepo, fileService, db.DB, conf)
+	articleService := service.NewArticleService(articleRepo, tagRepo, categoryRepo, commentRepo, fileService, db.DB)
 	tagService := service.NewTagService(tagRepo, articleRepo)
 	categoryService := service.NewCategoryService(categoryRepo, articleRepo)
 	notificationService := service.NewNotificationService(notificationRepo, notificationSvc)
@@ -296,8 +296,8 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 			// 数据导入
 			articleManagement.POST("/import", articleController.ImportArticles) // 导入文章数据（Hexo等）
 
-			// 微信公众号导出
-			articleManagement.POST("/:id/wechat/export", articleController.ExportToWeChat) // 导出到微信公众号
+			// 微信公众号格式生成
+			articleManagement.POST("/:id/wechat/export", articleController.ExportToWeChat) // 生成微信公众号 HTML
 
 			// 文章下载
 			articleManagement.GET("/:id/download/zip", articleController.DownloadZip) // 下载为 Markdown

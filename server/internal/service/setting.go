@@ -122,13 +122,6 @@ const (
 	KeyOAuthSessionSecret         = "oauth.session_secret" // Session 加密密钥
 )
 
-// 配置键常量 - WeChat 相关
-const (
-	KeyWeChatAppID     = "wechat.app_id"
-	KeyWeChatAppSecret = "wechat.app_secret"
-	KeyWeChatTokenURL  = "wechat.token_url"
-)
-
 // SettingService 配置服务
 type SettingService struct {
 	repo        *repository.SettingRepository
@@ -532,23 +525,6 @@ func (s *SettingService) ApplyDatabaseConfig(cfg *config.Config) error {
 		}
 		if v, ok := oauthSettings[KeyOAuthMicrosoftRedirectURL]; ok && v != "" {
 			cfg.OAuth.Microsoft.RedirectURL = v
-		}
-	}
-
-	// 加载 WeChat 配置
-	wechatSettings, err := s.repo.GetByGroup(model.SettingGroupWeChat)
-	if err != nil {
-		return err
-	}
-	if len(wechatSettings) > 0 {
-		if v, ok := wechatSettings[KeyWeChatAppID]; ok && v != "" {
-			cfg.WeChat.AppID = v
-		}
-		if v, ok := wechatSettings[KeyWeChatAppSecret]; ok && v != "" {
-			cfg.WeChat.AppSecret = v
-		}
-		if v, ok := wechatSettings[KeyWeChatTokenURL]; ok && v != "" {
-			cfg.WeChat.TokenURL = v
 		}
 	}
 

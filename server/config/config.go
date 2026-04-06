@@ -18,7 +18,6 @@ type Config struct {
 	Upload       UploadConfig       // 从数据库加载
 	AI           AIConfig           // 从数据库加载
 	OAuth        OAuthConfig        // 从数据库加载
-	WeChat       WeChatConfig       // 从数据库加载
 }
 
 // ServerConfig 服务器配置
@@ -124,13 +123,6 @@ type OAuthProviderConfig struct {
 	ClientID     string // Client ID
 	ClientSecret string // Client Secret
 	RedirectURL  string // 回调地址
-}
-
-// WeChatConfig 微信公众号配置（从数据库动态加载）
-type WeChatConfig struct {
-	AppID     string // 公众号 AppID
-	AppSecret string // 公众号 AppSecret
-	TokenURL  string // 自定义接口域名（可选）
 }
 
 // LoadConfig 从环境变量加载配置

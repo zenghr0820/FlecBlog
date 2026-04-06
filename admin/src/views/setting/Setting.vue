@@ -44,11 +44,6 @@
           <OAuthSettingsTab v-model:form="oauthForm" :loading="loading || !canEditSettings" />
         </el-tab-pane>
 
-        <!-- 微信公众号配置标签页 -->
-        <el-tab-pane label="微信公众号" name="wechat">
-          <WeChatSettingsTab v-model:form="wechatForm" :loading="loading || !canEditSettings" />
-        </el-tab-pane>
-
         <!-- 导入导出标签页 -->
         <el-tab-pane label="导入导出" name="import-export">
           <ImportExportTab :readonly="!canEditSettings" @import-success="handleImportSuccess" />
@@ -70,7 +65,6 @@ import NotificationSettingsTab from './components/NotificationSettingsTab.vue'
 import UploadSettingsTab from './components/UploadSettingsTab.vue'
 import AISettingsTab from './components/AISettingsTab.vue'
 import OAuthSettingsTab from './components/OAuthSettingsTab.vue'
-import WeChatSettingsTab from './components/WeChatSettingsTab.vue'
 import ImportExportTab from './components/ImportExportTab.vue'
 import type { SettingGroupType } from '@/types/sysconfig'
 import type { NotificationForm } from './components/NotificationSettingsTab.vue'
@@ -197,13 +191,6 @@ const oauthForm = ref({
   'microsoft.client_id': '',
   'microsoft.client_secret': '',
   'microsoft.redirect_url': ''
-})
-
-// 微信公众号配置表单
-const wechatForm = ref({
-  app_id: '',
-  app_secret: '',
-  token_url: ''
 })
 
 // 通用配置加载函数
@@ -398,20 +385,6 @@ const loadOAuthConfigs = async () => {
   }
 }
 
-// 加载微信公众号配置
-const loadWeChatConfigs = async () => {
-  try {
-    const configs = await loadConfigs('wechat')
-    Object.assign(wechatForm.value, {
-      app_id: configs.app_id || '',
-      app_secret: configs.app_secret || '',
-      token_url: configs.token_url || ''
-    })
-  } catch {
-    ElMessage.error('获取微信配置失败')
-  }
-}
-
 // 加载所有配置
 const loadAllConfigs = async () => {
   loading.value = true
@@ -422,8 +395,7 @@ const loadAllConfigs = async () => {
       loadNotificationConfigs(),
       loadUploadConfigs(),
       loadAIConfigs(),
-      loadOAuthConfigs(),
-      loadWeChatConfigs()
+      loadOAuthConfigs()
     ])
   } finally {
     loading.value = false
@@ -577,13 +549,6 @@ const handleSave = async () => {
       'oauth.microsoft.redirect_url': oauthForm.value['microsoft.redirect_url']
     }
 
-    // 微信公众号配置
-    const wechatPayload: Record<string, string> = {
-      'wechat.app_id': wechatForm.value.app_id,
-      'wechat.app_secret': wechatForm.value.app_secret,
-      'wechat.token_url': wechatForm.value.token_url
-    }
-
     // 构建需要保存的配置组列表
     const savePromises = [
       updateSettingGroup('basic', basicPayload),
@@ -591,8 +556,7 @@ const handleSave = async () => {
       updateSettingGroup('notification', notificationPayload),
       updateSettingGroup('upload', uploadPayload),
       updateSettingGroup('ai', aiPayload),
-      updateSettingGroup('oauth', oauthPayload),
-      updateSettingGroup('wechat', wechatPayload)
+      updateSettingGroup('oauth', oauthPayload)
     ]
 
     // 并行保存所有配置组
@@ -614,7 +578,6 @@ const validTabs = new Set<SettingGroupType | 'import-export'>([
   'upload',
   'ai',
   'oauth',
-  'wechat',
   'import-export'
 ])
 

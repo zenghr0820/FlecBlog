@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"flec_blog/config"
 	"flec_blog/internal/dto"
 	"flec_blog/internal/model"
 	"flec_blog/internal/repository"
@@ -36,13 +35,12 @@ type ArticleService struct {
 	fileService       *FileService
 	subscriberService *SubscriberService
 	db                *gorm.DB
-	config            *config.Config // 配置对象（支持热重载）
 	md                goldmark.Markdown
 	httpClient        *http.Client
 }
 
 // NewArticleService 创建文章服务实例
-func NewArticleService(articleRepo *repository.ArticleRepository, tagRepo *repository.TagRepository, categoryRepo *repository.CategoryRepository, commentRepo *repository.CommentRepository, fileService *FileService, db *gorm.DB, cfg *config.Config) *ArticleService {
+func NewArticleService(articleRepo *repository.ArticleRepository, tagRepo *repository.TagRepository, categoryRepo *repository.CategoryRepository, commentRepo *repository.CommentRepository, fileService *FileService, db *gorm.DB) *ArticleService {
 	// 初始化 goldmark（用于微信导出时渲染 Markdown）
 	md := goldmark.New(
 		goldmark.WithExtensions(
@@ -68,7 +66,6 @@ func NewArticleService(articleRepo *repository.ArticleRepository, tagRepo *repos
 		commentRepo:  commentRepo,
 		fileService:  fileService,
 		db:           db,
-		config:       cfg,
 		md:           md,
 		httpClient: &http.Client{
 			Timeout: 60 * time.Second,
@@ -1130,11 +1127,11 @@ func generateSummary(content string, maxLen int) string {
 
 // ============ 微信公众号导出 ============
 
-// ExportToWeChat 导出文章到微信公众号
-func (s *ArticleService) ExportToWeChat(ctx context.Context, id uint) *dto.WeChatExportResult {
+// ExportToWeChat 将文章渲染为微信公众号 HTML 格式
+func (s *ArticleService) ExportToWeChat(_ context.Context, id uint) *dto.WeChatExportResult {
 	article, err := s.articleRepo.Get(id)
 	if err != nil {
-		return &dto.WeChatExportResult{Success: false}
+		return &dto.WeChatExportResult{}
 	}
 
 	// 预处理并渲染 Markdown
@@ -1144,107 +1141,15 @@ func (s *ArticleService) ExportToWeChat(ctx context.Context, id uint) *dto.WeCha
 
 	var htmlBuf bytes.Buffer
 	if err := s.md.Convert([]byte(processed), &htmlBuf); err != nil {
-		return &dto.WeChatExportResult{Success: false}
+		return &dto.WeChatExportResult{}
 	}
 
-	// 转换为公众号格式
 	result, err := wechatmp.ConvertMarkdownToWeChatHTML(htmlBuf.String())
 	if err != nil {
-		return &dto.WeChatExportResult{Success: false}
-	}
-	html := result.HTML
-
-	// 检查微信配置
-	if s.config.WeChat.AppID == "" || s.config.WeChat.AppSecret == "" {
-		return &dto.WeChatExportResult{Success: false, HTML: html}
+		return &dto.WeChatExportResult{}
 	}
 
-	// 创建微信客户端
-	client, err := wechatmp.NewClient(wechatmp.Config{
-		AppID:     s.config.WeChat.AppID,
-		AppSecret: s.config.WeChat.AppSecret,
-		BaseURL:   s.config.WeChat.TokenURL,
-	})
-	if err != nil {
-		return &dto.WeChatExportResult{Success: false, HTML: html}
-	}
-
-	// 上传图片
-	htmlContent := result.HTML
-	var warnings []string
-	for _, img := range result.Images {
-		newURL, err := s.uploadImageToWeChat(ctx, client, img.OriginalURL)
-		if err != nil {
-			warnings = append(warnings, fmt.Sprintf("图片 %s 上传失败", img.OriginalURL))
-			continue
-		}
-		htmlContent = wechatmp.ReplaceImageURL(htmlContent, img.OriginalURL, newURL)
-	}
-
-	// 上传封面
-	coverURL := article.Cover
-	if coverURL == "" {
-		coverURL = "https://api.pearktrue.cn/api/bing/"
-	}
-	thumbMediaID, err := s.uploadCoverToWeChat(ctx, client, coverURL)
-	if err != nil {
-		return &dto.WeChatExportResult{Success: false, HTML: html, Warnings: warnings}
-	}
-
-	// 创建草稿
-	author := s.config.Basic.Author
-	if author == "" {
-		author = s.config.Blog.Title
-	}
-	draftResult, err := client.CreateDraft(ctx, []wechatmp.DraftArticle{{
-		Title:            article.Title,
-		Author:           author,
-		Content:          htmlContent,
-		Digest:           truncateString(article.Summary, 120),
-		ContentSourceURL: s.buildArticleURL(article),
-		ThumbMediaID:     thumbMediaID,
-		NeedOpenComment:  1,
-	}})
-	if err != nil {
-		return &dto.WeChatExportResult{Success: false, HTML: html, Warnings: warnings}
-	}
-
-	return &dto.WeChatExportResult{Success: true, MediaID: draftResult.MediaID, Warnings: warnings}
-}
-
-// uploadImageToWeChat 上传文章内图片到微信
-func (s *ArticleService) uploadImageToWeChat(ctx context.Context, client *wechatmp.Client, imgURL string) (string, error) {
-	data, ext, err := s.fetchImage(ctx, imgURL)
-	if err != nil {
-		return "", err
-	}
-
-	filename := "image" + ext
-	result, err := client.UploadImage(ctx, filename, data)
-	if err != nil {
-		return "", err
-	}
-	return result.URL, nil
-}
-
-// uploadCoverToWeChat 上传封面图到微信素材库
-func (s *ArticleService) uploadCoverToWeChat(ctx context.Context, client *wechatmp.Client, coverURL string) (string, error) {
-	data, ext, err := s.fetchImage(ctx, coverURL)
-	if err != nil {
-		return "", fmt.Errorf("下载封面图失败: %w", err)
-	}
-
-	const maxImageSize = 10 * 1024 * 1024
-	if len(data) > maxImageSize {
-		return "", fmt.Errorf("封面图片过大（%d MB），微信限制最大 10MB", len(data)/1024/1024)
-	}
-
-	result, err := client.AddThumbMaterial(ctx, "cover"+ext, data)
-	if err != nil {
-		return "", fmt.Errorf("上传封面到微信失败: %w", err)
-	}
-
-	return result.MediaID, nil
+	return &dto.WeChatExportResult{HTML: result.HTML}
 }
 
 // fetchImage 下载图片，返回数据和扩展名
@@ -1287,23 +1192,6 @@ func (s *ArticleService) fetchImage(ctx context.Context, imgURL string) ([]byte,
 	}
 
 	return data, ext, nil
-}
-
-// buildArticleURL 构建文章链接
-func (s *ArticleService) buildArticleURL(article *model.Article) string {
-	if s.config.Basic.BlogURL != "" {
-		return s.config.Basic.BlogURL + "/posts/" + article.Slug
-	}
-	return ""
-}
-
-// truncateString 截断字符串
-func truncateString(str string, maxLen int) string {
-	runes := []rune(str)
-	if len(runes) <= maxLen {
-		return str
-	}
-	return string(runes[:maxLen-3]) + "..."
 }
 
 // ============ 文章下载导出 ============

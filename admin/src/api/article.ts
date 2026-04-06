@@ -64,7 +64,7 @@ export function importArticles(formData: FormData): Promise<ImportArticlesResult
 // ==================== 微信公众号导出 ====================
 
 /**
- * 导出文章到微信公众号
+ * 将文章渲染为微信公众号 HTML 格式
  * @param id 文章ID
  * @returns Promise<WeChatExportResult>
  */

@@ -21,5 +21,4 @@ const (
 	SettingGroupUpload       = "upload"
 	SettingGroupAI           = "ai"
 	SettingGroupOAuth        = "oauth"
-	SettingGroupWeChat       = "wechat"
 )

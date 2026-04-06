@@ -250,7 +250,7 @@ const exportDialogVisible = ref(false)
 const exportArticleId = ref<number>(0)
 
 const exportOptions = reactive([
-  { key: 'wechat', title: '导出到微信公众平台', desc: '推送到微信公众号草稿箱', icon: 'ri-wechat-line', loading: false },
+  { key: 'wechat', title: '复制微信公众号格式', desc: '转换为公众号 HTML 并复制到剪贴板', icon: 'ri-wechat-line', loading: false },
   { key: 'markdown', title: '下载为 Markdown', desc: '下载含图片资源的完整文章', icon: 'ri-markdown-line', loading: false }
 ])
 
@@ -279,21 +279,14 @@ const handleExport = async (key: string) => {
   }
 }
 
-// 导出到微信公众平台
+// 复制微信公众号格式到剪贴板
 const handleExportToWeChat = async () => {
   const result = await exportToWeChat(exportArticleId.value)
-  
-  if (result.success) {
-    ElMessage.success('已导出到微信公众平台草稿箱')
-  } else if (result.html) {
+  if (result.html) {
     await copyRichText(result.html)
-    ElMessage.warning('推送失败，已复制到剪贴板')
+    ElMessage.success('已复制到剪贴板，请粘贴到微信公众平台编辑器')
   } else {
-    ElMessage.error('导出失败')
-  }
-  
-  if (result.warnings?.length) {
-    result.warnings.forEach(w => ElMessage.warning(w))
+    ElMessage.error('生成失败')
   }
   exportDialogVisible.value = false
 }

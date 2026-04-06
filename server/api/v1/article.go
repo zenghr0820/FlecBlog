@@ -358,10 +358,10 @@ func isMarkdownFile(filename string) bool {
 
 // ============ 微信公众号导出接口 ============
 
-// ExportToWeChat 导出文章到微信公众号
+// ExportToWeChat 将文章渲染为微信公众号格式
 //
-//	@Summary		导出到微信公众号
-//	@Description	尝试推送到公众号草稿箱，失败则返回 HTML 供复制
+//	@Summary		生成微信公众号 HTML
+//	@Description	将文章 Markdown 转换为微信公众号 HTML 格式，供复制粘贴到微信公众平台
 //	@Tags			文章管理
 //	@Accept			json
 //	@Produce		json
