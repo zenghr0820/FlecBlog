@@ -88,4 +88,19 @@ const getTagSize = (count: number) => {
         color: var(--flec-btn-hover);
     }
 }
+
+@media (max-width: 900px) {
+    .expand-toggle {
+        display: none;
+    }
+    
+    .card-tag-cloud.can-expand:not(.is-expanded) {
+        max-height: none;
+        overflow: visible;
+        
+        &::after {
+            display: none;
+        }
+    }
+}
 </style>

@@ -221,7 +221,7 @@ const displayTitle = computed(() => {
   }
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 900px) {
   .nav-menu {
     display: none;
   }

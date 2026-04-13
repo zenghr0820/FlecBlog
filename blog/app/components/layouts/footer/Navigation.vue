@@ -199,8 +199,13 @@ const refreshFriends = () => {
   .footer-group {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
     padding: 0 12px;
+  }
+}
+
+@media screen and (max-width: 400px) {
+  .footer-group {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

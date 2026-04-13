@@ -118,7 +118,7 @@ const toggleDrawer = () => {
   }
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 900px) {
   #navbar {
     padding: 0 1rem;
   }

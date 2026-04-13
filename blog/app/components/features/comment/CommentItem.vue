@@ -316,6 +316,14 @@ const handleReplyClick = () => {
 
   .comment-meta {
     font-size: 0.75rem;
+    white-space: normal;
+    word-break: break-all;
+    padding-left: 0;
+    max-width: 100%;
+
+    &::before {
+      display: none;
+    }
   }
 
   .comment-body {
