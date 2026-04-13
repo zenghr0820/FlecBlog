@@ -170,7 +170,8 @@ const aiForm = ref({
   model: '',
   summary_prompt: '',
   ai_summary_prompt: '',
-  title_prompt: ''
+  title_prompt: '',
+  mcp_secret: ''
 })
 
 // OAuth 配置表单
@@ -351,7 +352,8 @@ const loadAIConfigs = async () => {
       model: configs.model || '',
       summary_prompt: configs.summary_prompt || '',
       ai_summary_prompt: configs.ai_summary_prompt || '',
-      title_prompt: configs.title_prompt || ''
+      title_prompt: configs.title_prompt || '',
+      mcp_secret: configs.mcp_secret || ''
     })
   } catch {
     ElMessage.error('获取 AI 配置失败')

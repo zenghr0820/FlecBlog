@@ -104,6 +104,28 @@ func (c *SettingController) UpdateGroup(ctx *gin.Context) {
 	response.Success(ctx, nil, "配置更新成功")
 }
 
+// ResetMCPSecret 重置 MCP Secret
+//
+//	@Summary		重置 MCP Secret
+//	@Description	重新生成并返回 MCP Secret（仅超级管理员可修改）
+//	@Tags			配置管理
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	response.Response{data=map[string]string}
+//	@Failure		401	{object}	response.Response
+//	@Failure		500	{object}	response.Response
+//	@Router			/admin/settings/ai/mcp-secret/reset [put]
+func (c *SettingController) ResetMCPSecret(ctx *gin.Context) {
+	secret, err := c.settingService.ResetMCPSecret()
+	if err != nil {
+		response.Failed(ctx, "重置 MCP Secret 失败: "+err.Error())
+		return
+	}
+
+	response.Success(ctx, gin.H{"secret": secret}, "MCP Secret 重置成功")
+}
+
 // ============ 前台公开接口 ============
 
 // GetPublicSettingGroup 获取公开的配置分组

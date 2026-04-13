@@ -106,6 +106,7 @@ type AIConfig struct {
 	SummaryPrompt   string // 文章摘要提示词
 	AISummaryPrompt string // AI 总结提示词
 	TitlePrompt     string // 标题生成提示词
+	MCPSecret       string // MCP 专用鉴权密钥（系统自动生成）
 }
 
 // OAuthConfig OAuth配置（从数据库动态加载）

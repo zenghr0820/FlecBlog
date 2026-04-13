@@ -99,6 +99,7 @@ const (
 	KeyAISummaryPrompt   = "ai.summary_prompt"
 	KeyAIAISummaryPrompt = "ai.ai_summary_prompt"
 	KeyAITitlePrompt     = "ai.title_prompt"
+	KeyAIMCPSecret       = "ai.mcp_secret"
 )
 
 // 配置键常量 - OAuth 相关
@@ -177,8 +178,31 @@ func (s *SettingService) GetAIConfig() (*config.AIConfig, error) {
 	if v, ok := aiSettings[KeyAITitlePrompt]; ok {
 		cfg.TitlePrompt = v
 	}
+	if v, ok := aiSettings[KeyAIMCPSecret]; ok && v != "" {
+		cfg.MCPSecret = v
+	}
 
 	return cfg, nil
+}
+
+// ResetMCPSecret 重新生成 MCP Secret 并持久化
+func (s *SettingService) ResetMCPSecret() (string, error) {
+	secret := random.String(32)
+	if err := s.repo.UpdateGroup(model.SettingGroupAI, map[string]string{
+		KeyAIMCPSecret: secret,
+	}); err != nil {
+		return "", err
+	}
+
+	if s.config != nil {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if err := s.ApplyDatabaseConfig(s.config); err != nil {
+			return "", err
+		}
+	}
+
+	return secret, nil
 }
 
 // UpdateGroup 更新某个分组的配置（patch 方式），更新后自动重载
@@ -440,6 +464,14 @@ func (s *SettingService) ApplyDatabaseConfig(cfg *config.Config) error {
 		}
 		if v, ok := aiSettings[KeyAITitlePrompt]; ok {
 			cfg.AI.TitlePrompt = v
+		}
+		if v, ok := aiSettings[KeyAIMCPSecret]; ok && v != "" {
+			cfg.AI.MCPSecret = v
+		} else {
+			cfg.AI.MCPSecret = random.String(32)
+			_ = s.repo.UpdateGroup(model.SettingGroupAI, map[string]string{
+				KeyAIMCPSecret: cfg.AI.MCPSecret,
+			})
 		}
 	}
 

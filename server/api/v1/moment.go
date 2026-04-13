@@ -123,7 +123,7 @@ func (c *MomentController) Get(ctx *gin.Context) {
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Param			request	body		dto.CreateMomentRequest	true	"动态信息"
-//	@Success		201		{object}	response.Response{data=model.Moment}
+//	@Success		201		{object}	response.Response{data=dto.MomentListResponse}
 //	@Failure		400		{object}	response.Response
 //	@Failure		401		{object}	response.Response
 //	@Failure		403		{object}	response.Response
@@ -154,7 +154,7 @@ func (c *MomentController) Create(ctx *gin.Context) {
 //	@Security		BearerAuth
 //	@Param			id		path		int						true	"动态 ID"
 //	@Param			request	body		dto.UpdateMomentRequest	true	"动态信息"
-//	@Success		200		{object}	response.Response
+//	@Success		200		{object}	response.Response{data=dto.MomentListResponse}
 //	@Failure		400		{object}	response.Response
 //	@Failure		401		{object}	response.Response
 //	@Failure		403		{object}	response.Response
@@ -173,12 +173,13 @@ func (c *MomentController) Update(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.momentService.Update(ctx.Request.Context(), uint(id), &req); err != nil {
+	moment, err := c.momentService.Update(ctx.Request.Context(), uint(id), &req)
+	if err != nil {
 		response.Failed(ctx, err.Error())
 		return
 	}
 
-	response.Success(ctx, nil)
+	response.Success(ctx, moment)
 }
 
 // Delete 删除动态

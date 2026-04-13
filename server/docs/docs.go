@@ -768,7 +768,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "尝试推送到公众号草稿箱，失败则返回 HTML 供复制",
+                "description": "将文章 Markdown 转换为微信公众号 HTML 格式，供复制粘贴到微信公众平台",
                 "consumes": [
                     "application/json"
                 ],
@@ -778,7 +778,7 @@ const docTemplate = `{
                 "tags": [
                     "文章管理"
                 ],
-                "summary": "导出到微信公众号",
+                "summary": "生成微信公众号 HTML",
                 "parameters": [
                     {
                         "type": "integer",
@@ -2806,7 +2806,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.Moment"
+                                            "$ref": "#/definitions/dto.MomentListResponse"
                                         }
                                     }
                                 }
@@ -2945,7 +2945,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.MomentListResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -3180,6 +3192,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/settings/ai/mcp-secret/reset": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "重新生成并返回 MCP Secret（仅超级管理员可修改）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "配置管理"
+                ],
+                "summary": "重置 MCP Secret",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/settings/{group}": {
             "get": {
                 "security": [
@@ -3187,7 +3254,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "获取指定分组的所有配置项（需要管理员权限）",
+                "description": "获取指定分组的所有配置项（需要管理员及以上权限）",
                 "consumes": [
                     "application/json"
                 ],
@@ -3206,8 +3273,7 @@ const docTemplate = `{
                             "notification",
                             "upload",
                             "ai",
-                            "oauth",
-                            "wechat"
+                            "oauth"
                         ],
                         "type": "string",
                         "description": "配置分组",
@@ -3255,7 +3321,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "批量更新指定分组的配置项（patch 方式，只更新传入的配置）",
+                "description": "批量更新指定分组的配置项（patch 方式，只更新传入的配置，仅超级管理员可修改）",
                 "consumes": [
                     "application/json"
                 ],
@@ -3274,8 +3340,7 @@ const docTemplate = `{
                             "notification",
                             "upload",
                             "ai",
-                            "oauth",
-                            "wechat"
+                            "oauth"
                         ],
                         "type": "string",
                         "description": "配置分组",
@@ -6048,6 +6113,29 @@ const docTemplate = `{
                 }
             }
         },
+        "/rss.xml": {
+            "get": {
+                "description": "生成博客文章的RSS 2.0订阅源",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/xml"
+                ],
+                "tags": [
+                    "订阅"
+                ],
+                "summary": "RSS 2.0订阅",
+                "responses": {
+                    "200": {
+                        "description": "RSS XML 订阅内容",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/settings/{group}": {
             "get": {
                 "description": "获取指定分组的公开配置项，根据配置项可见性规则筛选",
@@ -6069,8 +6157,7 @@ const docTemplate = `{
                             "notification",
                             "upload",
                             "ai",
-                            "oauth",
-                            "wechat"
+                            "oauth"
                         ],
                         "type": "string",
                         "description": "配置分组",
@@ -8851,6 +8938,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "is_enabled": {
+                    "type": "boolean"
+                },
                 "is_virtual_email": {
                     "description": "是否为虚拟邮箱（需绑定真实邮箱）",
                     "type": "boolean"
@@ -8880,23 +8970,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "html": {
-                    "description": "公众号 HTML（失败时）",
+                    "description": "公众号 HTML，用于复制粘贴到微信公众平台",
                     "type": "string"
-                },
-                "media_id": {
-                    "description": "草稿 ID（成功时）",
-                    "type": "string"
-                },
-                "success": {
-                    "description": "是否成功推送",
-                    "type": "boolean"
-                },
-                "warnings": {
-                    "description": "警告信息",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
@@ -8923,32 +8998,6 @@ const docTemplate = `{
                 },
                 "sort": {
                     "type": "integer"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.Moment": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "description": "内容（JSON）- 包含text、images、location、link、music、video等",
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "is_publish": {
-                    "description": "是否发布",
-                    "type": "boolean"
-                },
-                "publish_time": {
-                    "description": "发布时间",
-                    "type": "string"
                 },
                 "updated_at": {
                     "type": "string"

@@ -1525,6 +1525,8 @@ definitions:
         type: boolean
       id:
         type: integer
+      is_enabled:
+        type: boolean
       is_virtual_email:
         description: 是否为虚拟邮箱（需绑定真实邮箱）
         type: boolean
@@ -1545,19 +1547,8 @@ definitions:
   dto.WeChatExportResult:
     properties:
       html:
-        description: 公众号 HTML（失败时）
+        description: 公众号 HTML，用于复制粘贴到微信公众平台
         type: string
-      media_id:
-        description: 草稿 ID（成功时）
-        type: string
-      success:
-        description: 是否成功推送
-        type: boolean
-      warnings:
-        description: 警告信息
-        items:
-          type: string
-        type: array
     type: object
   model.Category:
     properties:
@@ -1575,24 +1566,6 @@ definitions:
         type: string
       sort:
         type: integer
-      updated_at:
-        type: string
-    type: object
-  model.Moment:
-    properties:
-      content:
-        description: 内容（JSON）- 包含text、images、location、link、music、video等
-        type: string
-      created_at:
-        type: string
-      id:
-        type: integer
-      is_publish:
-        description: 是否发布
-        type: boolean
-      publish_time:
-        description: 发布时间
-        type: string
       updated_at:
         type: string
     type: object
@@ -2073,7 +2046,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 尝试推送到公众号草稿箱，失败则返回 HTML 供复制
+      description: 将文章 Markdown 转换为微信公众号 HTML 格式，供复制粘贴到微信公众平台
       parameters:
       - description: 文章 ID
         in: path
@@ -2106,7 +2079,7 @@ paths:
             $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
-      summary: 导出到微信公众号
+      summary: 生成微信公众号 HTML
       tags:
       - 文章管理
   /admin/articles/import:
@@ -3384,7 +3357,7 @@ paths:
             - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/model.Moment'
+                  $ref: '#/definitions/dto.MomentListResponse'
               type: object
         "400":
           description: Bad Request
@@ -3507,7 +3480,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Response'
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.MomentListResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -3625,7 +3603,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 获取指定分组的所有配置项（需要管理员权限）
+      description: 获取指定分组的所有配置项（需要管理员及以上权限）
       parameters:
       - description: 配置分组
         enum:
@@ -3635,7 +3613,6 @@ paths:
         - upload
         - ai
         - oauth
-        - wechat
         in: path
         name: group
         required: true
@@ -3668,7 +3645,7 @@ paths:
     patch:
       consumes:
       - application/json
-      description: 批量更新指定分组的配置项（patch 方式，只更新传入的配置）
+      description: 批量更新指定分组的配置项（patch 方式，只更新传入的配置，仅超级管理员可修改）
       parameters:
       - description: 配置分组
         enum:
@@ -3678,7 +3655,6 @@ paths:
         - upload
         - ai
         - oauth
-        - wechat
         in: path
         name: group
         required: true
@@ -3707,6 +3683,38 @@ paths:
       security:
       - BearerAuth: []
       summary: 更新配置分组
+      tags:
+      - 配置管理
+  /admin/settings/ai/mcp-secret/reset:
+    put:
+      consumes:
+      - application/json
+      description: 重新生成并返回 MCP Secret（仅超级管理员可修改）
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 重置 MCP Secret
       tags:
       - 配置管理
   /admin/stats/category:
@@ -5386,6 +5394,21 @@ paths:
       summary: 动态列表
       tags:
       - 动态
+  /rss.xml:
+    get:
+      consumes:
+      - application/json
+      description: 生成博客文章的RSS 2.0订阅源
+      produces:
+      - text/xml
+      responses:
+        "200":
+          description: RSS XML 订阅内容
+          schema:
+            type: string
+      summary: RSS 2.0订阅
+      tags:
+      - 订阅
   /settings/{group}:
     get:
       consumes:
@@ -5400,7 +5423,6 @@ paths:
         - upload
         - ai
         - oauth
-        - wechat
         in: path
         name: group
         required: true

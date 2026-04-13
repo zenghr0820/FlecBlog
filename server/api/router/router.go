@@ -10,6 +10,7 @@ import (
 	"flec_blog/pkg/database"
 	"flec_blog/pkg/email"
 	"flec_blog/pkg/feishu"
+	mcpserver "flec_blog/pkg/mcp"
 	"flec_blog/pkg/notification"
 	"flec_blog/pkg/scheduler"
 	"flec_blog/pkg/upload"
@@ -112,6 +113,13 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 	toolsHandler := v1.NewToolsController()
 	aiController := v1.NewAIController(settingService)
 	rssFeedController := v1.NewRssFeedController(rssFeedService)
+
+	// MCP 接口
+	mcpHandler := gin.WrapH(mcpserver.NewPublicHandler(
+		articleService, categoryService, tagService, commentService, friendService, rssFeedService, momentService,
+		userService, statsService,
+	))
+	r.Any("/mcp", middleware.MCPAuth(conf), mcpHandler)
 
 	// Atom 订阅
 	r.GET("/atom.xml", atomController.GetAtomFeed)
@@ -415,8 +423,9 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 		// ==================== 配置管理 ====================
 		settingManagement := adminAPI.Group("/settings")
 		{
-			settingManagement.GET("/:group", settingController.GetGroup)                                 // 获取指定分组的配置
-			settingManagement.PATCH("/:group", middleware.IsSuperAdmin(), settingController.UpdateGroup) // 更新指定分组的配置（仅超级管理员）
+			settingManagement.GET("/:group", settingController.GetGroup)                                               // 获取指定分组的配置
+			settingManagement.PATCH("/:group", middleware.IsSuperAdmin(), settingController.UpdateGroup)               // 更新指定分组的配置（仅超级管理员）
+			settingManagement.PUT("/ai/mcp-secret/reset", middleware.IsSuperAdmin(), settingController.ResetMCPSecret) // 重置 MCP Secret（仅超级管理员）
 		}
 
 		// ==================== 系统信息 ====================

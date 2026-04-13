@@ -315,7 +315,7 @@ func (c *FriendController) Create(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.friendService.Create(ctx.Request.Context(), &req); err != nil {
+	if _, err := c.friendService.Create(ctx.Request.Context(), &req); err != nil {
 		response.Failed(ctx, err.Error())
 		return
 	}

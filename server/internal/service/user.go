@@ -45,6 +45,16 @@ func (s *UserService) Get(id uint) (*dto.UserResponse, error) {
 	return dto.NewUserResponse(user), nil
 }
 
+// GetByEmail 通过邮箱获取用户
+func (s *UserService) GetByEmail(email string) (*dto.UserResponse, error) {
+	user, err := s.repo.GetByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto.NewUserResponse(user), nil
+}
+
 // ValidateToken 验证token并返回用户信息
 func (s *UserService) ValidateToken(token string) (*model.User, error) {
 	claims, err := utils.ParseToken(token, &s.config.JWT)

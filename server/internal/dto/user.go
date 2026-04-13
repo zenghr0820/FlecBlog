@@ -22,6 +22,7 @@ type UserResponse struct {
 	LinkedOAuths   []string        `json:"linked_oauths"` // ["github", "google", "qq"]
 	LastLogin      *utils.JSONTime `json:"last_login,omitempty"`
 	CreatedAt      utils.JSONTime  `json:"created_at"`
+	IsEnabled      bool            `json:"is_enabled"`
 }
 
 // NewUserResponse 从model.User创建UserResponse

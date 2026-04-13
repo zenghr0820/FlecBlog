@@ -227,7 +227,7 @@ func (s *FriendService) Get(ctx context.Context, id uint) (*model.Friend, error)
 }
 
 // Create 创建友链
-func (s *FriendService) Create(ctx context.Context, req *dto.CreateFriendRequest) error {
+func (s *FriendService) Create(ctx context.Context, req *dto.CreateFriendRequest) (*model.Friend, error) {
 	if req.Sort == 0 {
 		req.Sort = 5
 	}
@@ -236,7 +236,7 @@ func (s *FriendService) Create(ctx context.Context, req *dto.CreateFriendRequest
 	if req.TypeID != nil {
 		_, err := s.repo.GetTypeByID(ctx, *req.TypeID)
 		if err != nil {
-			return errors.New("指定的友链类型不存在")
+			return nil, errors.New("指定的友链类型不存在")
 		}
 	}
 
@@ -253,7 +253,7 @@ func (s *FriendService) Create(ctx context.Context, req *dto.CreateFriendRequest
 	}
 
 	if err := s.repo.Create(ctx, friend); err != nil {
-		return err
+		return nil, err
 	}
 
 	// 标记文件为使用中
@@ -266,7 +266,7 @@ func (s *FriendService) Create(ctx context.Context, req *dto.CreateFriendRequest
 		}
 	}
 
-	return nil
+	return friend, nil
 }
 
 // Update 更新友链

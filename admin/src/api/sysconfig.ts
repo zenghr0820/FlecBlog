@@ -15,3 +15,8 @@ export const updateSettingGroup = (
 ) => {
   return request.patch(`/admin/settings/${group}`, data);
 };
+
+// 重置 MCP Secret
+export const resetMCPSecret = (): Promise<{ secret: string }> => {
+  return request.put('/admin/settings/ai/mcp-secret/reset');
+};

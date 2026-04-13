@@ -114,7 +114,7 @@ func (s *MomentService) Get(ctx context.Context, id uint) (*dto.MomentListRespon
 }
 
 // Create 创建动态
-func (s *MomentService) Create(ctx context.Context, req *dto.CreateMomentRequest) (*model.Moment, error) {
+func (s *MomentService) Create(ctx context.Context, req *dto.CreateMomentRequest) (*dto.MomentListResponse, error) {
 	// 如果有视频且未提供platform和video_id，自动识别
 	if req.Content.Video != nil && req.Content.Video.URL != "" {
 		// 只在前端没有提供解析结果时才进行解析（避免重复处理）
@@ -146,17 +146,17 @@ func (s *MomentService) Create(ctx context.Context, req *dto.CreateMomentRequest
 	// 标记文件为使用中
 	s.markFilesAsUsed(&req.Content)
 
-	return moment, nil
+	return s.Get(ctx, moment.ID)
 }
 
 // Update 更新动态
-func (s *MomentService) Update(ctx context.Context, id uint, req *dto.UpdateMomentRequest) error {
+func (s *MomentService) Update(ctx context.Context, id uint, req *dto.UpdateMomentRequest) (*dto.MomentListResponse, error) {
 	moment, err := s.repo.Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("动态不存在")
+			return nil, errors.New("动态不存在")
 		}
-		return err
+		return nil, err
 	}
 
 	// 如果有视频且未提供platform和video_id，自动识别
@@ -174,7 +174,7 @@ func (s *MomentService) Update(ctx context.Context, id uint, req *dto.UpdateMome
 	// 将内容转换为JSON字符串
 	contentBytes, err := json.Marshal(req.Content)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// 获取旧内容，用于对比文件变化
@@ -188,13 +188,13 @@ func (s *MomentService) Update(ctx context.Context, id uint, req *dto.UpdateMome
 	moment.PublishTime = utils.FromJSONTime(req.PublishTime)
 
 	if err := s.repo.Update(ctx, moment); err != nil {
-		return err
+		return nil, err
 	}
 
 	// 更新文件使用状态
 	s.updateFileStatus(&oldContent, &req.Content)
 
-	return nil
+	return s.Get(ctx, id)
 }
 
 // Delete 删除动态
