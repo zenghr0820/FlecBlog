@@ -14,6 +14,8 @@ import sub from 'markdown-it-sub'
 import sup from 'markdown-it-sup'
 // @ts-ignore - 没有类型定义
 import underline from 'markdown-it-plugin-underline'
+// @ts-ignore - 没有类型定义
+import katex from '@traptitech/markdown-it-katex'
 import DOMPurify from 'dompurify'
 import hljs from 'highlight.js'
 
@@ -333,6 +335,7 @@ function createMarkdownRenderer(): MarkdownIt {
   instance.use(sup)
   instance.use(sub)
   instance.use(underline)
+  instance.use(katex, { throwOnError: false, errorColor: '#cc0000' })
   instance.use(customBlocksPlugin)
 
   return instance
@@ -599,7 +602,11 @@ const SANITIZE_CONFIG = {
     'div', 'span', 'sup', 'sub', 'kbd', 'abbr',
     'input', 'label', 'button', 'i', 'section',
     'svg', 'path', 'g', 'rect', 'circle', 'ellipse', 'line', 'polygon', 'polyline', 'text', 'foreignObject',
-    'video', 'iframe', 'audio', 'source'
+    'video', 'iframe', 'audio', 'source',
+    // KaTeX / MathML 标签
+    'math', 'mrow', 'mi', 'mo', 'mn', 'msup', 'msub', 'msubsup', 'mfrac', 'msqrt', 'mroot',
+    'mover', 'munder', 'munderover', 'mtable', 'mtr', 'mtd', 'mtext', 'mspace', 'mpadded',
+    'menclose', 'mstyle', 'merror', 'mfenced', 'mphantom', 'annotation', 'semantics'
   ],
   ALLOWED_ATTR: [
     'href', 'title', 'target', 'rel', 'src', 'alt', 'width', 'height',
@@ -613,7 +620,15 @@ const SANITIZE_CONFIG = {
     'controls', 'preload', 'autoplay', 'loop', 'muted', 'poster',
     'allowfullscreen', 'scrolling', 'border', 'frameborder', 'framespacing', 'allow',
     'sandbox', 'referrerpolicy',
-    'data-server', 'data-type', 'data-id'
+    'data-server', 'data-type', 'data-id',
+    // KaTeX / MathML 属性
+    'style', 'mathvariant', 'mathcolor', 'mathbackground', 'mathsize',
+    'displaystyle', 'scriptlevel', 'linethickness', 'lspace', 'rspace',
+    'stretchy', 'symmetric', 'largeop', 'movablelimits', 'accent',
+    'minsize', 'maxsize', 'open', 'close', 'separators', 'notation',
+    'encoding', 'definitionurl', 'display', 'xmlns:xlink',
+    'height', 'depth', 'voffset', 'width', 'lspace', 'width',
+    'columnalign', 'rowalign', 'columnspacing', 'rowspacing'
   ],
   ALLOW_DATA_ATTR: true,
   ADD_ATTR: ['target', 'onclick', 'allowfullscreen']
@@ -797,6 +812,7 @@ const MARKDOWN_STYLES = `
 .markdown-content .custom-link-main { display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-decoration: none; color: inherit; } .markdown-content .custom-link-icon { flex-shrink: 0; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(249, 250, 251, 0.5); border: 1px solid rgba(128, 128, 128, 0.2); }
 .markdown-content .custom-link-info { flex: 1; min-width: 0; } .markdown-content .custom-link-title { font-weight: 600; font-size: 1.1em; color: #2c3e50; } .markdown-content .custom-link-desc { font-size: 0.875em; color: #5a6c7d; line-height: 1.5; }
 .markdown-content .custom-photo-wall{margin:1em 0;border-radius:8px;overflow-x:auto}.markdown-content .custom-photo-wall-container{display:flex;flex-direction:column}.markdown-content .custom-photo-wall-row{display:flex;align-items:stretch;flex-wrap:nowrap}.markdown-content .custom-photo-wall-item{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;padding:5px;height:100%}.markdown-content .custom-photo-wall-item img{margin:0;display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;background:rgba(249,250,251,.8)}
+.markdown-content .katex-inline{display:inline}.markdown-content .katex-block{display:block;margin:1.5rem 0;text-align:center;overflow-x:auto;padding:0.5rem 0}.markdown-content .katex-block .katex{font-size:1.15em}.markdown-content .katex{font-size:1em;line-height:1.6}.markdown-content .katex .base{color:inherit}.markdown-content .katex .katex-mathml{position:absolute;clip:rect(1px,1px,1px,1px);padding:0;border:0;height:1px;width:1px;overflow:hidden}.markdown-content .katex-error{color:#cc0000;font-style:italic}
 `
 
 // 渲染 Markdown 为带样式的完整 HTML（用于复制）

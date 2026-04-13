@@ -139,6 +139,11 @@ export default defineNuxtConfig({
               return 'markdown-renderer'
             }
 
+            // KaTeX 数学公式渲染
+            if (id.includes('node_modules/katex')) {
+              return 'katex'
+            }
+
             // 代码高亮（较大，独立分割）
             if (id.includes('node_modules/highlight.js')) {
               return 'highlight'

@@ -91,6 +91,7 @@ onUnmounted(() => {
 
 <style>
 @import 'highlight.js/styles/atom-one-dark.css';
+@import 'katex/dist/katex.min.css';
 
 .medium-zoom-overlay {
   z-index: 9999 !important;

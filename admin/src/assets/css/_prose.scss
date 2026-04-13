@@ -700,6 +700,53 @@
     text-decoration-color: var(--prose-link);
   }
 
+  // ===== KaTeX 数学公式 =====
+  // 行内公式
+  .katex-inline {
+    display: inline;
+  }
+
+  // 块级公式（独立行展示）
+  .katex-block {
+    display: block;
+    margin: 1.5rem 0;
+    text-align: center;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+
+    .katex {
+      font-size: 1.15em;
+    }
+  }
+
+  // 行内公式中的 katex 容器
+  .katex {
+    font-size: 1em;
+    line-height: 1.6;
+  }
+
+  // 确保公式在暗色主题下可见
+  .katex .base {
+    color: inherit;
+  }
+
+  // MathML 辅助（屏幕阅读器用，视觉上隐藏）
+  .katex .katex-mathml {
+    position: absolute;
+    clip: rect(1px, 1px, 1px, 1px);
+    padding: 0;
+    border: 0;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+  }
+
+  // 公式错误提示样式
+  .katex-error {
+    color: #cc0000;
+    font-style: italic;
+  }
+
   // ===== 响应式调整 =====
   @media (max-width: 768px) {
     font-size: 0.9375rem;

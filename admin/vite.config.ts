@@ -99,6 +99,8 @@ export default defineConfig(({ mode }) => {
               'markdown-it-sup',
               'markdown-it-task-lists'
             ],
+            // KaTeX 数学公式渲染
+            'katex': ['katex'],
             // 其他工具库
             'utils': ['axios', 'dayjs', 'dompurify', '@vueuse/core'],
             // 图表库

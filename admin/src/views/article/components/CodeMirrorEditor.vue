@@ -776,6 +776,8 @@ const toolbarItems: ToolbarItem[] = [
   { icon: 'ri-emotion-line', title: '表情', action: () => toggleEmojiPicker() },
   { icon: 'ri-table-2', title: '表格', action: () => insertText('\n| 列1 | 列2 | 列3 |\n|:---:|:---:|:---:|\n|  ', '  |    |    |\n') },
   { icon: 'ri-mark-pen-line', title: '高亮', action: () => insertText('==', '==') },
+  { icon: 'ri-superscript-2', title: '行内公式', action: () => insertText('$', '$') },
+  { icon: 'ri-functions', title: '块级公式', action: () => insertText('\n$$\n', '\n$$\n') },
   { type: 'divider' },
 
   // 第四组：自定义块
@@ -1158,6 +1160,9 @@ onBeforeUnmount(() => {
 
 // 引入代码高亮样式
 @import 'highlight.js/styles/github.css';
+
+// 引入 KaTeX 数学公式样式
+@import 'katex/dist/katex.min.css';
 
 // 搜索高亮样式
 .cm-searchMatch {

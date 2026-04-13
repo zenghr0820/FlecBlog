@@ -14,6 +14,8 @@ import sub from 'markdown-it-sub'
 import sup from 'markdown-it-sup'
 // @ts-ignore - 没有类型定义
 import underline from 'markdown-it-plugin-underline'
+// @ts-ignore - 没有类型定义
+import katex from '@traptitech/markdown-it-katex'
 
 import DOMPurify from 'isomorphic-dompurify'
 import { getEmojiMapSync, replaceEmojisInText } from '@/composables/useEmojis'
@@ -339,17 +341,20 @@ md.use(sub)
 // 使用下划线插件（支持 ++下划线++ 语法）
 md.use(underline)
 
+// 使用 KaTeX 插件（支持 LaTeX 公式）
+md.use(katex, { throwOnError: false, errorColor: '#cc0000' })
+
 // 自定义表格渲染规则 - 添加滚动容器包裹
-const defaultTableOpen = md.renderer.rules.table_open || (() => '<table>\n');
-const defaultTableClose = md.renderer.rules.table_close || (() => '</table>\n');
+const defaultTableOpen = md.renderer.rules.table_open || (() => '<table>\n')
+const defaultTableClose = md.renderer.rules.table_close || (() => '</table>\n')
 
 md.renderer.rules.table_open = function (tokens, idx, options, env, self) {
-  return '<div class="table-wrapper">' + defaultTableOpen(tokens, idx, options, env, self);
-};
+  return '<div class="table-wrapper">' + defaultTableOpen(tokens, idx, options, env, self)
+}
 
 md.renderer.rules.table_close = function (tokens, idx, options, env, self) {
-  return defaultTableClose(tokens, idx, options, env, self) + '</div>';
-};
+  return defaultTableClose(tokens, idx, options, env, self) + '</div>'
+}
 
 // ========== 自定义块插件 ==========
 
@@ -580,7 +585,11 @@ export function renderMarkdown(markdown: string): string {
       'div', 'span', 'sup', 'sub', 'kbd', 'abbr',
       'input', 'label', 'button', 'i', 'section',
       'svg', 'path', 'g', 'rect', 'circle', 'ellipse', 'line', 'polygon', 'polyline', 'text', 'foreignObject',
-      'video', 'iframe', 'audio', 'source'
+      'video', 'iframe', 'audio', 'source',
+      // KaTeX / MathML 标签
+      'math', 'mrow', 'mi', 'mo', 'mn', 'msup', 'msub', 'msubsup', 'mfrac', 'msqrt', 'mroot',
+      'mover', 'munder', 'munderover', 'mtable', 'mtr', 'mtd', 'mtext', 'mspace', 'mpadded',
+      'menclose', 'mstyle', 'merror', 'mfenced', 'mphantom', 'annotation', 'semantics'
     ],
     ALLOWED_ATTR: [
       'href', 'title', 'target', 'rel', 'src', 'alt', 'width', 'height',
@@ -592,7 +601,15 @@ export function renderMarkdown(markdown: string): string {
       'controls', 'preload', 'autoplay', 'loop', 'muted', 'poster',
       'allowfullscreen', 'scrolling', 'border', 'frameborder', 'framespacing', 'allow',
       'sandbox', 'referrerpolicy',
-      'data-server', 'data-type', 'data-id'
+      'data-server', 'data-type', 'data-id',
+      // KaTeX / MathML 属性
+      'style', 'mathvariant', 'mathcolor', 'mathbackground', 'mathsize',
+      'displaystyle', 'scriptlevel', 'linethickness', 'lspace', 'rspace',
+      'stretchy', 'symmetric', 'largeop', 'movablelimits', 'accent',
+      'minsize', 'maxsize', 'open', 'close', 'separators', 'notation',
+      'encoding', 'definitionurl', 'display', 'xmlns:xlink',
+      'height', 'depth', 'voffset', 'width', 'lspace', 'width',
+      'columnalign', 'rowalign', 'columnspacing', 'rowspacing'
     ],
     ALLOW_DATA_ATTR: true,
     ADD_ATTR: ['target', 'onclick', 'allowfullscreen']
