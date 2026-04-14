@@ -19,7 +19,6 @@ interface ApiResponse<T = any> {
 
 // 获取 API URL（优先使用运行时配置）
 const getApiUrl = () => {
-  // @ts-ignore
   return (
     window.__APP_CONFIG__?.apiUrl ||
     import.meta.env.VITE_API_URL ||
