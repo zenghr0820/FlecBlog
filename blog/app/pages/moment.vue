@@ -3,8 +3,12 @@ import mediumZoom from 'medium-zoom'
 import type { Moment } from '@@/types/moment'
 import { getMoments } from '@/composables/api/moment'
 
-const { basicConfig } = useSysConfig()
+const { basicConfig, blogConfig } = useSysConfig()
 const avatarUrl = computed(() => basicConfig.value.author_avatar || '/avatar.webp')
+const momentsPageSize = computed(() => {
+  const configSize = parseInt(blogConfig.value['moments_size'] || '30')
+  return configSize > 0 ? configSize : 30
+})
 
 definePageMeta({
   showSidebar: false
@@ -21,7 +25,7 @@ const { moments } = useMoments()
 const { data: initialData } = await useAsyncData('moments-list', async () => {
   const response = await getMoments({
     page: 1,
-    page_size: 30
+    page_size: momentsPageSize.value
   })
   return response
 })
@@ -199,7 +203,7 @@ const handleCommentClick = (moment: Moment) => {
     <!-- 底部提示 -->
     <div v-if="moments.length > 0" class="moment-tip">
       <i class="ri-information-line"></i>
-      <span>只显示最近30条动态</span>
+      <span>只显示最近{{ momentsPageSize }}条动态</span>
     </div>
 
     <!-- 评论区域 -->

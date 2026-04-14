@@ -64,6 +64,9 @@ const (
 	KeyBlogCustomBody        = "blog.custom_body"         // 自定义 Body 代码
 	KeyBlogEmojis            = "blog.emojis"              // 表情包配置
 	KeyBlogFont              = "blog.font"                // 字体配置（URL|字体名称）
+	KeyBlogMomentsSize       = "blog.moments_size"        // 动态列表每页数量
+	KeyBlogMessageContent    = "blog.message_content"     // 留言信内容
+	KeyBlogHomeLayout        = "blog.home_layout"         // 首页布局（waterfall/single_column）
 )
 
 // 配置键常量 - Notification 相关
@@ -365,6 +368,19 @@ func (s *SettingService) ApplyDatabaseConfig(cfg *config.Config) error {
 		}
 		if v, ok := blogSettings[KeyBlogFont]; ok && v != "" {
 			cfg.Blog.Font = v
+		}
+		cfg.Blog.MomentsSize = 30
+		if v, ok := blogSettings[KeyBlogMomentsSize]; ok && v != "" {
+			if size, err := strconv.Atoi(v); err == nil && size > 0 {
+				cfg.Blog.MomentsSize = size
+			}
+		}
+		if v, ok := blogSettings[KeyBlogMessageContent]; ok && v != "" {
+			cfg.Blog.MessageContent = v
+		}
+		cfg.Blog.HomeLayout = "waterfall"
+		if v, ok := blogSettings[KeyBlogHomeLayout]; ok && v != "" {
+			cfg.Blog.HomeLayout = v
 		}
 	}
 

@@ -70,6 +70,9 @@ type BlogConfig struct {
 	CustomBody      string // 自定义 Body 代码
 	Emojis          string // 表情包配置
 	Font            string // 字体配置（URL|字体名称）
+	MomentsSize     int    // 动态列表每页数量
+	MessageContent  string // 留言信内容
+	HomeLayout      string // 首页布局（waterfall/single_column）
 }
 
 // NotificationConfig 通知配置（从数据库动态加载）

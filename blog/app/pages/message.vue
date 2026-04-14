@@ -8,6 +8,16 @@ useSeoMeta({
   description: '在这里留下你的足迹，分享你的想法和祝福'
 })
 
+const { blogConfig } = useSysConfig()
+
+const defaultContent = `写下你的留言，
+分享你的想法和祝福。`
+
+const messageLines = computed(() => {
+  const content = blogConfig.value['message_content'] || defaultContent
+  return content.split('\n').filter(line => line.trim())
+})
+
 // 信封状态
 const isOpen = ref(false)
 
@@ -94,14 +104,9 @@ const toggleEnvelope = () => {
 
           <div class="letter">
             <div class="letter-content">
-              <p>时光流逝，岁月如歌。</p>
-              <p>愿每句话都传递温暖。</p>
-              <p>欢迎来到留言天地。</p>
-              <p>分享你的心声与故事。</p>
-              <p>生活中的点滴感悟。</p>
-              <p>对未来的美好期许。</p>
-              <p>让文字连接彼此心灵。</p>
-              <p style="margin-top: 50px">期待你的真挚留言</p>
+              <p v-for="(line, index) in messageLines" :key="index">
+                {{ line }}
+              </p>
             </div>
           </div>
         </div>

@@ -73,6 +73,25 @@
         :default-item="{ name: '', url: '' }" :disabled="loading" />
     </el-form-item>
 
+    <el-divider content-position="left">页面配置</el-divider>
+
+    <el-form-item label="动态数量">
+      <el-input-number v-model="form.moments_size" :min="1" :disabled="loading"
+        placeholder="动态列表每页显示数量" style="width: 200px" />
+    </el-form-item>
+
+    <el-form-item label="首页布局">
+      <el-select v-model="form.home_layout" :disabled="loading" placeholder="选择首页布局" style="width: 200px">
+        <el-option label="瀑布流" value="waterfall" />
+        <el-option label="单列布局" value="single_column" />
+      </el-select>
+    </el-form-item>
+
+    <el-form-item label="留言信">
+      <el-input v-model="form.message_content" type="textarea" :rows="8"
+        placeholder="每行一段文字，显示在留言页面的信封中" :disabled="loading" />
+    </el-form-item>
+
     <el-divider content-position="left">关于页面配置</el-divider>
 
     <el-form-item label="个人描述">
@@ -245,6 +264,11 @@ interface BlogFormData {
 
   // 页脚链接
   footerLinksList: Array<{ name: string; url: string }>
+
+  // 页面配置
+  moments_size: number
+  message_content: string
+  home_layout: string
 
   // 关于页面配置
   about_describe: string
