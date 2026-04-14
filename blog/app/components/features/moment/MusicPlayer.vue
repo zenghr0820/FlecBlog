@@ -215,7 +215,7 @@ onMounted(() => fetchMusicData())
         @pause="isPlaying = false"
         @ended="onEnded"
         @error="
-          loadError = true
+          loadError = true;
           isPlaying = false
         "
       />

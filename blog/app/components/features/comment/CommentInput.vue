@@ -426,7 +426,7 @@ onUnmounted(() => {
         :disabled="isSubmitting"
         :class="{ error: errors.content }"
         @input="
-          clearError('content')
+          clearError('content');
           resetTextareaHeight()
         "
         @paste="handlePaste"
