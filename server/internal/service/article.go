@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
@@ -676,7 +677,7 @@ func (s *ArticleService) updateContentFileStatus(oldContent, newContent string) 
 // ============ 数据导入导出方法 ============
 
 // ImportFromHexo 从Hexo格式导入文章
-func (s *ArticleService) ImportFromHexo(ctx context.Context, files map[string]string) (*dto.ImportArticlesResult, error) {
+func (s *ArticleService) ImportFromHexo(ctx context.Context, files map[string]string, uploadImages bool) (*dto.ImportArticlesResult, error) {
 	if len(files) == 0 {
 		return nil, fmt.Errorf("没有找到有效的文章数据")
 	}
@@ -691,11 +692,41 @@ func (s *ArticleService) ImportFromHexo(ctx context.Context, files map[string]st
 
 	// 处理每篇文章
 	for filename, content := range files {
-		if err := s.importSingleHexoArticle(ctx, content, categoryCache, tagCache); err != nil {
+		parsed, err := parseHexoArticle(content)
+		if err != nil {
 			result.Failed++
 			result.Errors = append(result.Errors, dto.ImportArticleError{
 				Filename: filename,
 				Title:    extractTitle(content),
+				Error:    err.Error(),
+			})
+			continue
+		}
+
+		// 处理图片上传
+		if uploadImages {
+			processedContent, err := s.uploadContentImages(ctx, parsed.Content)
+			if err != nil {
+				logger.Warn("文章 %s 图片上传失败: %v", parsed.Title, err)
+			} else {
+				parsed.Content = processedContent
+			}
+			// 处理封面图
+			if parsed.Cover != "" {
+				uploadedCover, err := s.uploadSingleImage(ctx, parsed.Cover)
+				if err != nil {
+					logger.Warn("文章 %s 封面上传失败: %v", parsed.Title, err)
+				} else {
+					parsed.Cover = uploadedCover
+				}
+			}
+		}
+
+		if err := s.importSingleHexoArticle(ctx, parsed, categoryCache, tagCache); err != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, dto.ImportArticleError{
+				Filename: filename,
+				Title:    parsed.Title,
 				Error:    err.Error(),
 			})
 		} else {
@@ -709,19 +740,194 @@ func (s *ArticleService) ImportFromHexo(ctx context.Context, files map[string]st
 	return result, nil
 }
 
+// ImportFromMarkdown 从Markdown格式导入文章
+func (s *ArticleService) ImportFromMarkdown(ctx context.Context, files map[string]string, uploadImages bool) (*dto.ImportArticlesResult, error) {
+	if len(files) == 0 {
+		return nil, fmt.Errorf("没有找到有效的文章数据")
+	}
+
+	result := &dto.ImportArticlesResult{
+		Total: len(files),
+	}
+
+	// 缓存已创建的分类和标签
+	categoryCache := make(map[string]*model.Category)
+	tagCache := make(map[string]*model.Tag)
+
+	// 处理每篇文章
+	for filename, content := range files {
+		parsed, err := parseMarkdownArticle(filename, content)
+		if err != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, dto.ImportArticleError{
+				Filename: filename,
+				Title:    "未知",
+				Error:    err.Error(),
+			})
+			continue
+		}
+
+		// 处理图片上传
+		if uploadImages {
+			processedContent, err := s.uploadContentImages(ctx, parsed.Content)
+			if err != nil {
+				logger.Warn("文章 %s 图片上传失败: %v", parsed.Title, err)
+			} else {
+				parsed.Content = processedContent
+			}
+			// 处理封面图
+			if parsed.Cover != "" {
+				uploadedCover, err := s.uploadSingleImage(ctx, parsed.Cover)
+				if err != nil {
+					logger.Warn("文章 %s 封面上传失败: %v", parsed.Title, err)
+				} else {
+					parsed.Cover = uploadedCover
+				}
+			}
+		}
+
+		if err := s.importSingleHexoArticle(ctx, parsed, categoryCache, tagCache); err != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, dto.ImportArticleError{
+				Filename: filename,
+				Title:    parsed.Title,
+				Error:    err.Error(),
+			})
+		} else {
+			result.Success++
+		}
+	}
+
+	result.CategoriesAdded = len(categoryCache)
+	result.TagsAdded = len(tagCache)
+
+	return result, nil
+}
+
+// uploadContentImages 上传文章内容中的所有图片，返回替换后的内容
+func (s *ArticleService) uploadContentImages(ctx context.Context, content string) (string, error) {
+	if s.fileService == nil {
+		return content, nil
+	}
+
+	// 提取所有图片URL
+	imageURLs := extractContentImages(content)
+	if len(imageURLs) == 0 {
+		return content, nil
+	}
+
+	// 去重
+	uniqueURLs := make([]string, 0, len(imageURLs))
+	seen := make(map[string]bool)
+	for _, url := range imageURLs {
+		if !seen[url] {
+			seen[url] = true
+			uniqueURLs = append(uniqueURLs, url)
+		}
+	}
+
+	// 替换映射
+	urlReplacements := make(map[string]string)
+
+	// 限制并发数
+	const maxConcurrency = 10
+	sem := make(chan struct{}, maxConcurrency)
+	results := make(chan struct {
+		oldURL    string
+		newURL    string
+		skip     bool
+	}, len(uniqueURLs))
+
+	// 并发上传
+	for _, imgURL := range uniqueURLs {
+		// 跳过本地相对路径图片（无法通过 HTTP 下载）
+		if strings.HasPrefix(imgURL, "./") || strings.HasPrefix(imgURL, "../") || strings.HasPrefix(imgURL, "/") {
+			results <- struct {
+				oldURL string
+				newURL string
+				skip  bool
+			}{oldURL: imgURL, skip: true}
+			continue
+		}
+
+		go func(url string) {
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			uploadedURL, err := s.uploadSingleImage(ctx, url)
+			if err != nil {
+				logger.Warn("上传图片失败 %s: %v", url, err)
+				results <- struct {
+					oldURL string
+					newURL string
+					skip  bool
+				}{oldURL: url, skip: true}
+				return
+			}
+			results <- struct {
+				oldURL string
+				newURL string
+				skip  bool
+			}{oldURL: url, newURL: uploadedURL, skip: false}
+		}(imgURL)
+	}
+
+	// 收集结果
+	for range uniqueURLs {
+		result := <-results
+		if !result.skip {
+			urlReplacements[result.oldURL] = result.newURL
+		}
+	}
+
+	// 替换内容中的图片URL
+	for oldURL, newURL := range urlReplacements {
+		content = strings.ReplaceAll(content, oldURL, newURL)
+	}
+
+	return content, nil
+}
+
+// uploadSingleImage 上传单张图片，返回新的URL
+func (s *ArticleService) uploadSingleImage(ctx context.Context, imgURL string) (string, error) {
+	if s.fileService == nil || imgURL == "" {
+		return imgURL, nil
+	}
+
+	// 跳过本地相对路径图片（无法通过 HTTP 下载）
+	if strings.HasPrefix(imgURL, "./") || strings.HasPrefix(imgURL, "../") || strings.HasPrefix(imgURL, "/") {
+		return imgURL, nil
+	}
+
+	// 下载图片
+	data, ext, err := s.fetchImage(ctx, imgURL)
+	if err != nil {
+		return imgURL, fmt.Errorf("下载图片失败: %w", err)
+	}
+
+	// 用文件内容的 hash 生成唯一文件名，避免并发冲突
+	hashBytes := sha256.Sum256(data)
+	hashStr := fmt.Sprintf("%x", hashBytes)[:12]
+	filename := fmt.Sprintf("import_%s%s", hashStr, ext)
+
+	// 上传图片
+	reader := bytes.NewReader(data)
+	host := "" // 留空让内部处理
+	uploadedURL, err := s.fileService.UploadFromReader(reader, filename, "image", "image", 0, host)
+	if err != nil {
+		return imgURL, fmt.Errorf("上传图片失败: %w", err)
+	}
+
+	return uploadedURL, nil
+}
+
 // importSingleHexoArticle 导入单篇Hexo文章
 func (s *ArticleService) importSingleHexoArticle(
 	ctx context.Context,
-	content string,
+	parsed *HexoParsedArticle,
 	categoryCache map[string]*model.Category,
 	tagCache map[string]*model.Tag,
 ) error {
-	// 解析Hexo文章
-	parsed, err := parseHexoArticle(content)
-	if err != nil {
-		return fmt.Errorf("解析失败: %w", err)
-	}
-
 	// 处理分类
 	var categoryID *uint
 	if parsed.Category != "" {
@@ -1005,6 +1211,71 @@ func generateSummary(content string, maxLen int) string {
 		return string(runes[:maxLen]) + "..."
 	}
 	return content
+}
+
+// parseMarkdownArticle 解析纯Markdown格式文章（无Front Matter）
+func parseMarkdownArticle(filename, content string) (*HexoParsedArticle, error) {
+	lines := strings.Split(content, "\n")
+
+	parsed := &HexoParsedArticle{
+		Title:     "",
+		Tags:      []string{},
+		PublishTime: nil,
+		UpdateTime:  nil,
+	}
+
+	// 尝试从文件名提取标题（去掉扩展名）
+	if filename != "" {
+		nameWithoutExt := filename
+		if idx := strings.LastIndex(filename, "."); idx > 0 {
+			nameWithoutExt = filename[:idx]
+		}
+		// 清理文件名中的非法字符
+		nameWithoutExt = strings.Map(func(r rune) rune {
+			if strings.ContainsRune("_-", r) {
+				return ' '
+			}
+			if strings.ContainsRune("<>:\"/\\|?*", r) {
+				return '_'
+			}
+			return r
+		}, nameWithoutExt)
+		parsed.Title = strings.TrimSpace(nameWithoutExt)
+	}
+
+	// 尝试从内容中提取标题（第一个 # 标题）
+	contentStart := 0
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "# ") {
+			parsed.Title = strings.TrimSpace(strings.TrimPrefix(trimmed, "# "))
+			contentStart = i + 1
+			break
+		}
+	}
+
+	// 如果没有找到标题，使用文件名
+	if parsed.Title == "" {
+		parsed.Title = "未命名文章"
+	}
+
+	// 剩余内容
+	remainingContent := strings.Join(lines[contentStart:], "\n")
+
+	// 尝试提取第一张图片作为封面
+	coverRe := regexp.MustCompile(`!\[[^\]]*\]\(([^)]+)\)`)
+	coverMatches := coverRe.FindStringSubmatch(remainingContent)
+	if len(coverMatches) > 1 {
+		parsed.Cover = coverMatches[1]
+	}
+
+	// 生成摘要（取内容前200字符）
+	parsed.Summary = generateSummary(remainingContent, 200)
+
+	// 内容部分
+	parsed.Content = remainingContent
+
+	return parsed, nil
 }
 
 // ============ 微信公众号导出 ============
