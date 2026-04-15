@@ -392,6 +392,22 @@
         :disabled="loading"
       />
     </el-form-item>
+
+    <el-divider content-position="left">Markdown 容器映射</el-divider>
+
+    <el-form-item label="容器别名">
+      <JsonListEditor
+        v-model="form.markdownContainersList"
+        :fields="markdownContainerFields"
+        :default-item="{
+          name: '',
+          target: 'note',
+          params: '',
+          system: 'vuepress'
+        }"
+        :disabled="loading"
+      />
+    </el-form-item>
   </el-form>
 </template>
 
@@ -451,6 +467,12 @@ interface BlogFormData {
   custom_body: string
   emojis: string
   font: string
+  markdownContainersList: Array<{
+    name: string
+    target: string
+    params: string
+    system: string
+  }>
 }
 
 const form = defineModel<BlogFormData>('form', { required: true })
@@ -548,6 +570,41 @@ const footerLinksFields: FieldConfig[] = [
     type: 'text',
     placeholder: '链接地址 (/开头为内链)',
     style: 'flex: 1; margin: 0 8px'
+  }
+]
+
+const markdownContainerFields: FieldConfig[] = [
+  {
+    key: 'name',
+    type: 'text',
+    placeholder: '外部容器名（例如 tip）',
+    style: 'width: 140px'
+  },
+  {
+    key: 'target',
+    type: 'select',
+    placeholder: '内部类型',
+    style: 'width: 140px',
+    options: [
+      { label: 'note 提示框', value: 'note' },
+      { label: 'fold 折叠块', value: 'fold' },
+      { label: 'tabs 标签页', value: 'tabs' },
+      { label: 'photo 照片墙', value: 'photo' },
+      { label: 'link 链接卡片', value: 'link' },
+      { label: 'video 视频', value: 'video' }
+    ]
+  },
+  {
+    key: 'params',
+    type: 'text',
+    placeholder: '默认参数（空格分隔）',
+    style: 'flex: 1; margin: 0 8px'
+  },
+  {
+    key: 'system',
+    type: 'text',
+    placeholder: '来源系统（可选，如 vuepress）',
+    style: 'width: 160px'
   }
 ]
 

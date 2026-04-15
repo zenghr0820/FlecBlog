@@ -1291,6 +1291,32 @@ const loadEmojis = async () => {
   }
 }
 
+const markdownContainersLoaded = ref(false)
+
+const loadMarkdownContainers = async () => {
+  if (markdownContainersLoaded.value) return
+  try {
+    const blogSettings = await getSettingGroup('blog')
+    const raw =
+      blogSettings['blog.markdown_containers'] ||
+      blogSettings.markdown_containers ||
+      ''
+    if (typeof window !== 'undefined') {
+      if (raw) {
+        try {
+          ;(window as any).__FLEC_MARKDOWN_CONTAINERS__ = JSON.parse(raw)
+        } catch {
+          ;(window as any).__FLEC_MARKDOWN_CONTAINERS__ = []
+        }
+      } else {
+        ;(window as any).__FLEC_MARKDOWN_CONTAINERS__ = []
+      }
+    }
+  } finally {
+    markdownContainersLoaded.value = true
+  }
+}
+
 const selectEmoji = (item: { key: string; val: string }, type: string) => {
   const emoji = type === 'image' ? `:${item.key}:` : item.val
   insertText(emoji)
@@ -1522,6 +1548,7 @@ const handleEditorPaneMouseDown = (event: MouseEvent) => {
 
 onMounted(() => {
   initMermaid()
+  loadMarkdownContainers()
   initEditor()
   if (viewMode.value !== 'editor') {
     loadEmojis()

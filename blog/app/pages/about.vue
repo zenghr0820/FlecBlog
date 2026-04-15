@@ -232,14 +232,14 @@ const formatWords = (words: string) => {
     <!-- 个人介绍 -->
     <div class="Personal-Introduction">
       <div class="PI-box-left">
-        <h1 class="title">你好！</h1>
+        <h1 class="title">你好11！</h1>
         <div v-if="info.author" class="title">我是 {{ info.author }}</div>
         <div v-if="info.describe" class="describe">{{ info.describe }}</div>
         <span v-if="info.describeTips" class="describe-tips">{{
           info.describeTips
         }}</span>
         <div class="PI-button">
-          <a href="#one">博主信息</a>
+          <a href="#one">博主信息11</a>
           <a href="#two">本站信息</a>
         </div>
       </div>

@@ -429,7 +429,8 @@ export function useSysConfig() {
     font: '',
     moments_size: '30',
     message_content: '',
-    home_layout: 'waterfall'
+    home_layout: 'waterfall',
+    markdown_containers: ''
   }))
 
   const oauthConfig = useState<Record<string, string>>(
