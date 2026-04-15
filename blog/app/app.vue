@@ -49,9 +49,11 @@ const { data: globalData } = await useAsyncData('global-data', async () => {
     return processed;
   };
 
+  const blogProcessed = processConfig(blogConfigData, 'blog')
+
   return {
     basicConfig: processConfig(basicConfigData, 'basic'),
-    blogConfig: processConfig(blogConfigData, 'blog'),
+    blogConfig: blogProcessed,
     oauthConfig: processConfig(oauthConfigData, 'oauth'),
     uploadConfig: processConfig(uploadConfigData, 'upload'),
     menus: menusData || [],
@@ -78,6 +80,21 @@ if (globalData.value) {
   }
   if (globalData.value.tagsTotal !== undefined) {
     tagsTotal.value = globalData.value.tagsTotal;
+  }
+
+  if (typeof globalThis !== 'undefined') {
+    const containers =
+      globalData.value.blogConfig.markdown_containers || ''
+    if (containers) {
+      try {
+        ;(globalThis as any).__FLEC_MARKDOWN_CONTAINERS__ =
+          JSON.parse(containers)
+      } catch {
+        ;(globalThis as any).__FLEC_MARKDOWN_CONTAINERS__ = []
+      }
+    } else {
+      ;(globalThis as any).__FLEC_MARKDOWN_CONTAINERS__ = []
+    }
   }
 }
 

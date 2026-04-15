@@ -11,7 +11,7 @@
             :disabled="!canEditSettings"
             @click="handleSave"
           >
-            保存配置
+            保存配置1
           </el-button>
           <el-button @click="loadAllConfigs">重置</el-button>
         </div>
@@ -20,7 +20,7 @@
       <!-- 标签页 -->
       <el-tabs v-model="activeTab" class="setting-tabs">
         <!-- 基本配置标签页 -->
-        <el-tab-pane label="基本配置" name="basic">
+        <el-tab-pane label="基本配置1" name="basic">
           <BasicSettingsTab
             ref="basicTabRef"
             v-model:form="basicForm"
@@ -172,8 +172,14 @@ const blogForm = ref({
   custom_head: '',
   custom_body: '',
   emojis: '',
-  font: '',
-});
+  font: '', 
+  markdownContainersList: [] as Array<{
+    name: string
+    target: string
+    params: string
+    system: string
+  }>
+})
 
 // 上传配置表单
 const uploadForm = ref<UploadForm>({
@@ -341,6 +347,20 @@ const loadBlogConfigs = async () => {
     blogForm.value.custom_body = configs.custom_body || '';
     blogForm.value.emojis = configs.emojis || '';
     blogForm.value.font = configs.font || '';
+
+    const containers = parseJSON(configs.markdown_containers || '', [])
+    blogForm.value.markdownContainersList = Array.isArray(containers)
+      ? containers.map((item: any) => ({
+          name: String(item?.name || ''),
+          target: String(item?.target || 'note'),
+          params: String(
+            Array.isArray(item?.params)
+              ? item.params.join(' ')
+              : item?.params || ''
+          ),
+          system: String(item?.system || '')
+        }))
+      : []
   } catch {
     ElMessage.error('获取博客配置失败');
   }
@@ -578,6 +598,14 @@ const handleSave = async () => {
       'blog.moments_size': String(blogForm.value.moments_size),
       'blog.message_content': blogForm.value.message_content,
       'blog.home_layout': blogForm.value.home_layout,
+      'blog.markdown_containers': JSON.stringify(
+        blogForm.value.markdownContainersList.map((item) => ({
+          name: item.name,
+          target: item.target || 'note',
+          params: item.params,
+          system: item.system
+        }))
+      )
     };
 
     // 通知配置
