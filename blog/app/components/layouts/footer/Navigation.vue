@@ -140,6 +140,7 @@ const refreshFriends = () => {
   padding: 0 1rem;
   gap: 16px;
   margin-top: 24px;
+  background-color: var(--flec-footer-content-bg);
 
   .group-item {
     display: flex;

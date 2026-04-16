@@ -17,40 +17,42 @@ const isImageIcon = (icon: string) => {
 <template>
   <div v-if="topAggregateMenus.length > 0" class="nav-aggregate">
     <div class="aggregate-trigger brighten">
-      <i class="ri-apps-line ri-lg"></i>
+      <i class="ri-fingerprint-fill ri-lg"></i>
     </div>
 
     <!-- 聚合下拉菜单 -->
     <div class="aggregate-dropdown">
-      <div
-        v-for="menu in topAggregateMenus"
-        :key="menu.id"
-        v-show="menu.children && menu.children.length > 0"
-        class="aggregate-group"
-      >
-        <!-- 主菜单标题 -->
-        <div class="group-title">
-          <span>{{ menu.title }}</span>
-        </div>
+      <div class="aggregate-groups-container">
+        <div
+          v-for="menu in topAggregateMenus"
+          :key="menu.id"
+          v-show="menu.children && menu.children.length > 0"
+          class="aggregate-group"
+        >
+          <!-- 主菜单标题 -->
+          <div class="group-title">
+            <span>{{ menu.title }}</span>
+          </div>
 
-        <!-- 子菜单列 -->
-        <div class="group-children">
-          <a
-            v-for="child in menu.children"
-            :key="child.id"
-            :href="child.url"
-            :aria-label="child.title"
-          >
-            <NuxtImg
-              v-if="child.icon && isImageIcon(child.icon)"
-              :src="child.icon"
-              :alt="child.title"
-              class="icon-img"
-              loading="lazy"
-            />
-            <i v-else-if="child.icon" :class="child.icon + ' ri-lg'"></i>
-            <span>{{ child.title }}</span>
-          </a>
+          <!-- 子菜单列 -->
+          <div class="group-children">
+            <a
+              v-for="child in menu.children"
+              :key="child.id"
+              :href="child.url"
+              :aria-label="child.title"
+            >
+              <NuxtImg
+                v-if="child.icon && isImageIcon(child.icon)"
+                :src="child.icon"
+                :alt="child.title"
+                class="icon-img"
+                loading="lazy"
+              />
+              <i v-else-if="child.icon" :class="child.icon + ' ri-lg'"></i>
+              <span>{{ child.title }}</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -62,25 +64,29 @@ const isImageIcon = (icon: string) => {
 
 .nav-aggregate {
   position: relative;
-  margin-right: 30px;
+  margin-right: 8px;
 
   .aggregate-trigger {
     cursor: pointer;
   }
 
   .aggregate-dropdown {
-    @extend .cardHover;
-    backdrop-filter: blur(30px);
     position: absolute;
+    top: 45px;
+    transform: scale(.2);
+    transform-origin: top left;
     left: 0;
-    margin-top: 15px;
-    padding: 8px;
-    width: 300px;
+    background-color: var(--flec-nav-bg);
+    box-shadow: var(--flec-nav-shadow);
+    border-radius: 12px;
+    // border: var(--flec-card-border);
+    flex-direction: column;
+    font-size: 12px;
+    transition: .5s;
     opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
+    
+
 
     &::before {
       position: absolute;
@@ -91,32 +97,52 @@ const isImageIcon = (icon: string) => {
       content: '';
     }
 
+    .aggregate-groups-container{
+      padding-bottom: 15px;
+      width: 100%;
+      max-width: calc(100vw - 40px);
+      height: 100%;
+      overflow-y: auto;
+      max-height: calc(100vh - 80px);
+      overflow-x: hidden;
+    }
+
     .aggregate-group {
-      margin-bottom: 12px;
+      display: flex;
+      -webkit-box-orient: vertical;
+      -moz-box-orient: vertical;
+      -o-box-orient: vertical;
+      -webkit-flex-direction: column;
+      -ms-flex-direction: column;
+      flex-direction: column;
 
       &:last-child {
         margin-bottom: 0;
       }
 
+      &:hover {
+        .group-title {
+          transform: translateX(8px);
+        }
+      }
+
       .group-title {
         padding: 6px 10px;
         color: var(--flec-nav-fixed-font);
-        font-weight: bold;
-        font-size: 0.8rem;
-        transition: color 0.2s ease;
+        margin: 8px 0 8px 20px;
+        font-size: 1.6em;
+        font-weight: 800;
+        transition: .5s;
 
-        &:hover {
-          color: var(--flec-nav-fixed-font-hover);
-        }
       }
 
       .group-children {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 4px;
+        grid-template-columns: repeat(3, 1fr);
+        padding: 0 16px 8px 16px;
+        grid-gap: 8px;
 
         a {
-          height: 40px;
           display: flex;
           align-items: center;
           padding: 8px 10px;
@@ -125,13 +151,22 @@ const isImageIcon = (icon: string) => {
           opacity: 0;
           transform: translateY(-5px);
           transition: all 0.2s ease;
+          align-items: center;
+          width: 150px;
+          padding: 6px 10px;
+          border-radius: 8px;
 
           &:hover {
             background: var(--flec-nav-menu-bg-hover);
             border-radius: 8px;
+            color: var(--white);
 
             span {
-              color: var(--flec-nav-fixed-font-hover);
+              color: var(--white);
+            }
+
+            i{
+              transform: rotate(30deg);
             }
           }
 
@@ -145,13 +180,20 @@ const isImageIcon = (icon: string) => {
 
           i {
             margin-right: 8px;
+            transition: all .5s;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
 
           span {
+            transition: all .5s;
             color: var(--flec-nav-fixed-font);
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 16px;
+            font-weight: 600;
           }
         }
       }
@@ -160,10 +202,16 @@ const isImageIcon = (icon: string) => {
 
   &:hover {
     .aggregate-dropdown {
+      max-width: calc(100vw - 40px);
+      display: flex;
       opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
+      filter: none;
+      transition: .5s;
+      top: 50px;
       pointer-events: auto;
+      left: 0;
+      transform: scale(1);
+      // backdrop-filter: blur(10px);
 
       .group-children a {
         opacity: 1;

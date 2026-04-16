@@ -36,7 +36,7 @@ const goToCategory = () => {
 </script>
 
 <template>
-  <header
+  <div
     class="post-header"
     :style="{ backgroundImage: article?.cover ? `url(${article.cover})` : 'none' }"
   >
@@ -119,7 +119,20 @@ const goToCategory = () => {
         </div>
       </div>
     </div>
-  </header>
+    <section class="main-hero-waves-area waves-area">
+      <svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+        <defs>
+          <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s58 18 88 18 58-18 88-18 58 18 88 18v44h-352Z"></path>
+        </defs>
+        <g class="parallax">
+          <use href="#gentle-wave" x="48" y="0"></use>
+          <use href="#gentle-wave" x="48" y="3"></use>
+          <use href="#gentle-wave" x="48" y="5"></use>
+          <use href="#gentle-wave" x="48" y="7"></use>
+          </g>
+      </svg>
+    </section>
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -127,41 +140,54 @@ const goToCategory = () => {
   position: relative;
   height: 400px;
   width: 100%;
-  margin-top: -4rem; // 向上延伸 4rem（NavBar 的高度）
-  padding-top: 4rem; // 补偿内容位置
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  z-index: 0; // 确保在 NavBar (z-index: 50) 下方
 
   // 添加遮罩层，确保文字清晰可见
   &::before {
-    content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    z-index: 1;
+    width: 100%;
+    height: 100%;
+    background-color: var(--mark-bg);
+    content: '';
   }
 
   .post-info {
     position: absolute;
-    top: 35%;
+    padding: 0 8%;
     width: 100%;
+    text-align: center;
+    height: 100%;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
     display: flex;
-    align-items: center;
+    -webkit-box-pack: center;
+    -moz-box-pack: center;
+    -o-box-pack: center;
+    -ms-flex-pack: center;
+    -webkit-justify-content: center;
     justify-content: center;
+    -webkit-flex-wrap: npwrap;
+    -ms-flex-wrap: npwrap;
+    flex-wrap: npwrap;
+    -webkit-box-orient: vertical;
+    -moz-box-orient: vertical;
+    -o-box-orient: vertical;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
     flex-direction: column;
-    padding: 0 2rem;
-    z-index: 2;
+    backdrop-filter: blur(15px);
 
     .post-title {
-      font-size: 2.2rem;
-      color: #fff;
-      text-align: center;
+      margin-bottom: 8px;
+      color: var(--white);
+      font-weight: 400;
+      font-size: 2.5em;
+      line-height: 1.5;
+      -webkit-line-clamp: 3;
     }
 
     // 默认显示桌面端，隐藏移动端
@@ -178,7 +204,8 @@ const goToCategory = () => {
       align-items: center;
       flex-wrap: wrap;
       justify-content: center;
-      color: rgba(255, 255, 255, 0.9);
+      color: var(--light-grey);
+      font-size: 95%;
 
       .post-meta-item {
         display: flex;
@@ -205,6 +232,84 @@ const goToCategory = () => {
         }
       }
     }
+  }
+
+ 
+
+}
+
+ /* 波浪css */
+.main-hero-waves-area {
+  width: 100%;
+  position: absolute;
+  left: 0;
+  bottom: -11px;
+  z-index: 5;
+}
+.waves-area .waves-svg {
+  width: 100%;
+  height: 5rem;
+}
+/* Animation */
+
+.parallax > use {
+  animation: move-forever 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+}
+.parallax > use:nth-child(1) {
+  animation-delay: -2s;
+  animation-duration: 7s;
+  fill: #f7f9febd;
+}
+.parallax > use:nth-child(2) {
+  animation-delay: -3s;
+  animation-duration: 10s;
+  fill: #f7f9fe82;
+}
+.parallax > use:nth-child(3) {
+  animation-delay: -4s;
+  animation-duration: 13s;
+  fill: #f7f9fe36;
+}
+.parallax > use:nth-child(4) {
+  animation-delay: -5s;
+  animation-duration: 20s;
+  fill: #f7f9fe;
+}
+/* 黑色模式背景 */
+[data-theme="dark"] .parallax > use:nth-child(1) {
+  animation-delay: -2s;
+  animation-duration: 7s;
+  fill: #0f172ab3
+}
+[data-theme="dark"] .parallax > use:nth-child(2) {
+  animation-delay: -3s;
+  animation-duration: 10s;
+  fill: #0f172a80;
+}
+[data-theme="dark"] .parallax > use:nth-child(3) {
+  animation-delay: -4s;
+  animation-duration: 13s;
+  fill: #0f172a4d;
+}
+[data-theme="dark"] .parallax > use:nth-child(4) {
+  animation-delay: -5s;
+  animation-duration: 20s;
+  fill: rgba(66, 249, 251, 0.3);
+}
+
+@keyframes move-forever {
+  0% {
+    transform: translate3d(-90px, 0, 0);
+  }
+  100% {
+    transform: translate3d(85px, 0, 0);
+  }
+}
+/*Shrinking for mobile*/
+@media (max-width: 768px) {
+  .waves-area .waves-svg {
+    height: 40px;
+    min-height: 40px;
   }
 }
 

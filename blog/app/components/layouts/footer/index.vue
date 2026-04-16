@@ -17,6 +17,6 @@
   gap: 32px;
   align-items: center;
   width: 100%;
-  background: linear-gradient(to top, var(--flec-card-bg) 65%, var(--flec-page-bg) 90%);
+  background: var(--flec-footer-content-bg);
 }
 </style>

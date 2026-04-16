@@ -76,7 +76,7 @@ const showAnnouncement = computed(() => hasVisibleAnnouncementContent(announceme
 <template>
   <div v-if="showAnnouncement" class="card-widget card-announcement">
     <div class="item-headline">
-      <i class="ri-megaphone-line announcement-icon"></i>
+      <i class="ri-megaphone-fill"></i>
       <span>公告</span>
     </div>
     <div class="announcement-content" v-html="announcementHtml"></div>
@@ -85,9 +85,9 @@ const showAnnouncement = computed(() => hasVisibleAnnouncementContent(announceme
 
 <style lang="scss" scoped>
 .card-announcement {
-  .announcement-icon {
-    color: #e03131;
-  }
+  .item-headline i {
+    color: red;
+}
 
   .announcement-content {
     line-height: 1.8;

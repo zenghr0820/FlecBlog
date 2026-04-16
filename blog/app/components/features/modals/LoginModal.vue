@@ -474,7 +474,7 @@ const handleSubmit = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  backdrop-filter: blur(4px);
+  //backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -483,7 +483,7 @@ const handleSubmit = async () => {
 }
 
 .modal-container {
-  background-color: var(--flec-card-bg);
+  background-color: var(--flec-login-bg);
   border-radius: 1rem;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 100%;
