@@ -1,10 +1,16 @@
 <script lang="ts" setup>
-const { blogConfig } = useSysConfig()
+
+const { basicConfig, blogConfig } = useSysConfig()
 const displayText = ref('')
 const typingSpeed = 150 // 打字速度（毫秒）
 const deletingSpeed = 80 // 删除速度（毫秒）
 const pauseTime = 2000 // 暂停时间（毫秒）
 let typingTimer: number | null = null
+
+
+const avatarUrl = computed(
+  () => basicConfig.value.author_avatar || '/avatar.webp'
+)
 
 // 获取打字机文本列表
 const getTypingTexts = (): string[] => {
@@ -77,8 +83,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <header class="home-header">
+  <div  class="home-header">
     <div class="site-info">
+      <div class="info_title_avatar">
+        <NuxtImg :src="avatarUrl" alt="头像" loading="lazy" id="site-info-avatar"  />
+        </div>
       <h1>{{ blogConfig.title }}</h1>
       <div class="site-subtitle">
         <span id="subtitle">{{ displayText }}</span>
@@ -88,14 +97,31 @@ onUnmounted(() => {
     <div class="scroll-indicator" @click="scrollToContent">
       <i class="ri-arrow-down-s-line ri-2x"></i>
     </div>
-  </header>
+  </div>
 </template>
 
 <style lang="scss" scoped>
 .home-header {
   position: relative;
-  height: calc(100vh - 4rem);
   width: 100%;
+  height: 100vh;
+  background-attachment: fixed;
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  -webkit-transition: all .5s;
+  -moz-transition: all .5s;
+  -o-transition: all .5s;
+  -ms-transition: all .5s;
+  transition: all .5s;
+
+  &::before{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: var(--mark-bg);
+    content: '';
+  }
 
   .site-info {
     position: absolute;
@@ -106,14 +132,31 @@ onUnmounted(() => {
     justify-content: center;
     flex-direction: column;
 
+    .info_title_avatar {
+      #site-info-avatar {
+        text-align: center;
+        border: 4px solid var(--white);
+        padding: 4px;
+        height: 130px;
+        width: 130px;
+        border-radius: 50%;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box; 
+      }
+
+    }
+
+    
+
     h1 {
       font-size: 2.6rem;
-      color: #fff;
+      color: var(--white);
     }
 
     .site-subtitle {
       font-size: 1.7rem;
-      color: #eee;
+      color: var(--light-grey);
 
       .cursor {
         display: inline-block;

@@ -76,9 +76,10 @@
   --prose-del-text: #858585;
 
   // 自定义块颜色
-  --prose-custom-bg: rgba(249, 250, 251, 0.5);
+  --prose-custom-bg: #fff;
+  --prose-custom-note-bg: #fff;
   --prose-custom-hover-bg: rgba(0, 0, 0, 0.05);
-  --prose-custom-border: rgba(128, 128, 128, 0.2);
+  --prose-custom-border: #42444a;
   --prose-custom-accent: #49b1f5;
 }
 
@@ -157,13 +158,131 @@
   --prose-del-text: #666;
 
   // 自定义块颜色
-  --prose-custom-bg: rgba(30, 30, 30, 0.5);
+  --prose-custom-bg: #2d2d2d;
+  --prose-custom-note-bg: #2d2d2d;
   --prose-custom-hover-bg: rgba(255, 255, 255, 0.05);
-  --prose-custom-border: rgba(255, 255, 255, 0.15);
+  --prose-custom-border: #42444a;
   --prose-custom-accent: #49b1f5;
 }
 
 // ========== Markdown 内容排版样式 ==========
+#article-container.markdown-content h1,#article-container.markdown-content h2,#article-container.markdown-content h3,#article-container.markdown-content h4,#article-container.markdown-content h5,#article-container.markdown-content h6 {
+    -webkit-transition: all .2s ease-out;
+    -moz-transition: all .2s ease-out;
+    -o-transition: all .2s ease-out;
+    -ms-transition: all .2s ease-out;
+    transition: all .2s ease-out
+}
+
+#article-container.markdown-content h1:before,#article-container.markdown-content h2:before,#article-container.markdown-content h3:before,#article-container.markdown-content h4:before,#article-container.markdown-content h5:before,#article-container.markdown-content h6::before {
+    position: absolute;
+    top: calc(50% - 7px);
+    color: #f47466;
+    content: '\F0D4';
+    font-family: 'remixicon';
+    left: 0;
+    line-height: 1;
+    -webkit-transition: all .2s ease-out;
+    -moz-transition: all .2s ease-out;
+    -o-transition: all .2s ease-out;
+    -ms-transition: all .2s ease-out;
+    transition: all .2s ease-out
+}
+
+#article-container.markdown-content h1:hover:before,#article-container.markdown-content h2:hover:before,#article-container.markdown-content h3:hover:before,#article-container.markdown-content h4:hover:before,#article-container.markdown-content h5:hover:before,#article-container.markdown-content h6:hover:before {
+    color: #2679cc
+}
+
+#article-container.markdown-content h1:before,#article-container.markdown-content h2:before,#article-container.markdown-content h3:before,#article-container.markdown-content h4:before,#article-container.markdown-content h5:before,#article-container.markdown-content h6:before,#article-container.markdown-content hr:before,#post .post-outdate-notice:before,.custom-hr:before,.fontawesomeIcon,.search-dialog hr:before {
+    display: inline-block;
+    font-weight: 600;
+    font-family: 'remixicon';
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased
+}
+
+#article-container h1 a.headerlink,#article-container h2 a.headerlink,#article-container h3 a.headerlink,#article-container h4 a.headerlink,#article-container h5 a.headerlink,#article-container h6 a.headerlink {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%
+}
+
+#article-container.markdown-content h1 {
+    padding-left: 28px
+}
+
+#article-container.markdown-content h1:before {
+    font-size: 18px
+}
+
+#article-container.markdown-content h1:hover {
+    padding-left: 32px
+}
+
+#article-container.markdown-content h2 {
+    padding-left: 26px
+}
+
+#article-container.markdown-content h2:before {
+    font-size: 16px
+}
+
+#article-container.markdown-content h2:hover {
+    padding-left: 30px
+}
+
+#article-container.markdown-content h3 {
+    padding-left: 24px;
+}
+
+#article-container.markdown-content h3:before {
+    font-size: 14px
+}
+
+#article-container.markdown-content h3:hover {
+    padding-left: 28px
+}
+
+#article-container.markdown-content h4 {
+    padding-left: 22px
+}
+
+#article-container.markdown-content h4:before {
+    font-size: 12px
+}
+
+#article-container.markdown-content h4:hover {
+    padding-left: 26px
+}
+
+#article-container.markdown-content h5 {
+    padding-left: 20px
+}
+
+#article-container.markdown-content h5:before {
+    font-size: 10px
+}
+
+#article-container.markdown-content h5:hover {
+    padding-left: 24px
+}
+
+#article-container.markdown-content h6 {
+    padding-left: 20px
+}
+
+#article-container.markdown-content h6:before {
+    font-size: 10px
+}
+
+#article-container.markdown-content h6:hover {
+    padding-left: 24px
+}
+
 .markdown-content {
   // ===== 基础设置 =====
   font-family:
@@ -205,31 +324,7 @@
     }
   }
 
-  h1 {
-    font-size: 2.25rem;
-    margin-top: 0;
-    letter-spacing: -0.02rem;
-  }
-
-  h2 {
-    font-size: 1.875rem;
-    letter-spacing: -0.01rem;
-  }
-
-  h3 {
-    font-size: 1.5rem;
-  }
-
-  h4 {
-    font-size: 1.25rem;
-  }
-
-  h5 {
-    font-size: 1.125rem;
-  }
-
   h6 {
-    font-size: 1rem;
     font-weight: 600;
   }
 
@@ -257,10 +352,10 @@
     font-weight: 500;
     position: relative;
 
-    &:hover {
-      color: var(--prose-link-hover);
-      border-bottom-color: var(--prose-link);
-    }
+    // &:hover {
+    //   color: var(--prose-link-hover);
+    //   border-bottom-color: var(--prose-link);
+    // }
 
     // 外部链接图标
     &[target='_blank']::after {
@@ -771,13 +866,16 @@
   // ===== 自定义块设计系统 =====
   // 提示框
   .custom-note {
-    margin: 1.5rem 0;
-    padding: 1rem 1.2rem;
-    border-radius: 8px;
-    background: var(--prose-custom-bg);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-    border-left: 4px solid;
-    transition: box-shadow 0.3s ease;
+    border-radius: 12px;
+    position: relative;
+    margin: 0 0 20px;
+    padding: 15px 15px 7px 15px;
+    background-color: var(--prose-custom-note-bg);
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+    }
 
     .custom-note-title {
       font-weight: 700;
@@ -798,40 +896,44 @@
       }
     }
 
-    &:hover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-
     // 不同类型的提示框颜色
     &.custom-note-info {
-      border-left-color: #2196f3;
+      background-image: radial-gradient(circle at 4em -25em, #5cb85c, transparent 30em), linear-gradient(#5cb85c -2000%, transparent);
 
       .custom-note-title {
-        color: #2196f3;
+        color: #5cb85c;
       }
     }
 
     &.custom-note-warning {
-      border-left-color: #ff9800;
+      background-image: radial-gradient(circle at 4em -25em, #f0ad4e, transparent 30em), linear-gradient(#f0ad4e -2000%, transparent);
 
       .custom-note-title {
-        color: #ff9800;
+        color: #f0ad4e;
       }
     }
 
     &.custom-note-success {
-      border-left-color: #4caf50;
+      background-image: radial-gradient(circle at 4em -25em, #5cb85c, transparent 30em), linear-gradient(#5cb85c -2000%, transparent);
 
       .custom-note-title {
-        color: #4caf50;
+        color: #5cb85c;
       }
     }
 
     &.custom-note-error {
-      border-left-color: #f44336;
+      background-image: radial-gradient(circle at 4em -25em, #d9534f, transparent 30em), linear-gradient(#d9534f -2000%, transparent);
 
       .custom-note-title {
-        color: #f44336;
+        color: #d9534f;
+      }
+    }
+
+    &.custom-note-question {
+      background-image: radial-gradient(circle at 4em -25em, #5bc0de, transparent 30em), linear-gradient(#5bc0de -2000%, transparent);
+
+      .custom-note-title {
+        color: #5bc0de;
       }
     }
   }
@@ -1008,9 +1110,16 @@
 
       &:hover {
         border-bottom: none;
+        color: #fff;
+        background-color: var(--flec-btn-hover);
 
         .custom-link-arrow i {
+          color: #fff;
           transform: translate(2px, -2px);
+        }
+        
+        .custom-link-info .custom-link-title, .custom-link-desc {
+          color: #fff;
         }
       }
     }
@@ -1139,7 +1248,8 @@
 
     // 自定义块响应式调整
     .custom-note {
-      padding: 0.875rem 1rem;
+      padding: 12px 12px 5px 12px;
+      margin: 0 0 15px;
     }
 
     .custom-tabs {

@@ -32,7 +32,7 @@ withDefaults(defineProps<ToastProps>(), {
   border-radius: 6px;
   font-size: 0.95rem;
   color: white;
-  backdrop-filter: blur(10px);
+  //backdrop-filter: blur(10px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
   &.toast-success {

@@ -75,6 +75,13 @@ const secondaryBtn = computed(() =>
 const renderedMarkdown = computed(() =>
   renderSimpleMarkdown(commentContent.value)
 )
+
+// 评论字符计数
+const MAX_COMMENT_LENGTH = 500
+const commentLength = computed(() => commentContent.value.length)
+const remainingChars = computed(() => MAX_COMMENT_LENGTH - commentLength.value)
+const isOverLimit = computed(() => remainingChars.value < 0)
+
 const guestPrivacyNotice = [
   '游客无需注册即可评论。',
   '你提交的昵称、邮箱、网址和评论内容会保存在服务端，用于展示评论身份、接收回复及必要的安全审计。',
@@ -123,6 +130,15 @@ const validateForm = () => {
 
   if (!commentContent.value.trim()) {
     errors.value.content = '请输入评论内容'
+    autoClearError('content')
+    return false
+  }
+
+  // 验证评论长度（后端限制为 500 字符）
+  const contentLength = commentContent.value.trim().length
+  if (contentLength > 500) {
+    errors.value.content = `评论内容不能超过 500 个字符（当前 ${contentLength} 个字符）`
+    autoClearError('content')
     return false
   }
 
@@ -132,6 +148,13 @@ const validateForm = () => {
 // 清除特定字段的错误
 const clearError = (field: 'nickname' | 'email' | 'website' | 'content') => {
   errors.value[field] = ''
+}
+
+// 自动清除错误提示（3秒后）
+const autoClearError = (field: 'nickname' | 'email' | 'website' | 'content') => {
+  setTimeout(() => {
+    errors.value[field] = ''
+  }, 3000)
 }
 
 // 事件处理
@@ -184,8 +207,8 @@ const handleSubmitComment = async () => {
 
     if (isLoggedIn.value) triggerOnComment()
   } catch (error: any) {
-    errors.value.email =
-      error.message || error.response?.data?.message || '评论发表失败'
+    const errorMsg = error.response?._data?.message || '评论发表失败'
+    info(errorMsg)
   } finally {
     isSubmitting.value = false
   }
@@ -430,18 +453,17 @@ onUnmounted(() => {
           resetTextareaHeight()
         "
         @paste="handlePaste"
+        @wheel.stop.passive
+        @touchmove.stop.passive
       />
+      <!-- 字符计数器 -->
+      <div class="char-counter" :class="{ 'over-limit': isOverLimit }">
+        <span>{{ remainingChars }}</span> / {{ MAX_COMMENT_LENGTH }}
+      </div>
       <transition name="fade">
         <div v-if="errors.content" class="error-tooltip content-error">
           {{ errors.content }}
         </div>
-      </transition>
-      <transition name="expand">
-        <div
-          v-if="showPreview"
-          class="preview-area markdown-body"
-          v-html="renderedMarkdown || '<p class=\'empty-hint\'>暂无内容</p>'"
-        ></div>
       </transition>
     </div>
 
@@ -557,7 +579,8 @@ onUnmounted(() => {
 
 .comment-input {
   margin-bottom: 30px;
-  background: var(--flec-card-bg);
+  background: var(--flec-comment-bg);
+  box-shadow: var(--flec-card-box-shadow);
   border-radius: 8px;
   padding: 16px;
   display: flex;
@@ -752,6 +775,9 @@ textarea {
 .editor-container {
   position: relative;
   width: 100%;
+  
+  // 确保容器不会干扰内部元素的滚动
+  overflow: visible;
 }
 
 textarea {
@@ -759,10 +785,31 @@ textarea {
   padding: 10px 12px;
   font-size: 0.95rem;
   line-height: 1.6;
-  resize: none;
-  min-height: 60px;
+  resize: vertical;
+  min-height: 120px;
   max-height: 300px;
-  overflow-y: hidden;
+  overflow-y: auto;
+  
+  // 确保滚动行为独立，不受父元素影响
+  overscroll-behavior: contain;
+  
+  // 自定义滚动条样式（WebKit 浏览器）
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.3);
+    }
+  }
 
   &.error {
     border-color: #ef4444;
@@ -770,6 +817,21 @@ textarea {
     &:focus {
       border-color: #ef4444;
     }
+  }
+}
+
+.char-counter {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 0.75rem;
+  color: var(--theme-meta-color);
+  user-select: none;
+  pointer-events: none;
+
+  &.over-limit {
+    color: #ef4444;
+    font-weight: 600;
   }
 }
 
@@ -951,6 +1013,7 @@ textarea {
   border: none;
   border-radius: 6px;
   background: var(--flec-btn);
+  box-shadow: var(--flec-card-box-shadow);
   color: var(--font-light-color);
   font-size: 0.9rem;
   font-weight: 500;

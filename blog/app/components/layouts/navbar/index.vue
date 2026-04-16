@@ -3,7 +3,7 @@ const route = useRoute()
 const showHeader = computed(() => !!route.meta.typeHeader)
 
 const { y } = useWindowScroll()
-const isFixed = computed(() => y.value > 0)
+const isFixed = computed(() => y.value > 20)
 const lastScrollY = ref(0)
 const isScrollingDown = ref(false)
 const showDrawer = ref(false)
@@ -56,18 +56,17 @@ const toggleDrawer = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 6.5rem;
-  height: 4rem;
+  padding: 0 2.5rem;
   font-size: 1.1rem;
-  position: sticky;
   top: 0;
   left: 0;
   right: 0;
   z-index: 50;
   background-color: transparent;
-  transition:
-    background-color 0.5s ease,
-    opacity 0.5s ease-out;
+  height: 75px;
+  position: fixed;
+  transition: all .5s;
+
 
   .nav-left {
     flex: 1;
@@ -94,9 +93,9 @@ const toggleDrawer = () => {
       bottom: -8px;
       left: 50%;
       width: 90%;
-      height: 1px;
+      height: 3px;
       background-color: var(--flec-nav-focus);
-      transform: translateX(-50%) scaleX(0);
+      transform: translateX(-100%) scaleX(0);
       transform-origin: center;
       transition: transform 0.3s ease;
       will-change: transform;
@@ -109,6 +108,13 @@ const toggleDrawer = () => {
 
   &.fixed {
     background-color: var(--flec-nav-bg);
+    height: 60px;
+    top: 0;
+    -webkit-transition: all .5s;
+    -moz-transition: all .5s;
+    -o-transition: all .5s;
+    -ms-transition: all .5s;
+    transition: all .5s;
     opacity: 1;
 
     .brighten {

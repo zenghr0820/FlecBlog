@@ -153,14 +153,14 @@ onUnmounted(() => {
 .float-button {
   width: 35px;
   height: 35px;
-  background: var(--flec-btn);
+  background: var(--flec-float-btn);
   border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: white;
+  color: var(--flec-btn-color);
   font-size: 16px;
 
   &:hover {

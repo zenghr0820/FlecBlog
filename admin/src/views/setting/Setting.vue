@@ -11,7 +11,7 @@
             :disabled="!canEditSettings"
             @click="handleSave"
           >
-            保存配置1
+            保存配置
           </el-button>
           <el-button @click="loadAllConfigs">重置</el-button>
         </div>
@@ -20,7 +20,7 @@
       <!-- 标签页 -->
       <el-tabs v-model="activeTab" class="setting-tabs">
         <!-- 基本配置标签页 -->
-        <el-tab-pane label="基本配置1" name="basic">
+        <el-tab-pane label="基本配置" name="basic">
           <BasicSettingsTab
             ref="basicTabRef"
             v-model:form="basicForm"
@@ -146,7 +146,9 @@ const blogForm = ref({
 
   // 全局样式
   favicon: '',
-  background_image: '',
+  background_image: '', // 已废弃，保留兼容
+  background_image_light: '', // 浅色主题背景图片
+  background_image_dark: '', // 深色主题背景图片
   screenshot: '',
   announcement: '',
   typingTextsList: [] as Array<{ value: string }>,
@@ -290,16 +292,37 @@ const loadBlogConfigs = async () => {
 
       // 全局样式
       favicon: configs.favicon || '',
-      background_image: configs.background_image || '',
+      background_image: configs.background_image || '', // 已废弃，保留兼容
+      background_image_light: configs.background_image_light || '', // 浅色主题背景图片
+      background_image_dark: configs.background_image_dark || '', // 深色主题背景图片
       screenshot: configs.screenshot || '',
       announcement: configs.announcement || '',
+      typingTextsList: configs.typingTextsList || [],
+
+      // 社交媒体
+      sidebarSocialList: configs.sidebarSocialList || [],
+      footerSocialList: configs.footerSocialList || [],
+
+      // 页脚链接
+      footerLinksList: configs.footerLinksList || [],
+
+      // 页面配置
+      moments_size: configs.moments_size || 30,
+      message_content: configs.message_content || '',
+      home_layout: configs.home_layout || 'waterfall',
 
       // 关于页面配置
       about_describe: configs.about_describe || '',
       about_describe_tips: configs.about_describe_tips || '',
       about_exhibition: configs.about_exhibition || '',
+      profileList: configs.profileList || [],
       about_personality: configs.about_personality || '',
+      mottoMainList: configs.mottoMainList || [],
       about_motto_sub: configs.about_motto_sub || '',
+      socializeList: configs.socializeList || [],
+      creationList: configs.creationList || [],
+      versionsList: configs.versionsList || [],
+      unionsList: configs.unionsList || [],
       about_story: configs.about_story || '',
       moments_size: Number(configs.moments_size) || 30,
       message_content: configs.message_content || '',
@@ -468,16 +491,16 @@ const loadOAuthConfigs = async () => {
 const loadAllConfigs = async () => {
   loading.value = true
   try {
-    await Promise.all([
-      loadBasicConfigs(),
-      loadBlogConfigs(),
-      loadNotificationConfigs(),
-      loadUploadConfigs(),
-      loadAIConfigs(),
-      loadOAuthConfigs()
-    ])
+  await Promise.all([
+    loadBasicConfigs(),
+    loadBlogConfigs(),
+    loadNotificationConfigs(),
+    loadUploadConfigs(),
+    loadAIConfigs(),
+    loadOAuthConfigs()
+  ])
   } finally {
-    loading.value = false
+  loading.value = false
   }
 }
 
@@ -490,7 +513,7 @@ const handleSave = async () => {
 
   saving.value = true
   try {
-    const uploadPromises: Promise<void>[] = []
+  const uploadPromises: Promise<void>[] = []
 
     // 收集所有待上传的图片（并行上传）
     const basicUploaders = basicTabRef.value
@@ -515,43 +538,54 @@ const handleSave = async () => {
       }
     }
 
-    const blogUploaders = blogTabRef.value
-    if (blogUploaders) {
-      if (blogUploaders.faviconUploaderRef?.getPendingCount()) {
-        uploadPromises.push(
-          blogUploaders.faviconUploaderRef.uploadPendingFile().then((url) => {
-            if (url) blogForm.value.favicon = url
-          })
-        )
-      }
-      if (blogUploaders.backgroundUploaderRef?.getPendingCount()) {
-        uploadPromises.push(
-          blogUploaders.backgroundUploaderRef
-            .uploadPendingFile()
-            .then((url) => {
-              if (url) blogForm.value.background_image = url
-            })
-        )
-      }
-      if (blogUploaders.screenshotUploaderRef?.getPendingCount()) {
-        uploadPromises.push(
-          blogUploaders.screenshotUploaderRef
-            .uploadPendingFile()
-            .then((url) => {
-              if (url) blogForm.value.screenshot = url
-            })
-        )
-      }
-      if (blogUploaders.aboutExhibitionUploaderRef?.getPendingCount()) {
-        uploadPromises.push(
-          blogUploaders.aboutExhibitionUploaderRef
-            .uploadPendingFile()
-            .then((url) => {
-              if (url) blogForm.value.about_exhibition = url
-            })
-        )
-      }
+  const blogUploaders = blogTabRef.value
+  if (blogUploaders) {
+    if (blogUploaders.faviconUploaderRef?.getPendingCount()) {
+      uploadPromises.push(
+        blogUploaders.faviconUploaderRef.uploadPendingFile().then((url) => {
+          if (url) blogForm.value.favicon = url
+        })
+      )
     }
+    // 浅色主题背景图片上传
+    if (blogUploaders.backgroundLightUploaderRef?.getPendingCount()) {
+      uploadPromises.push(
+        blogUploaders.backgroundLightUploaderRef
+          .uploadPendingFile()
+          .then((url) => {
+            if (url) blogForm.value.background_image_light = url
+          })
+      )
+    }
+    // 深色主题背景图片上传
+    if (blogUploaders.backgroundDarkUploaderRef?.getPendingCount()) {
+      uploadPromises.push(
+        blogUploaders.backgroundDarkUploaderRef
+          .uploadPendingFile()
+          .then((url) => {
+            if (url) blogForm.value.background_image_dark = url
+          })
+      )
+    }
+    if (blogUploaders.screenshotUploaderRef?.getPendingCount()) {
+      uploadPromises.push(
+        blogUploaders.screenshotUploaderRef
+          .uploadPendingFile()
+          .then((url) => {
+            if (url) blogForm.value.screenshot = url
+          })
+      )
+    }
+    if (blogUploaders.aboutExhibitionUploaderRef?.getPendingCount()) {
+      uploadPromises.push(
+        blogUploaders.aboutExhibitionUploaderRef
+          .uploadPendingFile()
+          .then((url) => {
+            if (url) blogForm.value.about_exhibition = url
+          })
+      )
+    }
+  }
 
     // 等待所有上传完成（使用 allSettled 确保即使部分失败也继续）
     if (uploadPromises.length > 0) {
@@ -580,38 +614,40 @@ const handleSave = async () => {
 
     // 博客配置
     const blogPayload: Record<string, string> = {
-      'blog.title': blogForm.value.title,
-      'blog.subtitle': blogForm.value.subtitle,
-      'blog.slogan': blogForm.value.slogan,
-      'blog.description': blogForm.value.description,
-      'blog.keywords': blogForm.value.keywords,
-      'blog.established': blogForm.value.established,
-      'blog.favicon': blogForm.value.favicon,
-      'blog.background_image': blogForm.value.background_image,
-      'blog.screenshot': blogForm.value.screenshot,
-      'blog.announcement': blogForm.value.announcement,
+        'blog.title': blogForm.value.title,
+        'blog.subtitle': blogForm.value.subtitle,
+        'blog.slogan': blogForm.value.slogan,
+        'blog.description': blogForm.value.description,
+        'blog.keywords': blogForm.value.keywords,
+        'blog.established': blogForm.value.established,
+        'blog.favicon': blogForm.value.favicon,
+        'blog.background_image': blogForm.value.background_image, // 已废弃，保留兼容
+        'blog.background_image_light': blogForm.value.background_image_light, // 浅色主题背景图片
+        'blog.background_image_dark': blogForm.value.background_image_dark, // 深色主题背景图片
+        'blog.screenshot': blogForm.value.screenshot,
+        'blog.announcement': blogForm.value.announcement,
       'blog.typing_texts': JSON.stringify(
         blogForm.value.typingTextsList.map((item) => item.value)
       ),
       'blog.sidebar_social': JSON.stringify(blogForm.value.sidebarSocialList),
       'blog.footer_social': JSON.stringify(blogForm.value.footerSocialList),
       'blog.footer_links': JSON.stringify(blogForm.value.footerLinksList),
-      'blog.about_describe': blogForm.value.about_describe,
-      'blog.about_describe_tips': blogForm.value.about_describe_tips,
-      'blog.about_exhibition': blogForm.value.about_exhibition,
+        'blog.about_describe': blogForm.value.about_describe,
+        'blog.about_describe_tips': blogForm.value.about_describe_tips,
+        'blog.about_exhibition': blogForm.value.about_exhibition,
       'blog.about_profile': JSON.stringify(blogForm.value.profileList),
-      'blog.about_personality': blogForm.value.about_personality,
+        'blog.about_personality': blogForm.value.about_personality,
       'blog.about_motto_main': JSON.stringify(blogForm.value.mottoMainList),
-      'blog.about_motto_sub': blogForm.value.about_motto_sub,
+        'blog.about_motto_sub': blogForm.value.about_motto_sub,
       'blog.about_socialize': JSON.stringify(blogForm.value.socializeList),
       'blog.about_creation': JSON.stringify(blogForm.value.creationList),
       'blog.about_versions': JSON.stringify(blogForm.value.versionsList),
       'blog.about_unions': JSON.stringify(blogForm.value.unionsList),
-      'blog.about_story': blogForm.value.about_story,
-      'blog.custom_head': blogForm.value.custom_head,
-      'blog.custom_body': blogForm.value.custom_body,
-      'blog.emojis': blogForm.value.emojis,
-      'blog.font': blogForm.value.font,
+        'blog.about_story': blogForm.value.about_story,
+        'blog.custom_head': blogForm.value.custom_head,
+        'blog.custom_body': blogForm.value.custom_body,
+        'blog.emojis': blogForm.value.emojis,
+        'blog.font': blogForm.value.font,
       'blog.moments_size': String(blogForm.value.moments_size),
       'blog.message_content': blogForm.value.message_content,
       'blog.home_layout': blogForm.value.home_layout,
@@ -728,12 +764,30 @@ watch(
 
 // 导入成功回调
 const handleImportSuccess = () => {
-  // 可以在这里添加导入成功后的逻辑
+  loadAllConfigs()
 }
 
+// 页面加载时加载所有配置
 onMounted(() => {
   loadAllConfigs()
 })
+
+// 监听路由变化，加载对应配置
+watch(
+  () => route.params.tab,
+  (tab) => {
+    activeTab.value = tab as string
+  }
+)
+
+// 监听标签页变化，更新路由
+watch(
+  activeTab,
+  (tab) => {
+    route.params.tab = tab
+  }
+)
+
 </script>
 
 <style lang="scss" scoped>
@@ -764,10 +818,10 @@ onMounted(() => {
     margin: 0;
     font-size: 20px;
     font-weight: 500;
-  }
+}
 
-  .actions {
-    display: flex;
+.actions {
+  display: flex;
     gap: 12px;
   }
 }
@@ -824,7 +878,7 @@ onMounted(() => {
     }
 
     .actions {
-      width: 100%;
+  width: 100%;
 
       .el-button {
         flex: 1;

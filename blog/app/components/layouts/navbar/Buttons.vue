@@ -234,7 +234,7 @@ const handleLogout = () => {
       top: calc(100% + 0.75rem);
       right: 0;
       background-color: var(--flec-card-bg);
-      backdrop-filter: blur(3px);
+      //backdrop-filter: blur(3px);
       border-radius: 0.75rem;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
       min-width: 180px;

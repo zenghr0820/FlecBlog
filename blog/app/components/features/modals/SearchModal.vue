@@ -43,6 +43,7 @@ const search = async (newPage = 1) => {
   if (!searchTerm) {
     articles.value = []
     total.value = 0
+    page.value = 1
     return
   }
 
@@ -54,9 +55,10 @@ const search = async (newPage = 1) => {
       page: newPage,
       page_size: pageSize
     })
-    articles.value = data.list
-    total.value = data.total
+    articles.value = data.list || []
+    total.value = data.total || 0
   } catch (error) {
+    console.error('搜索失败:', error)
     articles.value = []
     total.value = 0
   } finally {
@@ -117,11 +119,18 @@ watch(
           </div>
 
           <!-- 结果区域 -->
-          <div v-if="hasSearched" class="results">
+          <div class="results">
+            <!-- 未输入关键词提示 -->
+            <div v-if="!hasSearched" class="empty">
+              <i class="ri-search-line"></i>
+              <p>输入关键词开始搜索</p>
+            </div>
+
             <!-- 加载中 -->
-            <div v-if="loading" class="loading">
+            <div v-else-if="loading" class="loading">
               <i class="ri-loader-4-line spin"></i>
             </div>
+
             <!-- 有结果 -->
             <template v-else-if="articles.length > 0">
               <NuxtLink
@@ -162,6 +171,7 @@ watch(
                 </button>
               </div>
             </template>
+
             <!-- 无结果 -->
             <div v-else class="empty">
               <i class="ri-search-line"></i>
@@ -179,7 +189,7 @@ watch(
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
+  //backdrop-filter: blur(8px);
   display: flex;
   align-items: flex-start;
   padding: 100px 20px;

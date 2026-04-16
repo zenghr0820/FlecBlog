@@ -396,7 +396,10 @@ const inputItems = computed(() => {
 // ========== 位置和交互 ==========
 const style = computed(() => ({
   left: `${pos.value.x}px`,
-  top: `${pos.value.y}px`
+  top: `${pos.value.y}px`,
+  display: 'block',
+  opacity: 1,
+  transform: 'translateY(0px) scale(1)'
 }))
 
 // 调整菜单位置，确保不超出视口边界
@@ -517,6 +520,10 @@ onUnmounted(() => {
   z-index: 10000;
   width: 160px;
   user-select: none;
+  transition: all .3s ease-in-out;
+  background-color: var(--flec-menu-child-bg);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
 }
 
 /* 菜单分组 */
@@ -527,7 +534,7 @@ onUnmounted(() => {
   &.line {
     padding: 7px 6px;
     flex-direction: column;
-    border-top: 1px solid var(--flec-border);
+    border-top: 1px dashed  var(--flec-border);
   }
 
   /* 横向按钮组样式 */

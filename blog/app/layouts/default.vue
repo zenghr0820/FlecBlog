@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import Navbar from '@/components/layouts/navbar/index.vue'
 import Header from '@/components/layouts/header/index.vue'
 import Sidebar from '@/components/layouts/sidebar/index.vue'
 import Footer from '@/components/layouts/footer/index.vue'
@@ -15,7 +14,6 @@ const showMomentWidget = computed(() => route.path == '/')
 
 <template>
   <div class="layout-wrapper">
-    <Navbar />
     <Header />
     <main class="page-main">
       <MomentWidget v-if="showMomentWidget" />
@@ -41,9 +39,9 @@ const showMomentWidget = computed(() => route.path == '/')
 }
 
 .page-main {
-  background: var(--flec-page-bg);
+  // background: var(--flec-page-bg);
   width: 100%;
-  padding: 40px 0;
+  padding: 100px 0;
   flex: 1;
 
   .main-layout {

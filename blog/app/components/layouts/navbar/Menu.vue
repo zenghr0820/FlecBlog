@@ -9,6 +9,7 @@ defineProps<Props>()
 const { flatNavigationMenus } = useMenus()
 const { blogConfig } = useSysConfig()
 const { currentArticle } = useCurrentArticle()
+console.log(flatNavigationMenus)
 
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -92,11 +93,11 @@ const displayTitle = computed(() => {
     gap: 1rem;
     opacity: 1;
     transform: translateY(0);
-    transition: all 0.3s ease;
+    transition: all 1s ease;
 
     &.hide {
       opacity: 0;
-      transform: translateY(-20px);
+      transform: translateY(-80px);
       pointer-events: none;
     }
 
@@ -142,7 +143,7 @@ const displayTitle = computed(() => {
       }
 
       .dropdown-menu {
-        @extend .cardHover;
+        background-color: var(--flec-menu-child-bg);
         visibility: hidden;
         backdrop-filter: blur(30px);
         position: absolute;
@@ -154,6 +155,10 @@ const displayTitle = computed(() => {
         transform: translateX(-50%) translateY(-10px);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         pointer-events: none;
+        display: block;
+        margin-top: 14px;
+        padding: 7px 7px;
+        border-radius: 20px;
 
         &::before {
           position: absolute;
@@ -189,7 +194,7 @@ const displayTitle = computed(() => {
             transition: all 0.2s ease;
 
             &:hover {
-              color: var(--flec-nav-fixed-font-hover);
+              color: var(--white);
               background: var(--flec-nav-menu-bg-hover);
               border-radius: 12px;
             }
@@ -207,13 +212,15 @@ const displayTitle = computed(() => {
     width: 100%;
     position: absolute;
     opacity: 0;
+    z-index: 1;
     pointer-events: none;
-    transform: translateY(20px);
-    transition: all 0.3s ease;
+    transform: translateY(-80px);
+    transition: all 1s ease;
 
     &.show {
       opacity: 1;
       pointer-events: auto;
+      z-index: 2;
       transform: translateY(0);
     }
 
@@ -222,6 +229,28 @@ const displayTitle = computed(() => {
       justify-content: center;
       width: 100%;
       text-align: center;
+
+      &:hover {
+        color: transparent !important;
+      }
+
+      &::before { 
+        font-size: 18px;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        color: transparent;
+        top: 0px;
+        left: 0px;
+        content: "点击回滚页面顶部";
+        opacity: 0;
+        border-radius: 12px;
+        transition: 0.5s;
+      }
+      &:hover::before {
+          opacity: 1;
+          color: var(--font-color);
+      }
 
       .title {
         display: inline;

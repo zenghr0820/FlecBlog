@@ -94,7 +94,7 @@ onUnmounted(() => {
 
 <template>
   <article class="post-content">
-    <div class="markdown-content" v-html="renderedContent"></div>
+    <div class="markdown-content"  id="article-container" v-html="renderedContent"></div>
   </article>
 </template>
 

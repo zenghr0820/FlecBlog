@@ -204,7 +204,7 @@ watch(
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 9999;
-  backdrop-filter: blur(4px);
+  //backdrop-filter: blur(4px);
 }
 
 .drawer-container {

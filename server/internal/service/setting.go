@@ -34,39 +34,42 @@ const (
 //
 //goland:noinspection ALL
 const (
-	KeyBlogTitle             = "blog.title"               // 博客标题
-	KeyBlogSubtitle          = "blog.subtitle"            // 博客副标题
-	KeyBlogSlogan            = "blog.slogan"              // 博客标语
-	KeyBlogDescription       = "blog.description"         // 博客描述
-	KeyBlogKeywords          = "blog.keywords"            // 博客关键词
-	KeyBlogEstablished       = "blog.established"         // 建站日期
-	KeyBlogFavicon           = "blog.favicon"             // 网站Favicon
-	KeyBlogBackgroundImage   = "blog.background_image"    // 背景图片
-	KeyBlogScreenshot        = "blog.screenshot"          // 站点截图
-	KeyBlogAnnouncement      = "blog.announcement"        // 公告内容
-	KeyBlogTypingTexts       = "blog.typing_texts"        // 打字机效果文本（JSON数组）
-	KeyBlogSidebarSocial     = "blog.sidebar_social"      // 侧边栏社交媒体（JSON数组）
-	KeyBlogFooterSocial      = "blog.footer_social"       // 页脚社交媒体（JSON数组）
-	KeyBlogFooterLinks       = "blog.footer_links"        // 页脚右侧链接（JSON数组）
-	KeyBlogAboutDescribe     = "blog.about_describe"      // 个人描述
-	KeyBlogAboutDescribeTips = "blog.about_describe_tips" // 描述提示
-	KeyBlogAboutExhibition   = "blog.about_exhibition"    // 展览图片URL
-	KeyBlogAboutProfile      = "blog.about_profile"       // 个人资料（JSON数组）
-	KeyBlogAboutPersonality  = "blog.about_personality"   // 性格类型代码（如 INFJ-A）
-	KeyBlogAboutMottoMain    = "blog.about_motto_main"    // 座右铭（JSON数组）
-	KeyBlogAboutMottoSub     = "blog.about_motto_sub"     // 一言
-	KeyBlogAboutSocialize    = "blog.about_socialize"     // 联系方式（JSON数组）
-	KeyBlogAboutCreation     = "blog.about_creation"      // 创作平台（JSON数组）
-	KeyBlogAboutVersions     = "blog.about_versions"      // 版本信息（JSON数组）
-	KeyBlogAboutUnions       = "blog.about_unions"        // 站长联盟（JSON数组）
-	KeyBlogAboutStory        = "blog.about_story"         // 心路历程
-	KeyBlogCustomHead        = "blog.custom_head"         // 自定义 Head 代码
-	KeyBlogCustomBody        = "blog.custom_body"         // 自定义 Body 代码
-	KeyBlogEmojis            = "blog.emojis"              // 表情包配置
-	KeyBlogFont              = "blog.font"                // 字体配置（URL|字体名称）
-	KeyBlogMomentsSize       = "blog.moments_size"        // 动态列表每页数量
-	KeyBlogMessageContent    = "blog.message_content"     // 留言信内容
-	KeyBlogHomeLayout        = "blog.home_layout"         // 首页布局（waterfall/single_column）
+	KeyBlogTitle                = "blog.title"                  // 博客标题
+	KeyBlogSubtitle             = "blog.subtitle"               // 博客副标题
+	KeyBlogSlogan               = "blog.slogan"                 // 博客标语
+	KeyBlogDescription          = "blog.description"            // 博客描述
+	KeyBlogKeywords             = "blog.keywords"               // 博客关键词
+	KeyBlogEstablished          = "blog.established"            // 建站日期
+	KeyBlogFavicon              = "blog.favicon"                // 网站Favicon
+	KeyBlogBackgroundImage      = "blog.background_image"       // 背景图片
+	KeyBlogBackgroundImageLight = "blog.background_image_light" // 浅色主题背景图片
+	KeyBlogBackgroundImageDark  = "blog.background_image_dark"  // 深色主题背景图片
+	KeyBlogScreenshot           = "blog.screenshot"             // 站点截图
+	KeyBlogAnnouncement         = "blog.announcement"           // 公告内容
+	KeyBlogTypingTexts          = "blog.typing_texts"           // 打字机效果文本（JSON数组）
+	KeyBlogSidebarSocial        = "blog.sidebar_social"         // 侧边栏社交媒体（JSON数组）
+	KeyBlogFooterSocial         = "blog.footer_social"          // 页脚社交媒体（JSON数组）
+	KeyBlogFooterLinks          = "blog.footer_links"           // 页脚右侧链接（JSON数组）
+	KeyBlogAboutDescribe        = "blog.about_describe"         // 个人描述
+	KeyBlogAboutDescribeTips    = "blog.about_describe_tips"    // 描述提示
+	KeyBlogAboutExhibition      = "blog.about_exhibition"       // 展览图片URL
+	KeyBlogAboutProfile         = "blog.about_profile"          // 个人资料（JSON数组）
+	KeyBlogAboutPersonality     = "blog.about_personality"      // 性格类型代码（如 INFJ-A）
+	KeyBlogAboutMottoMain       = "blog.about_motto_main"       // 座右铭（JSON数组）
+	KeyBlogAboutMottoSub        = "blog.about_motto_sub"        // 一言
+	KeyBlogAboutSocialize       = "blog.about_socialize"        // 联系方式（JSON数组）
+	KeyBlogAboutCreation        = "blog.about_creation"         // 创作平台（JSON数组）
+	KeyBlogAboutVersions        = "blog.about_versions"         // 版本信息（JSON数组）
+	KeyBlogAboutUnions          = "blog.about_unions"           // 站长联盟（JSON数组）
+	KeyBlogAboutStory           = "blog.about_story"            // 心路历程
+	KeyBlogCustomHead           = "blog.custom_head"            // 自定义 Head 代码
+	KeyBlogCustomBody           = "blog.custom_body"            // 自定义 Body 代码
+	KeyBlogEmojis               = "blog.emojis"                 // 表情包配置
+	KeyBlogFont                 = "blog.font"                   // 字体配置（URL|字体名称）
+	KeyBlogMomentsSize          = "blog.moments_size"           // 动态列表每页数量
+	KeyBlogMessageContent       = "blog.message_content"        // 留言信内容
+	KeyBlogHomeLayout           = "blog.home_layout"            // 首页布局（waterfall/single_column）
+	KeyBlogMarkdownContainers   = "blog.markdown_containers"    // Markdown 容器配置（JSON数组）
 )
 
 // 配置键常量 - Notification 相关
@@ -252,6 +255,8 @@ func (s *SettingService) UpdateGroup(group string, updates map[string]string) er
 		if group == model.SettingGroupBlog {
 			handleImageChange(KeyBlogFavicon)
 			handleImageChange(KeyBlogBackgroundImage)
+			handleImageChange(KeyBlogBackgroundImageLight)
+			handleImageChange(KeyBlogBackgroundImageDark)
 			handleImageChange(KeyBlogAboutExhibition)
 			handleImageChange(KeyBlogScreenshot)
 		}
@@ -350,6 +355,12 @@ func (s *SettingService) ApplyDatabaseConfig(cfg *config.Config) error {
 		}
 		if v, ok := blogSettings[KeyBlogBackgroundImage]; ok && v != "" {
 			cfg.Blog.BackgroundImage = v
+		}
+		if v, ok := blogSettings[KeyBlogBackgroundImageLight]; ok && v != "" {
+			cfg.Blog.BackgroundImageLight = v
+		}
+		if v, ok := blogSettings[KeyBlogBackgroundImageDark]; ok && v != "" {
+			cfg.Blog.BackgroundImageDark = v
 		}
 		if v, ok := blogSettings[KeyBlogScreenshot]; ok && v != "" {
 			cfg.Blog.Screenshot = v

@@ -45,7 +45,7 @@
           ref="authorPhotoUploaderRef"
           v-model="form.author_photo"
           upload-type="站长形象"
-          width="80px"
+          width="120px"
           height="120px"
           :disabled="loading"
         />

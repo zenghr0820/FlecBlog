@@ -1,13 +1,13 @@
 // 通用卡片样式 mixin
 .cardHover {
   background: var(--flec-card-bg);
-  box-shadow: 0 3px 8px 6px rgba(7, 17, 27, 0.05);
+  box-shadow: var(--flec-card-box-shadow);
   transition: all 0.3s;
   border-radius: 8px;
-  backdrop-filter: blur(3px);
+  // //backdrop-filter: blur(3px);
 
   &:hover {
-    box-shadow: 0 3px 8px 6px rgba(7, 17, 27, 0.09);
+    box-shadow: var(--flec-card-hover-box-shadow);
   }
 }
 

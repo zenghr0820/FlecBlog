@@ -326,6 +326,7 @@ const handleCommentClick = (moment: Moment) => {
     padding: 0;
     overflow: hidden;
     opacity: 0;
+    background-color: var(--flec-moment-card-bg);
 
     &.layout-ready {
       opacity: 1;
@@ -484,7 +485,7 @@ const handleCommentClick = (moment: Moment) => {
           color: #fff;
           font-weight: 600;
           border-radius: 6px;
-          backdrop-filter: blur(2px);
+          //backdrop-filter: blur(2px);
           transition: background 0.3s ease;
         }
 

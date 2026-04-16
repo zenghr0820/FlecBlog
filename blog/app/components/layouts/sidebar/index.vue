@@ -31,10 +31,6 @@ const isArticlePage = computed(() => route.meta.typeHeader === 'post')
   padding-left: 15px;
 
   .card-widget {
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 20px;
-    padding: 20px 24px;
     @extend .cardHover;
   }
 

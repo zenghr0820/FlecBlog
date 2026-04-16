@@ -104,8 +104,17 @@ router.afterEach(() => {
   triggerGlobal()
 })
 
-// 背景图片
-const bgImage = computed(() => blogConfig.value.background_image || '/bg.webp')
+// 背景图片 - 根据主题动态切换
+import { isDark } from '@/utils/theme'
+
+const bgImage = computed(() => {
+  // 根据主题返回对应的背景图片
+  if (isDark.value) {
+    return blogConfig.value.background_image_dark || blogConfig.value.background_image || '/bg-dark.webp'
+  } else {
+    return blogConfig.value.background_image_light || blogConfig.value.background_image || '/bg-light.webp'
+  }
+})
 
 // 刷新时恢复滚动位置
 onMounted(() => {
@@ -212,28 +221,28 @@ useHead({
 </script>
 
 <template>
-  <!-- 背景图片 -->
-  <div class="web_bg" :style="{ backgroundImage: `url(${bgImage})` }"></div>
+    <!-- 背景图片 -->
+    <div class="web_bg" :style="{ backgroundImage: `url(${bgImage})` }"></div>
 
-  <!-- Nuxt 布局和页面系统 -->
-  <NuxtLayout>
-    <NuxtPage />
-  </NuxtLayout>
+    <!-- Nuxt 布局和页面系统 -->
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
 
-  <!-- Toast 消息提示 -->
-  <UiToast v-for="toast in toasts" :key="toast.id" v-bind="toast" />
+    <!-- Toast 消息提示 -->
+    <UiToast v-for="toast in toasts" :key="toast.id" v-bind="toast" />
 
-  <!-- 登录弹窗 -->
-  <FeaturesModalsLoginModal v-model="showLoginModal" />
+    <!-- 登录弹窗 -->
+    <FeaturesModalsLoginModal v-model="showLoginModal" />
 
-  <!-- 邮箱绑定弹窗 -->
-  <FeaturesModalsBindEmailModal
-    v-model="showBindEmailModal"
-    @success="onBindSuccess"
-  />
+    <!-- 邮箱绑定弹窗 -->
+    <FeaturesModalsBindEmailModal
+      v-model="showBindEmailModal"
+      @success="onBindSuccess"
+    />
 
-  <!-- 右键菜单 -->
-  <UiContextMenu />
+    <!-- 右键菜单 -->
+    <UiContextMenu />
 </template>
 
 <style scoped>
@@ -251,7 +260,6 @@ useHead({
   position: absolute;
   width: 100%;
   height: 100%;
-  background-color: #121212b0;
   content: '';
 }
 </style>
