@@ -465,6 +465,13 @@ onUnmounted(() => {
           {{ errors.content }}
         </div>
       </transition>
+      <transition name="expand">
+        <div
+          v-if="showPreview"
+          class="preview-area markdown-body"
+          v-html="renderedMarkdown || '<p class=\'empty-hint\'>暂无内容</p>'"
+        ></div>
+      </transition>
     </div>
 
     <div class="toolbar">
