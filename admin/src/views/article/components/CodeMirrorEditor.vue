@@ -96,6 +96,467 @@
             </div>
           </el-popover>
         </template>
+        <!-- 提示框按钮 -->
+        <template v-else-if="item.title === '提示框'">
+          <el-popover
+            :width="300"
+            trigger="click"
+            placement="bottom"
+            v-model:visible="noteDialog.visible"
+          >
+            <template #reference>
+              <button
+                :title="item.title"
+                class="toolbar-btn"
+                :class="{ active: noteDialog.visible }"
+              >
+                <i :class="item.icon"></i>
+              </button>
+            </template>
+            <div class="note-dialog-wrap">
+              <div class="note-form-item">
+                <el-radio-group v-model="noteDialog.type" size="small">
+                  <el-radio-button value="info">Info</el-radio-button>
+                  <el-radio-button value="warning">Warning</el-radio-button>
+                  <el-radio-button value="success">Success</el-radio-button>
+                  <el-radio-button value="error">Error</el-radio-button>
+                </el-radio-group>
+              </div>
+              <div class="note-form-item">
+                <el-input
+                  v-model="noteDialog.title"
+                  placeholder="标题"
+                  size="small"
+                  clearable
+                  @keyup.enter="handleInsertNote"
+                />
+              </div>
+              <div class="note-form-actions">
+                <el-button type="primary" size="small" @click="handleInsertNote"> 插入 </el-button>
+              </div>
+            </div>
+          </el-popover>
+        </template>
+        <!-- 标签页按钮 -->
+        <template v-else-if="item.title === '标签页'">
+          <el-popover
+            :width="320"
+            trigger="click"
+            placement="bottom"
+            v-model:visible="tabsDialog.visible"
+          >
+            <template #reference>
+              <button
+                :title="item.title"
+                class="toolbar-btn"
+                :class="{ active: tabsDialog.visible }"
+              >
+                <i :class="item.icon"></i>
+              </button>
+            </template>
+            <div class="tabs-dialog-wrap">
+              <div class="tabs-list">
+                <div v-for="(tab, index) in tabsDialog.tabs" :key="index" class="tabs-item">
+                  <el-input v-model="tabsDialog.tabs[index]" size="small" placeholder="标签名称" />
+                  <el-button
+                    v-if="tabsDialog.tabs.length > 1"
+                    type="danger"
+                    size="small"
+                    text
+                    @click="removeTabsDialogTab(index)"
+                  >
+                    <i class="ri-close-line"></i>
+                  </el-button>
+                </div>
+              </div>
+              <div class="tabs-footer">
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="addTabsDialogTab"
+                  :disabled="tabsDialog.tabs.length >= 10"
+                >
+                  添加标签
+                </el-button>
+                <el-button type="primary" size="small" @click="handleInsertTabs"> 插入 </el-button>
+              </div>
+            </div>
+          </el-popover>
+        </template>
+        <!-- 折叠面板按钮 -->
+        <template v-else-if="item.title === '折叠面板'">
+          <el-popover
+            :width="300"
+            trigger="click"
+            placement="bottom"
+            v-model:visible="foldDialog.visible"
+          >
+            <template #reference>
+              <button
+                :title="item.title"
+                class="toolbar-btn"
+                :class="{ active: foldDialog.visible }"
+              >
+                <i :class="item.icon"></i>
+              </button>
+            </template>
+            <div class="fold-dialog-wrap">
+              <div class="fold-form-item">
+                <el-input
+                  v-model="foldDialog.title"
+                  placeholder="标题"
+                  size="small"
+                  clearable
+                  @keyup.enter="handleInsertFold"
+                />
+              </div>
+              <div class="fold-form-item">
+                <el-checkbox v-model="foldDialog.open" size="small">默认展开</el-checkbox>
+              </div>
+              <div class="fold-form-actions">
+                <el-button type="primary" size="small" @click="handleInsertFold"> 插入 </el-button>
+              </div>
+            </div>
+          </el-popover>
+        </template>
+        <!-- 链接卡片按钮 -->
+        <template v-else-if="item.title === '链接卡片'">
+          <el-popover
+            :width="320"
+            trigger="click"
+            placement="bottom"
+            v-model:visible="linkDialog.visible"
+          >
+            <template #reference>
+              <button
+                :title="item.title"
+                class="toolbar-btn"
+                :class="{ active: linkDialog.visible }"
+              >
+                <i :class="item.icon"></i>
+              </button>
+            </template>
+            <div class="link-dialog-wrap">
+              <div class="link-form-item">
+                <el-input v-model="linkDialog.title" placeholder="标题" size="small" clearable />
+              </div>
+              <div class="link-form-item">
+                <el-input v-model="linkDialog.url" placeholder="https://" size="small" clearable />
+              </div>
+              <div class="link-form-item">
+                <el-input
+                  v-model="linkDialog.description"
+                  placeholder="描述（可选）"
+                  size="small"
+                  clearable
+                />
+              </div>
+              <div class="link-form-actions">
+                <el-button type="primary" size="small" @click="handleInsertLink"> 插入 </el-button>
+              </div>
+            </div>
+          </el-popover>
+        </template>
+        <!-- 照片墙按钮 -->
+        <template v-else-if="item.title === '照片墙'">
+          <el-popover
+            :width="520"
+            trigger="click"
+            placement="bottom"
+            v-model:visible="photoDialog.visible"
+          >
+            <template #reference>
+              <button
+                :title="item.title"
+                class="toolbar-btn"
+                :class="{ active: photoDialog.visible }"
+              >
+                <i :class="item.icon"></i>
+              </button>
+            </template>
+            <div class="photo-dialog-wrap">
+              <div class="photo-rows">
+                <div v-for="(row, rowIndex) in photoDialog.rows" :key="rowIndex" class="photo-row">
+                  <div class="photo-row-header">
+                    <div class="photo-row-actions">
+                      <el-button
+                        :disabled="rowIndex === 0"
+                        size="small"
+                        text
+                        @click="movePhotoRowUp(rowIndex)"
+                      >
+                        <i class="ri-arrow-up-line"></i>
+                      </el-button>
+                      <el-button
+                        :disabled="rowIndex === photoDialog.rows.length - 1"
+                        size="small"
+                        text
+                        @click="movePhotoRowDown(rowIndex)"
+                      >
+                        <i class="ri-arrow-down-line"></i>
+                      </el-button>
+                    </div>
+                    <el-button
+                      v-if="photoDialog.rows.length > 1"
+                      type="danger"
+                      size="small"
+                      text
+                      @click="removePhotoDialogRow(rowIndex)"
+                    >
+                      <i class="ri-close-line"></i>
+                    </el-button>
+                  </div>
+                  <div class="photo-images">
+                    <div v-for="(img, imgIndex) in row" :key="imgIndex" class="photo-image-item">
+                      <el-input
+                        :model-value="getPhotoImageUrl(rowIndex, imgIndex)"
+                        placeholder="图片URL"
+                        size="small"
+                        @update:model-value="
+                          (val: string) => setPhotoImageUrl(rowIndex, imgIndex, val)
+                        "
+                      >
+                        <template #append>
+                          <el-upload
+                            :show-file-list="false"
+                            :before-upload="
+                              (file: File) => {
+                                handlePhotoImageUpload(rowIndex, imgIndex, file);
+                                return false;
+                              }
+                            "
+                            :disabled="photoDialog.uploading"
+                          >
+                            <el-button :loading="photoDialog.uploading" size="small">
+                              <i class="ri-upload-line"></i>
+                            </el-button>
+                          </el-upload>
+                        </template>
+                      </el-input>
+                      <div class="photo-image-actions">
+                        <el-button
+                          :disabled="imgIndex === 0"
+                          size="small"
+                          text
+                          @click="movePhotoImageUp(rowIndex, imgIndex)"
+                        >
+                          <i class="ri-arrow-up-line"></i>
+                        </el-button>
+                        <el-button
+                          :disabled="imgIndex === row.length - 1"
+                          size="small"
+                          text
+                          @click="movePhotoImageDown(rowIndex, imgIndex)"
+                        >
+                          <i class="ri-arrow-down-line"></i>
+                        </el-button>
+                        <el-button
+                          v-if="row.length > 1"
+                          type="danger"
+                          size="small"
+                          text
+                          @click="removePhotoDialogImage(rowIndex, imgIndex)"
+                        >
+                          <i class="ri-close-line"></i>
+                        </el-button>
+                      </div>
+                    </div>
+                    <el-button
+                      v-if="row.length < 4"
+                      type="primary"
+                      size="small"
+                      text
+                      @click="addPhotoDialogImage(rowIndex)"
+                    >
+                      <i class="ri-add-line"></i> 添加图片
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+              <div class="photo-footer">
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="addPhotoDialogRow"
+                  :disabled="photoDialog.rows.length >= 6"
+                >
+                  添加行
+                </el-button>
+                <el-button type="primary" size="small" @click="handleInsertPhoto"> 插入 </el-button>
+              </div>
+            </div>
+          </el-popover>
+        </template>
+        <!-- 视频按钮 -->
+        <template v-else-if="item.title === '视频'">
+          <el-popover
+            :width="320"
+            trigger="click"
+            placement="bottom"
+            v-model:visible="videoDialog.visible"
+          >
+            <template #reference>
+              <button
+                :title="item.title"
+                class="toolbar-btn"
+                :class="{ active: videoDialog.visible }"
+              >
+                <i :class="item.icon"></i>
+              </button>
+            </template>
+            <div class="video-dialog-wrap">
+              <div class="video-form-item">
+                <el-radio-group v-model="videoDialog.type" size="small">
+                  <el-radio-button value="url">在线视频</el-radio-button>
+                  <el-radio-button value="upload">本地上传</el-radio-button>
+                </el-radio-group>
+              </div>
+              <div v-if="videoDialog.type === 'url'" class="video-form-item">
+                <el-input
+                  v-model="videoDialog.videoUrl"
+                  placeholder="输入视频链接，支持B站、YouTube等"
+                  size="small"
+                  clearable
+                  @keyup.enter="handleInsertVideo"
+                />
+              </div>
+              <div v-else class="video-form-item">
+                <el-upload
+                  :show-file-list="false"
+                  :before-upload="
+                    (file: File) => {
+                      handleVideoUpload(file);
+                      return false;
+                    }
+                  "
+                  :disabled="videoDialog.uploading"
+                >
+                  <el-button
+                    type="primary"
+                    :loading="videoDialog.uploading"
+                    size="small"
+                    style="width: 100%"
+                  >
+                    <i v-if="!videoDialog.uploading" class="ri-upload-line"></i>
+                    {{ videoDialog.videoUrl ? '已上传' : '选择视频文件' }}
+                  </el-button>
+                </el-upload>
+                <div v-if="videoDialog.videoUrl" class="video-url-preview">
+                  {{ videoDialog.videoUrl }}
+                </div>
+              </div>
+              <div class="video-form-actions">
+                <el-button
+                  type="primary"
+                  size="small"
+                  :loading="videoDialog.loading"
+                  @click="handleInsertVideo"
+                >
+                  插入
+                </el-button>
+              </div>
+            </div>
+          </el-popover>
+        </template>
+        <!-- 音乐按钮 -->
+        <template v-else-if="item.title === '音乐'">
+          <el-popover
+            :width="320"
+            trigger="click"
+            placement="bottom"
+            v-model:visible="audioDialog.visible"
+          >
+            <template #reference>
+              <button
+                :title="item.title"
+                class="toolbar-btn"
+                :class="{ active: audioDialog.visible }"
+              >
+                <i :class="item.icon"></i>
+              </button>
+            </template>
+            <div class="audio-dialog-wrap">
+              <div class="audio-form-item">
+                <el-radio-group v-model="audioDialog.type" size="small">
+                  <el-radio-button value="music">在线音乐</el-radio-button>
+                  <el-radio-button value="upload">本地上传</el-radio-button>
+                </el-radio-group>
+              </div>
+              <template v-if="audioDialog.type === 'upload'">
+                <div class="audio-form-item">
+                  <el-input
+                    v-model="audioDialog.title"
+                    placeholder="音频标题"
+                    size="small"
+                    clearable
+                  />
+                </div>
+                <div class="audio-form-item">
+                  <el-upload
+                    :show-file-list="false"
+                    :before-upload="
+                      (file: File) => {
+                        handleAudioUpload(file);
+                        return false;
+                      }
+                    "
+                    :disabled="audioDialog.uploading"
+                  >
+                    <el-button
+                      type="primary"
+                      :loading="audioDialog.uploading"
+                      size="small"
+                      style="width: 100%"
+                    >
+                      <i v-if="!audioDialog.uploading" class="ri-upload-line"></i>
+                      {{ audioDialog.audioUrl ? '已上传' : '选择音频文件' }}
+                    </el-button>
+                  </el-upload>
+                  <div v-if="audioDialog.audioUrl" class="audio-url-preview">
+                    {{ audioDialog.audioUrl }}
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <div class="audio-form-item">
+                  <el-select v-model="audioDialog.musicServer" size="small" style="width: 100%">
+                    <el-option value="netease" label="网易云音乐" />
+                    <el-option value="tencent" label="QQ音乐" />
+                    <el-option value="kugou" label="酷狗音乐" />
+                    <el-option value="xiami" label="虾米音乐" />
+                    <el-option value="baidu" label="百度音乐" />
+                  </el-select>
+                </div>
+                <div class="audio-form-item">
+                  <el-input
+                    v-model="audioDialog.musicId"
+                    placeholder="输入音乐ID"
+                    size="small"
+                    clearable
+                  />
+                </div>
+                <div class="audio-form-item">
+                  <el-button
+                    type="primary"
+                    size="small"
+                    :loading="audioDialog.loading"
+                    style="width: 100%"
+                    @click="handleParseMusic"
+                  >
+                    解析
+                  </el-button>
+                </div>
+                <div v-if="audioDialog.musicInfo" class="music-info-preview">
+                  <div class="music-info-title">{{ audioDialog.musicInfo.title }}</div>
+                  <div class="music-info-artist">{{ audioDialog.musicInfo.artist }}</div>
+                </div>
+              </template>
+              <div class="audio-form-actions">
+                <el-button type="primary" size="small" @click="handleInsertAudio"> 插入 </el-button>
+              </div>
+            </div>
+          </el-popover>
+        </template>
         <!-- 普通按钮 -->
         <button
           v-else
@@ -197,6 +658,7 @@ import {
 } from 'vue';
 import { ElMessage } from 'element-plus';
 import { uploadFile } from '@/api/file';
+import { parseVideo } from '@/api/tools';
 import { getSettingGroup } from '@/api/sysconfig';
 import {
   renderMarkdownWithSourceMap,
@@ -378,6 +840,7 @@ const emit = defineEmits<{
 const editorRef = ref<HTMLElement>();
 const previewPaneRef = ref<HTMLElement>();
 const imageInputRef = ref<HTMLInputElement>();
+const photoUploadTarget = ref<{ row: number; index: number } | null>(null);
 const viewMode = ref<ViewMode>('split');
 const isBrowserFullscreen = ref(false);
 const isPageFullscreen = ref(false);
@@ -396,6 +859,77 @@ const emojiState = reactive({
   activeTab: 0,
   emojiMap: new Map<string, string>(),
 });
+
+// 提示框弹窗状态
+const noteDialog = reactive({
+  visible: false,
+  type: 'info' as 'info' | 'warning' | 'success' | 'error',
+  title: '',
+});
+
+// 标签页弹窗状态
+const tabsDialog = reactive({
+  visible: false,
+  tabs: ['标签1', '标签2'] as string[],
+});
+
+// 折叠面板弹窗状态
+const foldDialog = reactive({
+  visible: false,
+  title: '',
+  open: false,
+});
+
+// 链接卡片弹窗状态
+const linkDialog = reactive({
+  visible: false,
+  title: '',
+  url: '',
+  description: '',
+});
+
+// 视频弹窗状态
+const videoDialog = reactive({
+  visible: false,
+  type: 'url' as 'url' | 'upload',
+  videoUrl: '',
+  uploading: false,
+  loading: false,
+});
+
+// 音频弹窗状态
+const audioDialog = reactive({
+  visible: false,
+  type: 'music' as 'upload' | 'music',
+  title: '',
+  audioUrl: '',
+  uploading: false,
+  loading: false,
+  musicServer: 'netease',
+  musicId: '',
+  musicInfo: null as { title: string; artist: string; pic: string } | null,
+});
+
+// 照片墙弹窗状态
+const photoDialog = reactive({
+  visible: false,
+  rows: [['', '']] as string[][],
+  uploading: false as boolean,
+});
+
+// 安全获取照片墙图片 URL
+const getPhotoImageUrl = (rowIndex: number, imgIndex: number): string => {
+  const row = photoDialog.rows[rowIndex];
+  return row?.[imgIndex] ?? '';
+};
+
+// 安全设置照片墙图片 URL
+const setPhotoImageUrl = (rowIndex: number, imgIndex: number, url: string) => {
+  const row = photoDialog.rows[rowIndex];
+  if (row) {
+    row[imgIndex] = url;
+  }
+};
 
 // 编辑器实例
 const editorViewRef = shallowRef<EditorView | null>(null);
@@ -984,37 +1518,37 @@ const toolbarItems: ToolbarItem[] = [
   {
     icon: 'ri-information-line',
     title: '提示框',
-    action: () =>
-      insertText('\n:::note info 提示标题\ninfo/warning/success/error', '\n:::endnote\n'),
+    action: () => toggleNoteDialog(),
   },
   {
     icon: 'ri-layout-grid-line',
     title: '标签页',
-    action: () =>
-      insertText(
-        '\n:::tabs\n:::tab 标签1\n内容1',
-        '\n:::endtab\n:::tab 标签2\n内容2\n:::endtab\n:::endtabs\n'
-      ),
+    action: () => toggleTabsDialog(),
   },
   {
     icon: 'ri-increase-decrease-line',
     title: '折叠面板',
-    action: () => insertText('\n:::fold 点击展开\n', '\n:::endfold\n'),
+    action: () => toggleFoldDialog(),
   },
   {
     icon: 'ri-external-link-line',
     title: '链接卡片',
-    action: () => insertText('\n:::link 标题', ' https://example.com 描述信息 :::\n'),
+    action: () => toggleLinkDialog(),
   },
   {
     icon: 'ri-multi-image-line',
     title: '照片墙',
-    action: () => insertText('\n:::photo\n图片1\n图片2\n:::n\n图片3\n图片4\n:::endphoto\n'),
+    action: () => togglePhotoDialog(),
   },
   {
     icon: 'ri-video-line',
-    title: '在线视频',
-    action: () => insertText('\n:::video bilibili ', 'BV号 :::\n'),
+    title: '视频',
+    action: () => toggleVideoDialog(),
+  },
+  {
+    icon: 'ri-music-line',
+    title: '音乐',
+    action: () => toggleAudioDialog(),
   },
 
   // 弹性空间，将后续按钮推到右侧
@@ -1185,6 +1719,346 @@ const toggleEmojiPicker = () => {
   if (emojiState.visible && !emojiState.groups.length) {
     loadEmojis();
   }
+};
+
+// 切换提示框弹窗显示
+const toggleNoteDialog = () => {
+  noteDialog.visible = !noteDialog.visible;
+  if (noteDialog.visible) {
+    noteDialog.type = 'info';
+    noteDialog.title = '';
+  }
+};
+
+// 插入提示框语法
+const handleInsertNote = () => {
+  const title = noteDialog.title.trim() || '标题';
+  const typeLabel = noteDialog.type;
+  insertText(`:::note ${typeLabel} ${title}\n内容\n:::endnote\n`);
+  noteDialog.visible = false;
+};
+
+// 切换标签页弹窗显示
+const toggleTabsDialog = () => {
+  tabsDialog.visible = !tabsDialog.visible;
+  if (tabsDialog.visible) {
+    tabsDialog.tabs = ['标签1', '标签2'];
+  }
+};
+
+// 插入标签页语法
+const handleInsertTabs = () => {
+  const tabs = tabsDialog.tabs.filter(t => t.trim());
+  if (tabs.length === 0) {
+    tabsDialog.tabs = ['标签1', '标签2'];
+    return handleInsertTabs();
+  }
+  const tabBlocks = tabs.map((tab, i) => `:::tab ${tab}\n内容${i + 1}\n:::endtab`).join('\n');
+  insertText(`:::tabs\n${tabBlocks}\n:::endtabs\n`);
+  tabsDialog.visible = false;
+};
+
+// 添加标签页
+const addTabsDialogTab = () => {
+  if (tabsDialog.tabs.length < 10) {
+    tabsDialog.tabs.push(`标签${tabsDialog.tabs.length + 1}`);
+  }
+};
+
+// 删除标签页
+const removeTabsDialogTab = (index: number) => {
+  if (tabsDialog.tabs.length > 1) {
+    tabsDialog.tabs.splice(index, 1);
+  }
+};
+
+// 切换折叠面板弹窗显示
+const toggleFoldDialog = () => {
+  foldDialog.visible = !foldDialog.visible;
+  if (foldDialog.visible) {
+    foldDialog.title = '';
+    foldDialog.open = false;
+  }
+};
+
+// 插入折叠面板语法
+const handleInsertFold = () => {
+  const title = foldDialog.title.trim() || '点击展开';
+  const openFlag = foldDialog.open ? ' open' : '';
+  insertText(`:::fold ${title}${openFlag}\n内容\n:::endfold\n`);
+  foldDialog.visible = false;
+};
+
+// 切换链接卡片弹窗显示
+const toggleLinkDialog = () => {
+  linkDialog.visible = !linkDialog.visible;
+  if (linkDialog.visible) {
+    linkDialog.title = '';
+    linkDialog.url = '';
+    linkDialog.description = '';
+  }
+};
+
+// 插入链接卡片语法
+const handleInsertLink = () => {
+  const title = linkDialog.title.trim() || '标题';
+  let url = linkDialog.url.trim();
+  const description = linkDialog.description.trim();
+  if (!url) {
+    url = 'https://example.com';
+  } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+  const descPart = description ? ` ${description}` : '';
+  insertText(`:::link ${title} ${url}${descPart} :::\n`);
+  linkDialog.visible = false;
+};
+
+// 切换视频弹窗显示
+const toggleVideoDialog = () => {
+  videoDialog.visible = !videoDialog.visible;
+  if (videoDialog.visible) {
+    videoDialog.type = 'url';
+    videoDialog.videoUrl = '';
+    videoDialog.uploading = false;
+    videoDialog.loading = false;
+  }
+};
+
+// 处理视频上传
+const handleVideoUpload = async (file: File) => {
+  videoDialog.uploading = true;
+  try {
+    const results = await uploadFile(file, '文章视频');
+    videoDialog.videoUrl = results.file_url;
+    ElMessage.success('视频上传成功');
+  } catch (error: any) {
+    ElMessage.error(error.message || '视频上传失败');
+  } finally {
+    videoDialog.uploading = false;
+  }
+};
+
+// 插入视频语法
+const handleInsertVideo = () => {
+  if (videoDialog.type === 'url') {
+    const url = videoDialog.videoUrl.trim() || 'https://example.com/video.mp4';
+    videoDialog.loading = true;
+    parseVideo({ url })
+      .then(info => {
+        if (info.platform && info.video_id) {
+          insertText(`:::video ${info.platform} ${info.video_id} :::\n`);
+        } else {
+          insertText(`:::video ${url} :::\n`);
+        }
+        videoDialog.visible = false;
+      })
+      .catch(() => {
+        insertText(`:::video ${url} :::\n`);
+        videoDialog.visible = false;
+      })
+      .finally(() => {
+        videoDialog.loading = false;
+      });
+  } else {
+    const url = videoDialog.videoUrl.trim() || 'https://example.com/video.mp4';
+    insertText(`:::video ${url} :::\n`);
+    videoDialog.visible = false;
+  }
+};
+
+// 切换音频弹窗显示
+const toggleAudioDialog = () => {
+  audioDialog.visible = !audioDialog.visible;
+  if (audioDialog.visible) {
+    audioDialog.type = 'music';
+    audioDialog.title = '';
+    audioDialog.audioUrl = '';
+    audioDialog.uploading = false;
+    audioDialog.loading = false;
+    audioDialog.musicServer = 'netease';
+    audioDialog.musicId = '';
+    audioDialog.musicInfo = null;
+  }
+};
+
+// 处理音频上传
+const handleAudioUpload = async (file: File) => {
+  audioDialog.uploading = true;
+  try {
+    const results = await uploadFile(file, '文章音频');
+    audioDialog.audioUrl = results.file_url;
+    ElMessage.success('音频上传成功');
+  } catch (error: any) {
+    ElMessage.error(error.message || '音频上传失败');
+  } finally {
+    audioDialog.uploading = false;
+  }
+};
+
+// 解析音乐
+const handleParseMusic = async () => {
+  if (!audioDialog.musicId.trim()) {
+    ElMessage.warning('请输入音乐ID');
+    return;
+  }
+  audioDialog.loading = true;
+  try {
+    const apiUrl = `https://api.injahow.cn/meting/?server=${audioDialog.musicServer}&type=song&id=${audioDialog.musicId.trim()}`;
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    if (data && data.length > 0) {
+      const info = data[0];
+      audioDialog.musicInfo = {
+        title: info.name || info.title || '未知歌曲',
+        artist: info.artist || info.author || '未知艺术家',
+        pic: info.pic || info.cover || '',
+      };
+      audioDialog.title = `${audioDialog.musicInfo.title} - ${audioDialog.musicInfo.artist}`;
+      ElMessage.success('解析成功');
+    } else {
+      throw new Error('未获取到音乐信息');
+    }
+  } catch (error) {
+    ElMessage.error('解析失败，请检查音乐ID是否正确');
+    audioDialog.musicInfo = null;
+  } finally {
+    audioDialog.loading = false;
+  }
+};
+
+// 插入音频语法
+const handleInsertAudio = () => {
+  if (audioDialog.type === 'upload') {
+    const title = audioDialog.title.trim() || '音频';
+    const url = audioDialog.audioUrl.trim() || 'https://example.com/audio.mp3';
+    insertText(`:::audio ${title} ${url} :::\n`);
+    audioDialog.visible = false;
+  } else {
+    if (!audioDialog.musicInfo) {
+      insertText(
+        `:::music ${audioDialog.musicServer} ${audioDialog.musicId.trim() || '音乐ID'} :::\n`
+      );
+    } else {
+      insertText(`:::music ${audioDialog.musicServer} ${audioDialog.musicId.trim()} :::\n`);
+    }
+    audioDialog.visible = false;
+  }
+};
+
+// 切换照片墙弹窗显示
+const togglePhotoDialog = () => {
+  photoDialog.visible = !photoDialog.visible;
+  if (photoDialog.visible) {
+    photoDialog.rows = [['', '']];
+  }
+};
+
+// 添加照片墙行
+const addPhotoDialogRow = () => {
+  if (photoDialog.rows.length < 6) {
+    photoDialog.rows.push(['', '']);
+  }
+};
+
+// 删除照片墙行
+const removePhotoDialogRow = (index: number) => {
+  if (photoDialog.rows.length > 1) {
+    photoDialog.rows.splice(index, 1);
+  }
+};
+
+// 添加照片墙图片
+const addPhotoDialogImage = (rowIndex: number) => {
+  const row = photoDialog.rows[rowIndex];
+  if (row && row.length < 4) {
+    row.push('');
+  }
+};
+
+// 删除照片墙图片
+const removePhotoDialogImage = (rowIndex: number, imgIndex: number) => {
+  const row = photoDialog.rows[rowIndex];
+  if (row && row.length > 1) {
+    row.splice(imgIndex, 1);
+  }
+};
+
+// 处理照片墙图片上传
+const handlePhotoImageUpload = async (rowIndex: number, imgIndex: number, file: File) => {
+  photoDialog.uploading = true;
+  try {
+    const results = await uploadFile(file, '文章图片');
+    const row = photoDialog.rows[rowIndex];
+    if (row) {
+      row[imgIndex] = results.file_url;
+    }
+    ElMessage.success('图片上传成功');
+  } catch (error: any) {
+    ElMessage.error(error.message || '图片上传失败');
+  } finally {
+    photoDialog.uploading = false;
+  }
+};
+
+// 照片墙上移
+const movePhotoImageUp = (rowIndex: number, imgIndex: number) => {
+  const row = photoDialog.rows[rowIndex];
+  if (row && imgIndex > 0) {
+    const temp = row[imgIndex] ?? '';
+    const prev = row[imgIndex - 1] ?? '';
+    row[imgIndex - 1] = temp as string;
+    row[imgIndex] = prev as string;
+  }
+};
+
+// 照片墙下移
+const movePhotoImageDown = (rowIndex: number, imgIndex: number) => {
+  const row = photoDialog.rows[rowIndex];
+  if (row && imgIndex < row.length - 1) {
+    const temp = row[imgIndex] ?? '';
+    const next = row[imgIndex + 1] ?? '';
+    row[imgIndex + 1] = temp as string;
+    row[imgIndex] = next as string;
+  }
+};
+
+// 照片墙行上移
+const movePhotoRowUp = (rowIndex: number) => {
+  if (rowIndex > 0) {
+    const temp = photoDialog.rows[rowIndex];
+    const prevRow = photoDialog.rows[rowIndex - 1];
+    if (temp && prevRow) {
+      photoDialog.rows[rowIndex - 1] = temp;
+      photoDialog.rows[rowIndex] = prevRow;
+    }
+  }
+};
+
+// 照片墙行下移
+const movePhotoRowDown = (rowIndex: number) => {
+  if (rowIndex < photoDialog.rows.length - 1) {
+    const temp = photoDialog.rows[rowIndex];
+    const nextRow = photoDialog.rows[rowIndex + 1];
+    if (temp && nextRow) {
+      photoDialog.rows[rowIndex + 1] = temp;
+      photoDialog.rows[rowIndex] = nextRow;
+    }
+  }
+};
+
+// 插入照片墙语法
+const handleInsertPhoto = () => {
+  const rows = photoDialog.rows.filter(row => row.some(img => img.trim()));
+  let photoBlocks;
+  if (rows.length === 0) {
+    photoBlocks = '图片1\n图片2\n\:::n\n图片3\n图片4';
+  } else {
+    photoBlocks = rows.map(row => row.filter(img => img.trim()).join('\n')).join('\n:::n\n');
+  }
+
+  insertText(`:::photo\n${photoBlocks}\n:::endphoto\n`);
+  photoDialog.visible = false;
 };
 
 // ==================== 编辑器初始化 ====================
@@ -1641,23 +2515,6 @@ onBeforeUnmount(() => {
           border-left: 4px solid #f56c6c;
         }
 
-        // 视频播放器样式
-        .custom-video {
-          margin: 1.5rem 0;
-          border-radius: 8px;
-          overflow: hidden;
-          background: #000;
-
-          video,
-          iframe {
-            width: 100%;
-            height: auto;
-            aspect-ratio: 16 / 9;
-            border: none;
-            display: block;
-          }
-        }
-
         img.preview-collapsible-image {
           max-height: 160px;
           width: auto;
@@ -1670,11 +2527,6 @@ onBeforeUnmount(() => {
         img.preview-collapsible-image.is-expanded {
           max-height: none;
           cursor: zoom-out;
-        }
-
-        // 音乐播放器样式
-        .custom-music {
-          margin: 1.5rem 0;
         }
       }
     }
@@ -1957,6 +2809,240 @@ onBeforeUnmount(() => {
       overflow: hidden;
       max-width: 100%;
     }
+  }
+}
+
+// 提示框弹窗样式
+.note-dialog-wrap {
+  padding: 4px 0;
+
+  .note-form-item {
+    margin-bottom: 12px;
+
+    &:last-of-type {
+      margin-bottom: 16px;
+    }
+  }
+
+  .note-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}
+
+// 标签页弹窗样式
+.tabs-dialog-wrap {
+  padding: 4px 0;
+
+  .tabs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .tabs-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .el-input {
+      flex: 1;
+    }
+
+    .el-button {
+      flex-shrink: 0;
+      padding: 4px;
+    }
+  }
+
+  .tabs-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+}
+
+// 折叠面板弹窗样式
+.fold-dialog-wrap {
+  padding: 4px 0;
+
+  .fold-form-item {
+    margin-bottom: 12px;
+
+    &:last-of-type {
+      margin-bottom: 16px;
+    }
+  }
+
+  .fold-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}
+
+// 链接卡片弹窗样式
+.link-dialog-wrap {
+  padding: 4px 0;
+
+  .link-form-item {
+    margin-bottom: 12px;
+
+    &:last-of-type {
+      margin-bottom: 16px;
+    }
+  }
+
+  .link-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}
+
+// 视频弹窗样式
+.video-dialog-wrap {
+  padding: 4px 0;
+
+  .video-form-item {
+    margin-bottom: 12px;
+
+    &:last-of-type {
+      margin-bottom: 16px;
+    }
+  }
+
+  .video-url-preview {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #909399;
+    word-break: break-all;
+    max-height: 40px;
+    overflow-y: auto;
+  }
+
+  .video-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}
+
+// 音频弹窗样式
+.audio-dialog-wrap {
+  padding: 4px 0;
+
+  .audio-form-item {
+    margin-bottom: 12px;
+
+    &:last-of-type {
+      margin-bottom: 16px;
+    }
+  }
+
+  .audio-url-preview {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #909399;
+    word-break: break-all;
+    max-height: 40px;
+    overflow-y: auto;
+  }
+
+  .music-info-preview {
+    margin-top: 8px;
+    padding: 8px;
+    background: #f5f7fa;
+    border-radius: 4px;
+
+    .music-info-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .music-info-artist {
+      font-size: 12px;
+      color: #909399;
+    }
+  }
+
+  .audio-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}
+
+// 照片墙弹窗样式
+.photo-dialog-wrap {
+  padding: 4px 0;
+  max-height: 400px;
+  overflow-y: auto;
+
+  .photo-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .photo-row {
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 8px;
+  }
+
+  .photo-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #909399;
+  }
+
+  .photo-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .photo-images {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .photo-image-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .el-input {
+      flex: 1;
+    }
+
+    .el-button {
+      flex-shrink: 0;
+      padding: 4px;
+    }
+  }
+
+  .photo-image-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .photo-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
   }
 }
 </style>

@@ -160,22 +160,6 @@ onUnmounted(() => {
       border-radius: 4px;
       border-left: 4px solid #f56c6c;
     }
-
-    .custom-video {
-      margin: 1.5rem 0;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #000;
-
-      video,
-      iframe {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 16 / 9;
-        border: none;
-        display: block;
-      }
-    }
   }
 }
 </style>

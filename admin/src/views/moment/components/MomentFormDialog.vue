@@ -674,7 +674,7 @@ const handleParseMusic = async () => {
   fetchingMusic.value = true;
   try {
     const { server, type, id } = formData.content.music;
-    const apiUrl = `https://api.i-meto.com/meting/api?server=${server}&type=${type}&id=${id}`;
+    const apiUrl = `https://api.injahow.cn/meting/?server=${server}&type=${type}&id=${id}`;
 
     const response = await fetch(apiUrl);
     const data = await response.json();

@@ -208,6 +208,81 @@ function renderLinkCard(params: string[]): string {
 }
 
 /**
+ * 渲染在线音乐/音频
+ * @param params - [标题, 音频URL]
+ */
+function renderAudio(params: string[]): string {
+  const title = params[0] || '';
+  const audioUrl = params[1] || '';
+
+  if (!title || (!audioUrl.startsWith('http://') && !audioUrl.startsWith('https://'))) {
+    return '';
+  }
+
+  const audioId = `audio-${simpleHash(audioUrl + title)}`;
+
+  return `<div class="custom-audio" data-audio-id="${audioId}">
+  <div class="custom-audio-type">播放音频</div>
+  <div class="custom-audio-main">
+    <div class="custom-audio-icon">
+      <i class="ri-music-line"></i>
+      <button class="custom-audio-btn" onclick="toggleAudioPlay('${audioId}')">
+        <i class="ri-play-fill"></i>
+      </button>
+    </div>
+    <div class="custom-audio-content">
+      <div class="custom-audio-info">${title}</div>
+      <div class="custom-audio-controls">
+        <div class="custom-audio-progress" onclick="seekAudio('${audioId}', event)">
+          <div class="custom-audio-progress-bar"></div>
+        </div>
+        <div class="custom-audio-time"><span class="custom-audio-current">0:00</span> / <span class="custom-audio-duration">0:00</span></div>
+      </div>
+    </div>
+  </div>
+  <audio src="${audioUrl}" preload="auto" style="display:none;"></audio>
+</div>`;
+}
+
+/**
+ * 渲染在线音乐
+ * @param params - [平台, 音乐ID]
+ */
+function renderMusic(params: string[]): string {
+  if (params.length < 2) return '';
+
+  const server = params[0] || '';
+  const musicId = params[1] || '';
+
+  if (!server || !musicId) return '';
+
+  const audioId = `audio-${simpleHash(server + musicId)}`;
+  const embedUrl = `https://api.injahow.cn/meting/?server=${server}&type=song&id=${musicId}`;
+
+  return `<div class="custom-audio" data-audio-id="${audioId}" data-music-id="${musicId}">
+  <div class="custom-audio-type">播放在线音乐</div>
+  <div class="custom-audio-main">
+    <div class="custom-audio-icon">
+      <i class="ri-music-line"></i>
+      <button class="custom-audio-btn" onclick="toggleMusicPlay('${audioId}', '${server}', '${musicId}')">
+        <i class="ri-play-fill"></i>
+      </button>
+    </div>
+    <div class="custom-audio-content">
+      <div class="custom-audio-info" data-music-info="${audioId}">加载中...</div>
+      <div class="custom-audio-controls">
+        <div class="custom-audio-progress" onclick="seekMusic('${audioId}', event)">
+          <div class="custom-audio-progress-bar"></div>
+        </div>
+        <div class="custom-audio-time"><span class="custom-audio-current">0:00</span> / <span class="custom-audio-duration">0:00</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="custom-audio-source" data-embed-url="${embedUrl}" style="display:none;"></div>
+</div>`;
+}
+
+/**
  * 渲染在线视频
  * @param params - [平台或URL, 视频ID(可选)]
  * 支持格式：
@@ -224,12 +299,12 @@ function renderVideo(params: string[]): string {
   // B站视频
   if (platformOrUrl === 'bilibili' && videoId) {
     return `<div class="custom-video">
-      <iframe 
-        src="//player.bilibili.com/player.html?bvid=${videoId}&autoplay=0" 
-        scrolling="no" 
-        border="0" 
-        frameborder="no" 
-        framespacing="0" 
+      <iframe
+        src="//player.bilibili.com/player.html?bvid=${videoId}&autoplay=0"
+        scrolling="no"
+        border="0"
+        frameborder="no"
+        framespacing="0"
         allowfullscreen="true"
         sandbox="allow-scripts allow-same-origin allow-popups"
         referrerpolicy="strict-origin-when-cross-origin">
@@ -240,10 +315,10 @@ function renderVideo(params: string[]): string {
   // YouTube视频
   if (platformOrUrl === 'youtube' && videoId) {
     return `<div class="custom-video">
-      <iframe 
-        src="https://www.youtube.com/embed/${videoId}" 
-        frameborder="0" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+      <iframe
+        src="https://www.youtube.com/embed/${videoId}"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen
         sandbox="allow-scripts allow-same-origin allow-popups"
         referrerpolicy="strict-origin-when-cross-origin">
@@ -397,6 +472,10 @@ function customBlocksPlugin(md: MarkdownIt) {
         html = renderLinkCard(params);
       } else if (tag === 'video') {
         html = renderVideo(params);
+      } else if (tag === 'audio') {
+        html = renderAudio(params);
+      } else if (tag === 'music') {
+        html = renderMusic(params);
       }
 
       if (html) {
@@ -848,6 +927,8 @@ export function extractToc(markdown: string): TocItem[] {
   cleanedMarkdown = cleanedMarkdown.replace(/^:::photo[\s\S]*?^:::endphoto$/gm, '');
   // 处理视频自定义块
   cleanedMarkdown = cleanedMarkdown.replace(/^:::video\s+.*?:::$/gm, '');
+  // 处理音频自定义块
+  cleanedMarkdown = cleanedMarkdown.replace(/^:::audio\s+.*?:::$/gm, '');
 
   const headings: TocItem[] = [];
 
@@ -1014,11 +1095,338 @@ export function toggleFold(foldId: string): void {
   foldContainer.classList.toggle('open');
 }
 
+function formatTime(seconds: number): string {
+  if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+export function toggleAudioPlay(audioId: string): void {
+  const container = document.querySelector(`[data-audio-id="${audioId}"]`);
+  if (!container) return;
+
+  const audio = container.querySelector('audio') as HTMLAudioElement;
+  const btn = container.querySelector('.custom-audio-btn i');
+  const durationTime = container.querySelector('.custom-audio-duration');
+  if (!audio || !btn) return;
+
+  if (!(container as HTMLElement).dataset.audioInitialized) {
+    initAudioEvents(container);
+    (container as HTMLElement).dataset.audioInitialized = 'true';
+  }
+
+  if (durationTime && audio.duration && isFinite(audio.duration)) {
+    const mins = Math.floor(audio.duration / 60);
+    const secs = Math.floor(audio.duration % 60);
+    durationTime.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  if (audio.paused) {
+    audio.play();
+    btn.className = 'ri-pause-fill';
+  } else {
+    audio.pause();
+    btn.className = 'ri-play-fill';
+  }
+}
+
+export function seekAudio(audioId: string, event: MouseEvent): void {
+  const container = document.querySelector(`[data-audio-id="${audioId}"]`);
+  if (!container) return;
+
+  const audio = container.querySelector('audio') as HTMLAudioElement;
+  const progressBar = container.querySelector('.custom-audio-progress');
+  const durationTime = container.querySelector('.custom-audio-duration');
+  if (!audio || !progressBar) return;
+
+  if (!(container as HTMLElement).dataset.audioInitialized) {
+    initAudioEvents(container);
+    (container as HTMLElement).dataset.audioInitialized = 'true';
+  }
+
+  if (durationTime && (!audio.duration || !isFinite(audio.duration))) {
+    audio.preload = 'metadata';
+    audio.addEventListener(
+      'loadedmetadata',
+      () => {
+        const mins = Math.floor(audio.duration / 60);
+        const secs = Math.floor(audio.duration % 60);
+        durationTime.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+      },
+      { once: true }
+    );
+  }
+
+  const rect = progressBar.getBoundingClientRect();
+  const percent = (event.clientX - rect.left) / rect.width;
+  audio.currentTime = percent * audio.duration;
+}
+
+export function toggleMusicPlay(audioId: string, server: string, musicId: string): void {
+  const container = document.querySelector(`[data-audio-id="${audioId}"]`);
+  if (!container) return;
+
+  const btn = container.querySelector('.custom-audio-btn i');
+  const musicInfoEl = container.querySelector(`[data-music-info="${audioId}"]`);
+  const durationTime = container.querySelector('.custom-audio-duration');
+  if (!btn) return;
+
+  let audio = container.querySelector('audio') as HTMLAudioElement;
+  const musicSource = container.querySelector('.custom-audio-source') as HTMLElement;
+
+  if (!audio && musicSource) {
+    const embedUrl = musicSource.dataset.embedUrl || '';
+
+    fetch(embedUrl)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.length > 0) {
+          const info = data[0];
+          if (musicInfoEl) {
+            musicInfoEl.textContent = `${info.name || '未知歌曲'} - ${info.artist || info.author || '未知艺术家'}`;
+          }
+
+          audio = container.querySelector('audio') as HTMLAudioElement;
+          if (!audio && info.url) {
+            const newAudio = document.createElement('audio');
+            newAudio.src = info.url;
+            newAudio.preload = 'auto';
+            container.appendChild(newAudio);
+            audio = newAudio;
+          } else if (audio) {
+            audio.src = info.url;
+          }
+
+          if (audio && durationTime) {
+            audio.addEventListener(
+              'loadedmetadata',
+              () => {
+                if (durationTime && audio.duration && isFinite(audio.duration)) {
+                  const mins = Math.floor(audio.duration / 60);
+                  const secs = Math.floor(audio.duration % 60);
+                  durationTime.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                }
+              },
+              { once: true }
+            );
+          }
+
+          initMusicEvents(container);
+          audio.play();
+          btn.className = 'ri-pause-fill';
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load music:', err);
+        if (musicInfoEl) {
+          musicInfoEl.textContent = '加载失败';
+        }
+      });
+    return;
+  }
+
+  if (audio) {
+    if (audio.paused) {
+      audio.play();
+      btn.className = 'ri-pause-fill';
+    } else {
+      audio.pause();
+      btn.className = 'ri-play-fill';
+    }
+  }
+}
+
+export function seekMusic(audioId: string, event: MouseEvent): void {
+  const container = document.querySelector(`[data-audio-id="${audioId}"]`);
+  if (!container) return;
+
+  const audio = container.querySelector('audio') as HTMLAudioElement;
+  const progressBar = container.querySelector('.custom-audio-progress');
+  const durationTime = container.querySelector('.custom-audio-duration');
+  if (!audio || !progressBar) return;
+
+  initMusicEvents(container);
+
+  if (durationTime && (!audio.duration || !isFinite(audio.duration))) {
+    audio.preload = 'metadata';
+    audio.addEventListener(
+      'loadedmetadata',
+      () => {
+        if (durationTime && audio.duration && isFinite(audio.duration)) {
+          const mins = Math.floor(audio.duration / 60);
+          const secs = Math.floor(audio.duration % 60);
+          durationTime.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+      },
+      { once: true }
+    );
+  }
+
+  const rect = progressBar.getBoundingClientRect();
+  const percent = (event.clientX - rect.left) / rect.width;
+  audio.currentTime = percent * audio.duration;
+}
+
+function initMusicEvents(container: Element): void {
+  if ((container as HTMLElement).dataset.musicInitialized) return;
+  (container as HTMLElement).dataset.musicInitialized = 'true';
+
+  const audio = container.querySelector('audio') as HTMLAudioElement;
+  const progressBar = container.querySelector('.custom-audio-progress-bar') as HTMLElement;
+  const currentTimeEl = container.querySelector('.custom-audio-current') as HTMLElement;
+  const durationTime = container.querySelector('.custom-audio-duration') as HTMLElement;
+  const btn = container.querySelector('.custom-audio-btn i');
+
+  if (!audio) return;
+
+  audio.load();
+
+  const updateDuration = () => {
+    if (durationTime && audio.duration && isFinite(audio.duration)) {
+      durationTime.textContent = formatTime(audio.duration);
+    }
+  };
+
+  audio.addEventListener('loadedmetadata', updateDuration);
+  audio.addEventListener('canplay', updateDuration);
+
+  audio.addEventListener('timeupdate', () => {
+    if (currentTimeEl) {
+      currentTimeEl.textContent = formatTime(audio.currentTime);
+    }
+    if (progressBar && audio.duration && isFinite(audio.duration)) {
+      progressBar.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
+    }
+    if (durationTime && audio.duration && isFinite(audio.duration)) {
+      durationTime.textContent = formatTime(audio.duration);
+    }
+  });
+
+  audio.addEventListener('ended', () => {
+    const btnEl = container.querySelector('.custom-audio-btn i') as HTMLElement;
+    if (btnEl) btnEl.className = 'ri-play-fill';
+    if (progressBar) progressBar.style.width = '0%';
+    if (currentTimeEl) currentTimeEl.textContent = '0:00';
+  });
+}
+
+function initAudioEvents(container: Element): void {
+  const audio = container.querySelector('audio') as HTMLAudioElement;
+  const progressBar = container.querySelector('.custom-audio-progress-bar') as HTMLElement;
+  const currentTimeEl = container.querySelector('.custom-audio-current') as HTMLElement;
+  const durationTime = container.querySelector('.custom-audio-duration') as HTMLElement;
+
+  if (!audio) return;
+  if ((container as HTMLElement).dataset.audioInitialized) return;
+  (container as HTMLElement).dataset.audioInitialized = 'true';
+
+  audio.load();
+
+  const updateDuration = () => {
+    if (durationTime && audio.duration && isFinite(audio.duration)) {
+      durationTime.textContent = formatTime(audio.duration);
+    }
+  };
+
+  audio.addEventListener('loadedmetadata', updateDuration);
+  audio.addEventListener('canplay', updateDuration);
+
+  audio.addEventListener('timeupdate', () => {
+    if (progressBar && audio.duration && isFinite(audio.duration)) {
+      progressBar.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
+    }
+    if (durationTime && audio.duration && isFinite(audio.duration)) {
+      durationTime.textContent = formatTime(audio.duration);
+    }
+    if (currentTimeEl) currentTimeEl.textContent = formatTime(audio.currentTime);
+  });
+
+  audio.addEventListener('ended', () => {
+    const btn = container.querySelector('.custom-audio-btn i') as HTMLElement;
+    if (btn) btn.className = 'ri-play-fill';
+    if (progressBar) progressBar.style.width = '0%';
+    if (currentTimeEl) currentTimeEl.textContent = '0:00';
+  });
+}
+
+function observeAudioPlayers(): void {
+  const observer = new MutationObserver(mutations => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node instanceof Element) {
+          const audioContainers = node.matches?.('[data-audio-id]')
+            ? [node]
+            : node.querySelectorAll?.('[data-audio-id]');
+          audioContainers?.forEach(container => {
+            initAudioEvents(container);
+            initMusicCard(container);
+          });
+        }
+      }
+    }
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  document.querySelectorAll('.custom-audio[data-audio-id]').forEach(container => {
+    initAudioEvents(container);
+    initMusicCard(container);
+  });
+}
+
+// 初始化音乐卡片 - 预加载音乐信息
+function initMusicCard(container: Element): void {
+  const musicSource = container.querySelector('.custom-audio-source') as HTMLElement;
+  const musicInfoEl = container.querySelector('.custom-audio-info') as HTMLElement;
+  if (!musicSource || musicInfoEl?.dataset.initialized) return;
+
+  const embedUrl = musicSource.dataset.embedUrl;
+  if (!embedUrl) return;
+
+  musicInfoEl.dataset.initialized = 'true';
+
+  fetch(embedUrl)
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.length > 0) {
+        const info = data[0];
+        if (musicInfoEl) {
+          musicInfoEl.textContent = `${info.name || '未知歌曲'} - ${info.artist || info.author || '未知艺术家'}`;
+        }
+        const existingAudio = container.querySelector('audio');
+        if (!existingAudio && info.url) {
+          const audio = document.createElement('audio');
+          audio.src = info.url;
+          audio.preload = 'auto';
+          audio.style.display = 'none';
+          container.appendChild(audio);
+          initMusicEvents(container);
+        }
+      }
+    })
+    .catch(() => {
+      if (musicInfoEl) {
+        musicInfoEl.textContent = '加载失败';
+      }
+    });
+}
+
 // 挂载全局函数供内联 onclick 使用
 if (typeof window !== 'undefined') {
   (window as any).copyCodeBlock = copyCodeBlock;
   (window as any).switchTab = switchTab;
   (window as any).toggleFold = toggleFold;
+  (window as any).toggleAudioPlay = toggleAudioPlay;
+  (window as any).seekAudio = seekAudio;
+  (window as any).toggleMusicPlay = toggleMusicPlay;
+  (window as any).seekMusic = seekMusic;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', observeAudioPlayers);
+  } else {
+    observeAudioPlayers();
+  }
 }
 
 export default {

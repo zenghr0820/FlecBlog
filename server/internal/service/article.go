@@ -470,8 +470,10 @@ func (s *ArticleService) Create(ctx context.Context, req *dto.CreateArticleReque
 		_ = s.fileService.MarkAsUsed(req.Cover)
 	}
 
-	// 标记内容中的图片为使用中
+	// 标记内容中的图片、视频、音频为使用中
 	s.markContentImagesAsUsed(req.Content)
+	s.markContentVideosAsUsed(req.Content)
+	s.markContentAudiosAsUsed(req.Content)
 
 	// 如果是发布状态，异步发送订阅推送
 	if article.IsPublish && s.subscriberService != nil {
@@ -600,8 +602,10 @@ func (s *ArticleService) Delete(ctx context.Context, id uint) error {
 		_ = s.fileService.MarkAsUnused(article.Cover)
 	}
 
-	// 标记内容中的图片为未使用
+	// 标记内容中的图片、视频、音频为未使用
 	s.markContentImagesAsUnused(article.Content)
+	s.markContentVideosAsUnused(article.Content)
+	s.markContentAudiosAsUnused(article.Content)
 
 	return s.articleRepo.Delete(id)
 }
@@ -639,6 +643,104 @@ func extractContentImages(content string) []string {
 		}
 	}
 
+	// 提取 :::photo :::endphoto 块中的图片 URL
+	photoBlockRe := regexp.MustCompile(`(?s):::photo\s*\n(.*?)\n:::endphoto`)
+	photoMatches := photoBlockRe.FindAllStringSubmatch(content, -1)
+	for _, match := range photoMatches {
+		if len(match) > 1 {
+			photoContent := match[1]
+			// 提取块中的每一行作为可能的图片 URL
+			lines := strings.Split(photoContent, "\n")
+			for _, line := range lines {
+				line = strings.TrimSpace(line)
+				// 跳过换行标记 :::n
+				if line == ":::n" || line == "" {
+					continue
+				}
+				// 移除可能的 Markdown 图片语法，提取 URL
+				imgUrl := line
+				if strings.HasPrefix(line, "![") {
+					mdMatch := mdImageRe.FindStringSubmatch(line)
+					if len(mdMatch) > 1 {
+						imgUrl = strings.TrimSpace(mdMatch[1])
+					}
+				}
+				if imgUrl != "" && !seen[imgUrl] {
+					seen[imgUrl] = true
+					urls = append(urls, imgUrl)
+				}
+			}
+		}
+	}
+
+	return urls
+}
+
+// extractContentVideos 从 Markdown 内容中提取所有视频 URL
+func extractContentVideos(content string) []string {
+	var urls []string
+	seen := make(map[string]bool)
+
+	// 提取 :::video ... ::: 块中的视频 URL
+	videoBlockRe := regexp.MustCompile(`(?s):::video\s+(.*?)\s*:::`)
+	matches := videoBlockRe.FindAllStringSubmatch(content, -1)
+	for _, match := range matches {
+		if len(match) > 1 {
+			videoContent := strings.TrimSpace(match[1])
+			// 检查是否包含平台信息（bilibili/youtube 等）或直接是 URL
+			parts := strings.SplitN(videoContent, " ", 2)
+			if len(parts) == 2 {
+				// 第二部分是 URL 或视频 ID
+				potentialUrl := strings.TrimSpace(parts[1])
+				// 跳过平台名称（第一个单词是平台如 bilibili/youtube）
+				if strings.HasPrefix(potentialUrl, "http://") || strings.HasPrefix(potentialUrl, "https://") {
+					if potentialUrl != "" && !seen[potentialUrl] {
+						seen[potentialUrl] = true
+						urls = append(urls, potentialUrl)
+					}
+				}
+			} else if len(parts) == 1 {
+				// 整个内容可能是 URL
+				potentialUrl := strings.TrimSpace(parts[0])
+				if strings.HasPrefix(potentialUrl, "http://") || strings.HasPrefix(potentialUrl, "https://") {
+					if potentialUrl != "" && !seen[potentialUrl] {
+						seen[potentialUrl] = true
+						urls = append(urls, potentialUrl)
+					}
+				}
+			}
+		}
+	}
+
+	return urls
+}
+
+// extractContentAudios 从 Markdown 内容中提取所有音频 URL
+func extractContentAudios(content string) []string {
+	var urls []string
+	seen := make(map[string]bool)
+
+	// 提取 :::audio title url ::: 块中的音频 URL
+	audioBlockRe := regexp.MustCompile(`(?s):::audio\s+(.*?)\s*:::`)
+	matches := audioBlockRe.FindAllStringSubmatch(content, -1)
+	for _, match := range matches {
+		if len(match) > 1 {
+			audioContent := strings.TrimSpace(match[1])
+			// 格式是 "标题 URL"，找最后一个部分作为 URL
+			parts := strings.Split(audioContent, " ")
+			for i := len(parts) - 1; i >= 0; i-- {
+				potentialUrl := strings.TrimSpace(parts[i])
+				if strings.HasPrefix(potentialUrl, "http://") || strings.HasPrefix(potentialUrl, "https://") {
+					if potentialUrl != "" && !seen[potentialUrl] {
+						seen[potentialUrl] = true
+						urls = append(urls, potentialUrl)
+					}
+					break
+				}
+			}
+		}
+	}
+
 	return urls
 }
 
@@ -648,6 +750,26 @@ func (s *ArticleService) markContentImagesAsUsed(content string) {
 		return
 	}
 	for _, url := range extractContentImages(content) {
+		_ = s.fileService.MarkAsUsed(url)
+	}
+}
+
+// markContentVideosAsUsed 标记内容中的视频为已使用
+func (s *ArticleService) markContentVideosAsUsed(content string) {
+	if s.fileService == nil {
+		return
+	}
+	for _, url := range extractContentVideos(content) {
+		_ = s.fileService.MarkAsUsed(url)
+	}
+}
+
+// markContentAudiosAsUsed 标记内容中的音频为已使用
+func (s *ArticleService) markContentAudiosAsUsed(content string) {
+	if s.fileService == nil {
+		return
+	}
+	for _, url := range extractContentAudios(content) {
 		_ = s.fileService.MarkAsUsed(url)
 	}
 }
@@ -662,31 +784,75 @@ func (s *ArticleService) markContentImagesAsUnused(content string) {
 	}
 }
 
-// updateContentFileStatus 对比新旧内容，更新图片文件状态
+// markContentVideosAsUnused 标记内容中的视频为未使用
+func (s *ArticleService) markContentVideosAsUnused(content string) {
+	if s.fileService == nil {
+		return
+	}
+	for _, url := range extractContentVideos(content) {
+		_ = s.fileService.MarkAsUnused(url)
+	}
+}
+
+// markContentAudiosAsUnused 标记内容中的音频为未使用
+func (s *ArticleService) markContentAudiosAsUnused(content string) {
+	if s.fileService == nil {
+		return
+	}
+	for _, url := range extractContentAudios(content) {
+		_ = s.fileService.MarkAsUnused(url)
+	}
+}
+
+// updateContentFileStatus 对比新旧内容，更新图片、视频、音频文件状态
 func (s *ArticleService) updateContentFileStatus(oldContent, newContent string) {
 	if s.fileService == nil {
 		return
 	}
 
+	// 处理图片
 	oldImages := make(map[string]bool)
 	for _, url := range extractContentImages(oldContent) {
 		oldImages[url] = true
 	}
-
-	newImages := make(map[string]bool)
 	for _, url := range extractContentImages(newContent) {
-		newImages[url] = true
-		// 新增的图片标记为使用中
 		if !oldImages[url] {
 			_ = s.fileService.MarkAsUsed(url)
 		}
+		delete(oldImages, url)
+	}
+	for url := range oldImages {
+		_ = s.fileService.MarkAsUnused(url)
 	}
 
-	// 移除的图片标记为未使用
-	for url := range oldImages {
-		if !newImages[url] {
-			_ = s.fileService.MarkAsUnused(url)
+	// 处理视频
+	oldVideos := make(map[string]bool)
+	for _, url := range extractContentVideos(oldContent) {
+		oldVideos[url] = true
+	}
+	for _, url := range extractContentVideos(newContent) {
+		if !oldVideos[url] {
+			_ = s.fileService.MarkAsUsed(url)
 		}
+		delete(oldVideos, url)
+	}
+	for url := range oldVideos {
+		_ = s.fileService.MarkAsUnused(url)
+	}
+
+	// 处理音频
+	oldAudios := make(map[string]bool)
+	for _, url := range extractContentAudios(oldContent) {
+		oldAudios[url] = true
+	}
+	for _, url := range extractContentAudios(newContent) {
+		if !oldAudios[url] {
+			_ = s.fileService.MarkAsUsed(url)
+		}
+		delete(oldAudios, url)
+	}
+	for url := range oldAudios {
+		_ = s.fileService.MarkAsUnused(url)
 	}
 }
 

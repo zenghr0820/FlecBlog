@@ -37,7 +37,7 @@
       show-overflow-tooltip
     />
 
-    <el-table-column prop="file_type" label="类型" width="100" align="center" />
+    <el-table-column prop="file_type" label="类型" width="120" align="center" />
 
     <el-table-column label="状态" width="100" align="center">
       <template #default="{ row }">
