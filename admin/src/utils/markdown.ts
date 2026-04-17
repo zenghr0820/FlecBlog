@@ -217,46 +217,6 @@ function normalizeBlockTag(
   return { tag: mapping.target, params: [...baseParams, ...params] }
 }
 
-type MarkdownContainerMapping = {
-  name?: string
-  target?: string
-  params?: string | string[]
-  enabled?: boolean
-}
-
-function getContainerMappingsFromGlobal(): MarkdownContainerMapping[] {
-  if (typeof globalThis === 'undefined') return []
-  const raw = (globalThis as any).__FLEC_MARKDOWN_CONTAINERS__
-  if (!raw) return []
-  if (Array.isArray(raw)) return raw
-  return []
-}
-
-function normalizeBlockTag(
-  tag: string,
-  params: string[]
-): { tag: string; params: string[] } {
-  const mappings = getContainerMappingsFromGlobal()
-  const lower = tag.toLowerCase()
-  const mapping = mappings.find((item) => {
-    if (!item || typeof item.name !== 'string') return false
-    if (item.enabled === false) return false
-    return item.name.toLowerCase() === lower && typeof item.target === 'string'
-  })
-  if (!mapping || !mapping.target) return { tag, params }
-  const baseParams: string[] = []
-  if (Array.isArray(mapping.params)) {
-    for (const p of mapping.params) {
-      if (typeof p === 'string' && p.trim()) baseParams.push(p.trim())
-    }
-  } else if (typeof mapping.params === 'string' && mapping.params.trim()) {
-    baseParams.push(
-      ...mapping.params.split(/\s+/).filter((p: string) => p && p !== ':::')
-    )
-  }
-  return { tag: mapping.target, params: [...baseParams, ...params] }
-}
-
 // ========== 自定义块渲染函数 ==========
 
 /**
