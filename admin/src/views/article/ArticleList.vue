@@ -14,8 +14,9 @@
   >
     <!-- 额外按钮 -->
     <template #toolbar-after>
-      <el-button @click="openCategoryManager"> 分类管理 </el-button>
-      <el-button @click="openTagManager"> 标签管理 </el-button>
+      <el-button @click="importDialogVisible = true">导入文章</el-button>
+      <el-button @click="openCategoryManager">分类管理</el-button>
+      <el-button @click="openTagManager">标签管理</el-button>
     </template>
 
     <!-- 表格列 - 直接使用 el-table-column -->
@@ -129,6 +130,9 @@
   <!-- 弹窗组件：懒挂载，首次打开时才渲染 -->
   <category-manager v-if="categoryMounted" v-model="categoryDialogVisible" />
   <tag-manager v-if="tagMounted" v-model="tagDialogVisible" />
+  
+  <!-- 文章导入对话框 -->
+  <article-import-dialog v-model="importDialogVisible" @import-success="fetchArticles" />
 
   <!-- 导出弹窗 -->
   <el-dialog
@@ -233,6 +237,7 @@ import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { View, ChatDotRound, Upload, EditPen, Loading } from '@element-plus/icons-vue';
 import CommonList from '@/components/common/CommonList.vue';
+import ArticleImportDialog from '@/components/common/ArticleImportDialog.vue';
 import type { Article } from '@/types/article';
 import type { PaginationQuery } from '@/types/request';
 import { getArticles, deleteArticle, exportToWeChat, downloadArticleZip } from '@/api/article';
@@ -244,6 +249,7 @@ const router = useRouter();
 const loading = ref(false);
 const categoryDialogVisible = ref(false);
 const tagDialogVisible = ref(false);
+const importDialogVisible = ref(false);
 const categoryMounted = ref(false);
 const tagMounted = ref(false);
 const articleList = ref<Article[]>([]);

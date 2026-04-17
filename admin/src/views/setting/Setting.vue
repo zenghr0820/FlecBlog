@@ -61,9 +61,9 @@
         </el-tab-pane>
 
         <!-- 导入导出标签页 -->
-        <el-tab-pane label="导入导出" name="import-export">
+        <!-- <el-tab-pane label="导入导出" name="import-export">
           <ImportExportTab :readonly="!canEditSettings" @import-success="handleImportSuccess" />
-        </el-tab-pane>
+        </el-tab-pane> -->
       </el-tabs>
     </el-card>
   </div>
@@ -81,7 +81,7 @@ import NotificationSettingsTab from './components/NotificationSettingsTab.vue';
 import UploadSettingsTab from './components/UploadSettingsTab.vue';
 import AISettingsTab from './components/AISettingsTab.vue';
 import OAuthSettingsTab from './components/OAuthSettingsTab.vue';
-import ImportExportTab from './components/ImportExportTab.vue';
+// import ImportExportTab from './components/ImportExportTab.vue';
 import type { SettingGroupType } from '@/types/sysconfig';
 import type { NotificationForm } from './components/NotificationSettingsTab.vue';
 import type { UploadForm } from './components/UploadSettingsTab.vue';

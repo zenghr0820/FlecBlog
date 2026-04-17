@@ -11,6 +11,11 @@
     @update:page="fetchComments"
     @update:pageSize="fetchComments"
   >
+    <!-- 额外按钮 -->
+    <template #toolbar-after>
+      <el-button @click="importDialogVisible = true">导入评论</el-button>
+    </template>
+
     <!-- 表格列 -->
     <el-table-column label="用户信息" width="180" align="center">
       <template #default="{ row }">
@@ -167,6 +172,9 @@
       <el-button type="primary" :loading="replying" @click="handleReply">提交回复</el-button>
     </template>
   </el-dialog>
+
+  <!-- 评论导入对话框 -->
+  <comment-import-dialog v-model="importDialogVisible" @import-success="fetchComments" />
 </template>
 
 <script setup lang="ts">
@@ -174,6 +182,7 @@ import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { User } from '@element-plus/icons-vue';
 import CommonList from '@/components/common/CommonList.vue';
+import CommentImportDialog from '@/components/common/CommentImportDialog.vue';
 import type { Comment } from '@/types/comment';
 import type { PaginationQuery } from '@/types/request';
 import {
@@ -189,6 +198,9 @@ const loading = ref(false);
 const commentList = ref<Comment[]>([]);
 const total = ref(0);
 const queryParams = ref<PaginationQuery>({ page: 1, page_size: 20 });
+
+// 导入相关状态
+const importDialogVisible = ref(false);
 
 // 回复相关状态
 const replyDialogVisible = ref(false);
