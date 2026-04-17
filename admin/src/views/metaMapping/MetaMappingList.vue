@@ -284,24 +284,22 @@ const mappingRules = {
 }
 
 const reloadTemplates = async () => {
-  const data = (await getTemplates()) as TemplateItem[]
-  templates.value = Array.isArray(data) ? data : []
+  const response = await getTemplates();
+  const data = response.data;
+  templates.value = Array.isArray(data) ? data : [];
   if (!selectedTemplate.value && templates.value.length > 0) {
-    selectedTemplate.value = templates.value[0].template_key
+    selectedTemplate.value = templates.value[0]?.template_key || '';
   }
 }
 
 const reloadMappings = async (templateKey: string) => {
-  if (!templateKey) return
-  const data = (await getMappingsByTemplate(templateKey)) as {
-    template_key: string
-    template_name: string
-    mappings: MappingItem[]
-  }
+  if (!templateKey) return;
+  const response = await getMappingsByTemplate(templateKey);
+  const data = response.data;
   mappings.value = {
     ...mappings.value,
     [templateKey]: Array.isArray(data?.mappings) ? data.mappings : []
-  }
+  };
 }
 
 const reloadAll = async () => {
@@ -464,12 +462,12 @@ const saveMapping = async () => {
         await createMapping({
           ...payloadBase,
           template_key: selectedTemplate.value,
-          template_name: selectedTemplateInfo.value.template_name
-        })
-        ElMessage.success('创建成功')
+          template_name: selectedTemplateInfo.value?.template_name || ''
+        });
+        ElMessage.success('创建成功');
       } else {
-        await updateMapping(mappingForm.value.id, payloadBase)
-        ElMessage.success('更新成功')
+        await updateMapping(mappingForm.value.id, payloadBase);
+        ElMessage.success('更新成功');
       }
 
       mappingDialogVisible.value = false

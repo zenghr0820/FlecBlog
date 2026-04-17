@@ -228,12 +228,13 @@ const articleMappingTemplate = ref<string>('');
 const loadTemplates = async () => {
   try {
     templateLoading.value = true;
-    const templates = await getTemplates();
-    templateList.value = templates || [];
+    const response = await getTemplates();
+    const templates = response.data || [];
+    templateList.value = templates;
     
     // 如果有模版且当前未选择，默认选择第一个
     if (templateList.value.length > 0 && !articleMappingTemplate.value) {
-      articleMappingTemplate.value = templateList.value[0].template_key;
+      articleMappingTemplate.value = templateList.value[0]?.template_key || '';
     }
   } catch (error: any) {
     console.error('获取映射模版列表失败:', error);
@@ -311,7 +312,7 @@ watch(articleImportVisible, val => {
       articleUploadImages.value = false;
       // 重置映射模版选择（保留已加载的列表）
       articleMappingTemplate.value = templateList.value.length > 0 
-        ? templateList.value[0].template_key 
+        ? templateList.value[0]?.template_key || ''
         : '';
     }, 300);
   } else {

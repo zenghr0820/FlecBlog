@@ -40,8 +40,8 @@ function extractTagAndParams(line: string): { tag: string; params: string[] } {
   const params = paramsString ? paramsString.split(/\s+/).filter(p => p && p !== ':::') : [];
 
   if (!tag && params.length > 0) {
-    tag = params[0]
-    return { tag, params: params.slice(1) }
+    tag = params[0] || '';
+    return { tag, params: params.slice(1) };
   }
 
   return { tag, params };
