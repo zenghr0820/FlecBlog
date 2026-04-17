@@ -1,10 +1,10 @@
 <template>
   <el-form label-width="100px" class="setting-form">
-    <!-- <el-form-item label="文章数据">
+    <el-form-item label="文章数据">
       <el-button type="primary" :disabled="readonly" @click="articleImportVisible = true"
         >导入文章</el-button
       >
-    </el-form-item> -->
+    </el-form-item>
 
     <el-form-item label="评论数据">
       <el-button type="primary" :disabled="readonly" @click="commentImportVisible = true"
@@ -21,28 +21,17 @@
     :close-on-click-modal="false"
   >
     <el-form label-width="100px">
-      <el-form-item label="映射模版">
+      <el-form-item label="数据来源">
         <el-select
-          v-model="articleMappingTemplate"
-          placeholder="请选择映射模版"
+          v-model="articleSourceType"
+          placeholder="请选择数据来源"
           style="width: 100%"
-          :loading="templateLoading"
+          :disabled="readonly"
         >
-          <el-option
-            v-for="template in templateList"
-            :key="template.template_key"
-            :label="template.template_name"
-            :value="template.template_key"
-          >
-            <span>{{ template.template_name }}</span>
-            <span style="float: right; color: #8492a6; font-size: 13px">
-              {{ template.mapping_count }} 个映射
-            </span>
-          </el-option>
+          <el-option label="Hexo 格式" value="hexo" />
+          <el-option label="Markdown 格式" value="markdown" />
         </el-select>
-        <div class="form-tip">
-          选择映射模版后，系统将自动识别文章元数据字段
-        </div>
+        <div class="form-tip">Hexo 格式需要包含 Front Matter，Markdown 格式 仅需 Markdown 内容</div>
       </el-form-item>
 
       <el-form-item label="上传文件">
@@ -193,13 +182,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { UploadFilled } from '@element-plus/icons-vue';
 import type { UploadUserFile, UploadFile } from 'element-plus';
 import { importArticles } from '@/api/article';
 import { importComments } from '@/api/comment';
-import { getTemplates } from '@/api/metaMapping';
 import type { ImportArticlesResult } from '@/types/article';
 import type { ImportCommentsResult } from '@/types/comment';
 
@@ -210,39 +198,6 @@ const props = withDefaults(defineProps<{ readonly?: boolean }>(), {
 const emit = defineEmits<{
   'import-success': [];
 }>();
-
-// 映射模版相关
-interface MappingTemplate {
-  id: number;
-  template_key: string;
-  template_name: string;
-  description: string;
-  mapping_count: number;
-}
-
-const templateList = ref<MappingTemplate[]>([]);
-const templateLoading = ref(false);
-const articleMappingTemplate = ref<string>('');
-
-// 加载映射模版列表
-const loadTemplates = async () => {
-  try {
-    templateLoading.value = true;
-    const response = await getTemplates();
-    const templates = response.data || [];
-    templateList.value = templates;
-    
-    // 如果有模版且当前未选择，默认选择第一个
-    if (templateList.value.length > 0 && !articleMappingTemplate.value) {
-      articleMappingTemplate.value = templateList.value[0]?.template_key || '';
-    }
-  } catch (error: any) {
-    console.error('获取映射模版列表失败:', error);
-    ElMessage.warning('获取映射模版列表失败');
-  } finally {
-    templateLoading.value = false;
-  }
-};
 
 // 文章导入相关
 const articleImportVisible = ref(false);
@@ -266,20 +221,15 @@ const handleArticleImport = async () => {
     return;
   }
 
-  if (articleFileList.value.length === 0) {
-    ElMessage.warning('请选择要导入的文件');
-    return;
-  }
-
+  if (articleFileList.value.length === 0) return;
 
   try {
     articleUploading.value = true;
     articleImportResult.value = undefined;
 
     const formData = new FormData();
-    formData.append('source_type', articleMappingTemplate.value);
+    formData.append('source_type', articleSourceType.value);
     formData.append('upload_images', String(articleUploadImages.value));
-    
     articleFileList.value.forEach(file => {
       if (file.raw) formData.append('files', file.raw);
     });
@@ -310,16 +260,7 @@ watch(articleImportVisible, val => {
       articleImportResult.value = undefined;
       articleSourceType.value = 'hexo';
       articleUploadImages.value = false;
-      // 重置映射模版选择（保留已加载的列表）
-      articleMappingTemplate.value = templateList.value.length > 0 
-        ? templateList.value[0]?.template_key || ''
-        : '';
     }, 300);
-  } else {
-    // 对话框打开时，如果模版列表为空则加载
-    if (templateList.value.length === 0) {
-      loadTemplates();
-    }
   }
 });
 
@@ -394,10 +335,6 @@ watch(commentImportVisible, val => {
       commentSourceType.value = 'artalk';
     }, 300);
   }
-});
-
-onMounted(() => {
-  loadTemplates();
 });
 </script>
 

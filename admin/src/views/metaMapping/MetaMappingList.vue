@@ -201,6 +201,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CommonList from '@/components/common/CommonList.vue'
+import type { MetaMappingTemplate, MetaMappingItem } from '@/types/metaMapping'
 import {
   createMapping,
   createTemplate,
@@ -234,9 +235,9 @@ type MappingItem = {
 
 const loading = ref(false)
 const saving = ref(false)
-const templates = ref<TemplateItem[]>([])
+const templates = ref<MetaMappingTemplate[]>([])
 const selectedTemplate = ref<string>('')
-const mappings = ref<Record<string, MappingItem[]>>({})
+const mappings = ref<Record<string, MetaMappingItem[]>>({})
 
 const templateOptions = computed(() =>
   templates.value.map((t) => ({ label: t.template_name, value: t.template_key }))
@@ -284,8 +285,7 @@ const mappingRules = {
 }
 
 const reloadTemplates = async () => {
-  const response = await getTemplates();
-  const data = response.data;
+  const data = await getTemplates();
   templates.value = Array.isArray(data) ? data : [];
   if (!selectedTemplate.value && templates.value.length > 0) {
     selectedTemplate.value = templates.value[0]?.template_key || '';
@@ -294,8 +294,7 @@ const reloadTemplates = async () => {
 
 const reloadMappings = async (templateKey: string) => {
   if (!templateKey) return;
-  const response = await getMappingsByTemplate(templateKey);
-  const data = response.data;
+  const data = await getMappingsByTemplate(templateKey);
   mappings.value = {
     ...mappings.value,
     [templateKey]: Array.isArray(data?.mappings) ? data.mappings : []
@@ -406,7 +405,7 @@ const handleCreate = () => {
   mappingDialogVisible.value = true
 }
 
-const handleEdit = (row: MappingItem) => {
+const handleEdit = (row: MetaMappingItem) => {
   mappingDialogMode.value = 'edit'
   mappingForm.value = {
     id: row.id,
@@ -419,7 +418,7 @@ const handleEdit = (row: MappingItem) => {
   mappingDialogVisible.value = true
 }
 
-const handleDelete = async (row: MappingItem) => {
+const handleDelete = async (row: MetaMappingItem) => {
   try {
     await ElMessageBox.confirm('确定要删除该映射吗？', '提示', { type: 'warning' })
     await deleteMapping(row.id)
@@ -430,7 +429,7 @@ const handleDelete = async (row: MappingItem) => {
   }
 }
 
-const handleToggle = async (row: MappingItem, isActive: boolean) => {
+const handleToggle = async (row: MetaMappingItem, isActive: boolean) => {
   try {
     await toggleMappingStatus(row.id)
     ElMessage.success(isActive ? '已启用' : '已禁用')

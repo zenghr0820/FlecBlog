@@ -121,9 +121,8 @@ const articleMappingTemplate = ref<string>('');
 const loadTemplates = async () => {
   try {
     templateLoading.value = true;
-    const response = await getTemplates();
-    const templates = response.data || [];
-    templateList.value = templates;
+    const templates = await getTemplates();
+    templateList.value = templates || [];
     
     // 如果有模版且当前未选择，默认选择第一个
     if (templateList.value.length > 0 && !articleMappingTemplate.value) {
