@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"regexp"
 	"strings"
 	"sync"
@@ -25,20 +26,22 @@ import (
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
+	"gopkg.in/yaml.v3"
 	"gorm.io/gorm"
 )
 
 // ArticleService 文章服务
 type ArticleService struct {
-	articleRepo       *repository.ArticleRepository
-	tagRepo           *repository.TagRepository
-	categoryRepo      *repository.CategoryRepository
-	commentRepo       *repository.CommentRepository
-	fileService       *FileService
-	subscriberService *SubscriberService
-	db                *gorm.DB
-	md                goldmark.Markdown
-	httpClient        *http.Client
+	articleRepo        *repository.ArticleRepository
+	tagRepo            *repository.TagRepository
+	categoryRepo       *repository.CategoryRepository
+	commentRepo        *repository.CommentRepository
+	fileService        *FileService
+	subscriberService  *SubscriberService
+	metaMappingService *MetaMappingService
+	db                 *gorm.DB
+	md                 goldmark.Markdown
+	httpClient         *http.Client
 }
 
 // NewArticleService 创建文章服务实例
@@ -83,6 +86,11 @@ func NewArticleService(articleRepo *repository.ArticleRepository, tagRepo *repos
 // SetSubscriberService 设置订阅者服务（避免循环依赖）
 func (s *ArticleService) SetSubscriberService(subscriberService *SubscriberService) {
 	s.subscriberService = subscriberService
+}
+
+// SetMetaService 设置映射服务
+func (s *ArticleService) SetMetaService(metaMappingService *MetaMappingService) {
+	s.metaMappingService = metaMappingService
 }
 
 // ============ 前台服务 ============
@@ -858,8 +866,8 @@ func (s *ArticleService) updateContentFileStatus(oldContent, newContent string) 
 
 // ============ 文章导入方法 ============
 
-// ImportArticles 导入文章数据
-func (s *ArticleService) ImportArticles(ctx context.Context, files map[string]string, sourceType string, uploadImages bool, host string) (*dto.ImportArticlesResult, error) {
+// ImportArticles 导入文章（支持Markdown格式，通过映射模版解析元数据）
+func (s *ArticleService) ImportArticles(ctx context.Context, files map[string]string, mappingTemplate string, uploadImages bool, host string) (*dto.ImportArticlesResult, error) {
 	if len(files) == 0 {
 		return nil, fmt.Errorf("没有找到有效的文章数据")
 	}
@@ -869,7 +877,7 @@ func (s *ArticleService) ImportArticles(ctx context.Context, files map[string]st
 	tagCache := make(map[string]*model.Tag)
 
 	for filename, content := range files {
-		parsed, err := s.parseAndUploadImages(ctx, filename, content, sourceType, uploadImages, host)
+		parsed, err := s.parseMarkdown(ctx, filename, content, mappingTemplate, uploadImages, host)
 		if err != nil {
 			title := "未知标题"
 			for _, line := range strings.Split(content, "\n") {
@@ -933,22 +941,162 @@ func (s *ArticleService) parseAndUploadImages(ctx context.Context, filename, con
 	return parsed, nil
 }
 
+// parseMarkdown 解析Markdown文章（支持YAML Front Matter）
+func (s *ArticleService) parseMarkdown(ctx context.Context, filename, content, mappingTemplate string, uploadImages bool, host string) (*ParsedArticle, error) {
+	parsed := &ParsedArticle{}
+
+	// 根据映射模版获取对应的映射字段
+	metaMappings, err := s.metaMappingService.GetMappingsByTemplateKey(mappingTemplate)
+	if err != nil {
+		// 获取失败打印日志，不阻塞运行
+		logger.Warn("映射模版(%s)获取失败，将使用默认解析逻辑: %v", mappingTemplate, err)
+	}
+
+	// 使用正则表达式提取YAML元数据部分
+	re := regexp.MustCompile(`---\r*\n([\s\S]*?)\r*\n---`)
+	match := re.FindStringSubmatch(content)
+
+	if len(match) >= 2 {
+		// 获取YAML元数据内容
+		yamlContent := match[1]
+		// 获取除去YAML元数据的Markdown内容
+		markdownContent := strings.TrimPrefix(content, match[0])
+		parsed.Content = strings.TrimSpace(markdownContent)
+
+		// 解析YAML元数据
+		metadata := make(map[string]any)
+		if err := yaml.Unmarshal([]byte(yamlContent), &metadata); err != nil {
+			logger.Error("解析YAML元数据失败: %v", err)
+		}
+
+		// 解析成功并且有值，先使用默认的映射配置
+		if len(metadata) > 0 {
+			s.applyDefaultMappings(parsed, metadata)
+		}
+		// 再使用自定义的映射
+		if len(metadata) > 0 && len(metaMappings) > 0 {
+			s.applyMetaMappings(parsed, metadata, metaMappings)
+		}
+	} else {
+		// 没有YAML部分，整个内容作为正文
+		parsed.Content = content
+		logger.Error("未找到YAML Front Matter，使用默认解析")
+	}
+
+	// 如果标题为空，尝试从文件名提取
+	if parsed.Title == "" {
+		parsed.Title = "未命名文章"
+	}
+
+	// 生成摘要（如果为空）
+	if parsed.Summary == "" {
+		parsed.Summary = generateSummary(parsed.Content, 200)
+	}
+
+	// 上传图片
+	if uploadImages {
+		if newContent, err := s.uploadContentImages(ctx, parsed.Content, host); err == nil {
+			parsed.Content = newContent
+		}
+		if parsed.Cover != "" {
+			if newCover, err := s.uploadSingleImage(ctx, parsed.Cover, host); err == nil {
+				parsed.Cover = newCover
+			}
+		}
+	}
+
+	return parsed, nil
+}
+
+// applyDefaultMappings 应用默认的元数据映射逻辑
+func (s *ArticleService) applyDefaultMappings(parsed *ParsedArticle, metadata map[string]any) {
+	// 定义默认映射关系: YAML key -> ParsedArticle field
+	defaultMap := map[string]string{
+		"title":       "Title",
+		"slug":        "Slug",
+		"summary":     "Summary",
+		"description": "Summary",
+		"cover":       "Cover",
+		"thumbnail":   "Cover",
+		"category":    "Category",
+		"tags":        "Tags",
+		"date":        "PublishTime",
+		"created":     "PublishTime",
+		"updated":     "UpdateTime",
+		"modified":    "UpdateTime",
+	}
+
+	val := reflect.ValueOf(parsed).Elem()
+
+	for yamlKey, fieldName := range defaultMap {
+		sourceValue, exists := metadata[yamlKey]
+		if !exists || sourceValue == nil {
+			continue
+		}
+
+		field := val.FieldByName(fieldName)
+		if !field.IsValid() || !field.CanSet() {
+			continue
+		}
+
+		setFieldValue(field, sourceValue)
+	}
+}
+
+// applyMetaMappings 根据映射规则将 YAML 元数据填充到 ParsedArticle
+func (s *ArticleService) applyMetaMappings(parsed *ParsedArticle, metadata map[string]any, mappings []model.MetaMapping) {
+	if len(mappings) == 0 || len(metadata) == 0 {
+		return
+	}
+
+	// 反射获取结构体指针（用于动态赋值）
+	val := reflect.ValueOf(parsed).Elem()
+
+	for _, m := range mappings {
+		// 跳过未激活的映射
+		if !m.IsActive {
+			continue
+		}
+
+		// 从 metadata 中获取源字段值
+		sourceValue, exists := metadata[m.SourceField]
+		if !exists || sourceValue == nil {
+			continue
+		}
+
+		// 获取目标字段（首字母大写匹配）
+		targetField := utils.ToFieldName(m.TargetField)
+		field := val.FieldByName(targetField)
+		if !field.IsValid() || !field.CanSet() {
+			logger.Warn("未知或不可设置的目标字段: %s", m.TargetField)
+			continue
+		}
+
+		// 根据目标类型自动赋值
+		setFieldValue(field, sourceValue)
+	}
+}
+
 // resolveCategory 解析分类ID
-func (s *ArticleService) resolveCategory(ctx context.Context, name string, cache map[string]*model.Category) (*uint, error) {
-	if name == "" {
+func (s *ArticleService) resolveCategory(ctx context.Context, names []string, cache map[string]*model.Category) (*uint, error) {
+	if len(names) <= 0 {
 		return nil, nil
 	}
-	if c, ok := cache[name]; ok {
+
+	// 获取第一个分类
+	category := names[0]
+
+	if c, ok := cache[category]; ok {
 		return &c.ID, nil
 	}
-	c, err := s.categoryRepo.GetBySlug(ctx, name)
+	c, err := s.categoryRepo.GetBySlug(ctx, category)
 	if err != nil {
-		c = &model.Category{Name: name, Slug: name}
+		c = &model.Category{Name: category, Slug: category}
 		if err := s.categoryRepo.Create(ctx, c); err != nil {
 			return nil, err
 		}
 	}
-	cache[name] = c
+	cache[category] = c
 	return &c.ID, nil
 }
 
@@ -984,6 +1132,9 @@ func (s *ArticleService) createArticle(parsed *ParsedArticle, categoryID *uint, 
 	if slug == "" {
 		slug, _ = random.UniqueCode(8, s.articleRepo.CheckSlugExists)
 	}
+
+	fmt.Println("categoryID")
+	fmt.Println(categoryID)
 
 	article := &model.Article{
 		Title:       parsed.Title,
@@ -1103,7 +1254,7 @@ type ParsedArticle struct {
 	Content     string
 	Summary     string
 	Cover       string
-	Category    string
+	Category    []string
 	Tags        []string
 	PublishTime *time.Time
 	UpdateTime  *time.Time
@@ -1123,146 +1274,171 @@ func generateSummary(content string, maxLen int) string {
 
 // parseHexoArticle 解析Hexo文章格式（Front Matter + Markdown）
 func parseHexoArticle(content string) (*ParsedArticle, error) {
-	if !strings.HasPrefix(content, "---") {
-		return nil, fmt.Errorf("无效的Hexo格式：缺少Front Matter")
-	}
+	//if !strings.HasPrefix(content, "---") {
+	//	return nil, fmt.Errorf("无效的Hexo格式：缺少Front Matter")
+	//}
+	//
+	//parts := strings.SplitN(content, "---", 3)
+	//if len(parts) < 3 {
+	//	return nil, fmt.Errorf("无效的Hexo格式：Front Matter格式错误")
+	//}
+	//
+	//frontMatter := parts[1]
+	//markdown := strings.TrimSpace(parts[2])
+	//
+	//parsed := &ParsedArticle{
+	//	Content: markdown,
+	//}
+	//
+	//// 日期格式列表
+	//dateFormats := []string{
+	//	"2006-01-02 15:04:05",
+	//	"2006-01-02T15:04:05Z",
+	//	"2006-01-02T15:04:05-07:00",
+	//	"2006-01-02 15:04",
+	//	"2006-01-02",
+	//}
+	//
+	//// 解析日期的辅助函数
+	//parseDate := func(dateStr string) *time.Time {
+	//	for _, format := range dateFormats {
+	//		if t, err := time.Parse(format, dateStr); err == nil {
+	//			return &t
+	//		}
+	//	}
+	//	return nil
+	//}
+	//
+	//lines := strings.Split(frontMatter, "\n")
+	//var tagLines []string
+	//inTags := false
+	//
+	//for _, line := range lines {
+	//	line = strings.TrimSpace(line)
+	//	if line == "" {
+	//		continue
+	//	}
+	//
+	//	if inTags {
+	//		if strings.HasPrefix(line, "-") {
+	//			tagValue := strings.TrimSpace(strings.TrimPrefix(line, "-"))
+	//			tagValue = strings.Trim(tagValue, "\"'")
+	//			if tagValue != "" {
+	//				tagLines = append(tagLines, tagValue)
+	//			}
+	//		} else {
+	//			inTags = false
+	//		}
+	//	}
+	//
+	//	if strings.Contains(line, ":") && !strings.HasPrefix(line, "-") {
+	//		parts := strings.SplitN(line, ":", 2)
+	//		key := strings.TrimSpace(parts[0])
+	//		value := ""
+	//		if len(parts) > 1 {
+	//			value = strings.TrimSpace(parts[1])
+	//			value = strings.Trim(value, "\"'")
+	//		}
+	//
+	//		switch key {
+	//		case "title":
+	//			parsed.Title = value
+	//		case "date":
+	//			parsed.PublishTime = parseDate(value)
+	//		case "updated":
+	//			parsed.UpdateTime = parseDate(value)
+	//		case "categories", "category":
+	//			if value != "" {
+	//				parsed.Category = value
+	//			}
+	//		case "tags":
+	//			if value != "" {
+	//				value = strings.Trim(value, "[]")
+	//				for _, tag := range strings.Split(value, ",") {
+	//					tag = strings.TrimSpace(tag)
+	//					tag = strings.Trim(tag, "\"'")
+	//					if tag != "" {
+	//						parsed.Tags = append(parsed.Tags, tag)
+	//					}
+	//				}
+	//			} else {
+	//				inTags = true
+	//			}
+	//		case "cover", "thumbnail":
+	//			parsed.Cover = value
+	//		case "description", "excerpt":
+	//			parsed.Summary = value
+	//		case "slug", "abbrlink":
+	//			parsed.Slug = value
+	//		}
+	//	}
+	//}
+	//
+	//if len(tagLines) > 0 {
+	//	parsed.Tags = append(parsed.Tags, tagLines...)
+	//}
+	//
+	//if parsed.Title == "" {
+	//	return nil, fmt.Errorf("文章缺少标题")
+	//}
+	//
+	//if parsed.Summary == "" {
+	//	parsed.Summary = generateSummary(parsed.Content, 200)
+	//}
 
-	parts := strings.SplitN(content, "---", 3)
-	if len(parts) < 3 {
-		return nil, fmt.Errorf("无效的Hexo格式：Front Matter格式错误")
-	}
-
-	frontMatter := parts[1]
-	markdown := strings.TrimSpace(parts[2])
-
-	parsed := &ParsedArticle{
-		Content: markdown,
-	}
-
-	// 日期格式列表
-	dateFormats := []string{
-		"2006-01-02 15:04:05",
-		"2006-01-02T15:04:05Z",
-		"2006-01-02T15:04:05-07:00",
-		"2006-01-02 15:04",
-		"2006-01-02",
-	}
-
-	// 解析日期的辅助函数
-	parseDate := func(dateStr string) *time.Time {
-		for _, format := range dateFormats {
-			if t, err := time.Parse(format, dateStr); err == nil {
-				return &t
-			}
-		}
-		return nil
-	}
-
-	lines := strings.Split(frontMatter, "\n")
-	var tagLines []string
-	inTags := false
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		if inTags {
-			if strings.HasPrefix(line, "-") {
-				tagValue := strings.TrimSpace(strings.TrimPrefix(line, "-"))
-				tagValue = strings.Trim(tagValue, "\"'")
-				if tagValue != "" {
-					tagLines = append(tagLines, tagValue)
-				}
-			} else {
-				inTags = false
-			}
-		}
-
-		if strings.Contains(line, ":") && !strings.HasPrefix(line, "-") {
-			parts := strings.SplitN(line, ":", 2)
-			key := strings.TrimSpace(parts[0])
-			value := ""
-			if len(parts) > 1 {
-				value = strings.TrimSpace(parts[1])
-				value = strings.Trim(value, "\"'")
-			}
-
-			switch key {
-			case "title":
-				parsed.Title = value
-			case "date":
-				parsed.PublishTime = parseDate(value)
-			case "updated":
-				parsed.UpdateTime = parseDate(value)
-			case "categories", "category":
-				if value != "" {
-					parsed.Category = value
-				}
-			case "tags":
-				if value != "" {
-					value = strings.Trim(value, "[]")
-					for _, tag := range strings.Split(value, ",") {
-						tag = strings.TrimSpace(tag)
-						tag = strings.Trim(tag, "\"'")
-						if tag != "" {
-							parsed.Tags = append(parsed.Tags, tag)
-						}
-					}
-				} else {
-					inTags = true
-				}
-			case "cover", "thumbnail":
-				parsed.Cover = value
-			case "description", "excerpt":
-				parsed.Summary = value
-			case "slug", "abbrlink":
-				parsed.Slug = value
-			}
-		}
-	}
-
-	if len(tagLines) > 0 {
-		parsed.Tags = append(parsed.Tags, tagLines...)
-	}
-
-	if parsed.Title == "" {
-		return nil, fmt.Errorf("文章缺少标题")
-	}
-
-	if parsed.Summary == "" {
-		parsed.Summary = generateSummary(parsed.Content, 200)
-	}
-
-	return parsed, nil
+	return nil, nil
 }
 
 // parseMarkdownArticle 解析Markdown格式文章
 func parseMarkdownArticle(filename, content string) (*ParsedArticle, error) {
-	parsed := &ParsedArticle{
-		Tags:        []string{},
-		PublishTime: nil,
-		UpdateTime:  nil,
-	}
+	//parsed := &ParsedArticle{
+	//	Tags:        []string{},
+	//	PublishTime: nil,
+	//	UpdateTime:  nil,
+	//}
+	//
+	//if filename != "" {
+	//	lowerName := strings.ToLower(filename)
+	//	if strings.HasSuffix(lowerName, ".md") {
+	//		parsed.Title = strings.TrimSpace(filename[:len(filename)-3])
+	//	} else {
+	//		parsed.Title = strings.TrimSpace(filename)
+	//	}
+	//}
+	//
+	//if parsed.Title == "" {
+	//	parsed.Title = "未命名文章"
+	//}
+	//
+	//parsed.Summary = generateSummary(content, 200)
+	//parsed.Content = content
 
-	if filename != "" {
-		lowerName := strings.ToLower(filename)
-		if strings.HasSuffix(lowerName, ".md") {
-			parsed.Title = strings.TrimSpace(filename[:len(filename)-3])
-		} else {
-			parsed.Title = strings.TrimSpace(filename)
+	return nil, nil
+}
+
+// ------------------------------
+// 自动根据类型赋值
+// ------------------------------
+func setFieldValue(field reflect.Value, value any) {
+	switch field.Kind() {
+	case reflect.String:
+		field.SetString(utils.ToString(value))
+
+	case reflect.Slice:
+		if field.Type().Elem().Kind() == reflect.String {
+			arr := utils.ToStringArray(value)
+			field.Set(reflect.ValueOf(arr))
 		}
+
+	case reflect.Ptr:
+		if field.Type() == reflect.PointerTo(reflect.TypeOf(time.Time{})) {
+			if t := utils.ToDate(value); t != nil {
+				field.Set(reflect.ValueOf(t))
+			}
+		}
+	default:
+		logger.Error("未知或不可设置的目标字段: %s", field.String())
 	}
-
-	if parsed.Title == "" {
-		parsed.Title = "未命名文章"
-	}
-
-	parsed.Summary = generateSummary(content, 200)
-	parsed.Content = content
-
-	return parsed, nil
 }
 
 // ============ 微信公众号导出 ============

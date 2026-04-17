@@ -67,6 +67,7 @@ require (
 	github.com/modelcontextprotocol/go-sdk v1.2.0
 	github.com/mssola/user_agent v0.5.3
 	github.com/shirou/gopsutil/v4 v4.26.2
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

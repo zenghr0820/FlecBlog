@@ -73,10 +73,10 @@ func Error(format string, v ...interface{}) {
 		fmt.Fprintln(errorLogFile, fileMsg)
 	}
 
-	consoleMsg := fmt.Sprintf("%s[%s]%s [%sERROR%s] %s",
+	consoleMsg := fmt.Sprintf("%s[%s]%s [%sERROR%s] %s%s%s",
 		ColorGray, timestamp, ColorReset,
 		ColorRed, ColorReset,
-		msg,
+		ColorWhite, msg, ColorReset,
 	)
 	log.Println(consoleMsg)
 }
@@ -133,10 +133,10 @@ func HTTPError(requestID string, errMsg string) {
 		fmt.Fprintln(errorLogFile, fileMsg)
 	}
 
-	log.Printf("%s[%s]%s [%sERROR%s] [%s] Errors: %s",
+	log.Printf("%s[%s]%s [%sERROR%s] [%s] Errors: %s%s%s",
 		ColorGray, timestamp, ColorReset,
 		ColorRed, ColorReset,
-		requestID, errMsg)
+		requestID, ColorWhite, errMsg, ColorReset)
 }
 
 // writeLog 写入日志（同时输出到控制台和文件）
@@ -151,10 +151,10 @@ func writeLog(level, color, format string, v ...interface{}) {
 		fmt.Fprintf(logFile, "[%s] [%s] %s\n", timestamp, level, msg)
 	}
 
-	consoleMsg := fmt.Sprintf("%s[%s]%s [%s%s%s] %s",
+	consoleMsg := fmt.Sprintf("%s[%s]%s [%s%s%s] %s%s%s",
 		ColorGray, timestamp, ColorReset,
 		color, level, ColorReset,
-		msg,
+		ColorWhite, msg, ColorReset,
 	)
 	log.Println(consoleMsg)
 }

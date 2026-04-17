@@ -312,10 +312,6 @@ func (c *ArticleController) ImportArticles(ctx *gin.Context) {
 	}
 
 	sourceType := ctx.PostForm("source_type")
-	if sourceType != "hexo" && sourceType != "markdown" {
-		response.ValidateFailed(ctx, "不支持的来源类型，仅支持 hexo 和 markdown")
-		return
-	}
 
 	uploadImages := ctx.PostForm("upload_images") == "true"
 
