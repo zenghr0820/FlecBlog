@@ -104,15 +104,16 @@ router.afterEach(() => {
   triggerGlobal()
 })
 
-// 背景图片 - 根据主题动态切换
-import { isDark } from '@/utils/theme'
+// 背景图片 - 根据主题动态切换（使用 CSS + data-theme，避免刷新时 SSR/水合导致的回退）
+const bgStyle = computed<Record<string, string>>(() => {
+  const common = blogConfig.value.background_image || ''
+  const light = blogConfig.value.background_image_light || common || '/bg-light.webp'
+  const dark = blogConfig.value.background_image_dark || common || '/bg-dark.webp'
 
-const bgImage = computed(() => {
-  // 根据主题返回对应的背景图片
-  if (isDark.value) {
-    return blogConfig.value.background_image_dark || blogConfig.value.background_image || '/bg-dark.webp'
-  } else {
-    return blogConfig.value.background_image_light || blogConfig.value.background_image || '/bg-light.webp'
+  // 用 CSS 变量承载 url(...)，由 [data-theme] 选择器决定使用哪一个
+  return {
+    '--web-bg-light': `url("${light}")`,
+    '--web-bg-dark': `url("${dark}")`
   }
 })
 
@@ -222,7 +223,7 @@ useHead({
 
 <template>
     <!-- 背景图片 -->
-    <div class="web_bg" :style="{ backgroundImage: `url(${bgImage})` }"></div>
+    <div class="web_bg" :style="bgStyle"></div>
 
     <!-- Nuxt 布局和页面系统 -->
     <NuxtLayout>
@@ -254,12 +255,10 @@ useHead({
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
+  background-image: var(--web-bg-light);
 }
 
-[data-theme='dark'] .web_bg::before {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  content: '';
+[data-theme='dark'] .web_bg {
+  background-image: var(--web-bg-dark);
 }
 </style>
