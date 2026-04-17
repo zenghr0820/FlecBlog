@@ -1133,9 +1133,6 @@ func (s *ArticleService) createArticle(parsed *ParsedArticle, categoryID *uint, 
 		slug, _ = random.UniqueCode(8, s.articleRepo.CheckSlugExists)
 	}
 
-	fmt.Println("categoryID")
-	fmt.Println(categoryID)
-
 	article := &model.Article{
 		Title:       parsed.Title,
 		Slug:        slug,
