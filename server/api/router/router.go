@@ -46,6 +46,12 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 	rssFeedRepo := repository.NewRssFeedRepository(db.DB)
 	settingRepo := repository.NewSettingRepository(db.DB)
 
+	// 初始化元数据映射服务
+	metaMappingService := service.NewMetaMappingService(
+		repository.NewMetaMappingRepository(db.DB),
+		repository.NewMetaMappingTemplateRepository(db.DB),
+	)
+
 	// 初始化上传系统
 	uploadManager := upload.InitializeUploadSystem(conf)
 
@@ -91,6 +97,7 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 	settingService.SetConfig(conf)                         // 设置全局配置对象，用于热重载
 	settingService.SetFileService(fileService)             // 设置文件服务，用于文件状态管理
 	articleService.SetSubscriberService(subscriberService) // 设置订阅服务，用于文章推送
+	articleService.SetMetaMappingService(metaMappingService) // 设置元数据映射服务
 
 	// 初始化并启动定时任务调度器
 	initScheduler(fileService, userService, verificationService, rssFeedService, friendService, systemService)
@@ -116,6 +123,7 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 	toolsHandler := v1.NewToolsController()
 	aiController := v1.NewAIController(settingService)
 	rssFeedController := v1.NewRssFeedController(rssFeedService)
+	metaMappingController := v1.NewMetaMappingController(metaMappingService)
 
 	// MCP 接口
 	mcpHandler := gin.WrapH(mcpserver.NewPublicHandler(
@@ -465,6 +473,22 @@ func InitRouter(db *database.Database, conf *config.Config) *gin.Engine {
 			subscriberManagement.GET("", subscriberHandler.List)          // 获取订阅者列表
 			subscriberManagement.DELETE("/:id", subscriberHandler.Delete) // 删除订阅者
 		}
+
+		// ==================== 元数据映射管理 ====================
+		metaMappingAPI := adminAPI.Group("/meta-mappings")
+		{
+			metaMappingAPI.GET("/templates", metaMappingController.ListTemplates)
+			metaMappingAPI.POST("/templates", metaMappingController.CreateTemplate)
+			metaMappingAPI.PUT("/templates/:id", metaMappingController.UpdateTemplate)
+			metaMappingAPI.DELETE("/templates/:id", metaMappingController.DeleteTemplate)
+
+			metaMappingAPI.GET("/:templateKey", metaMappingController.GetMappingsByTemplate)
+			metaMappingAPI.POST("", metaMappingController.CreateMapping)
+			metaMappingAPI.PUT("/:id", metaMappingController.UpdateMapping)
+			metaMappingAPI.DELETE("/:id", metaMappingController.DeleteMapping)
+			metaMappingAPI.PUT("/:id/toggle", metaMappingController.ToggleMappingStatus)
+		}
+
 	}
 
 	return r
