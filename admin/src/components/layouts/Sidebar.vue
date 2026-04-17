@@ -72,6 +72,10 @@
           <i class="ri-menu-line ri-lg"></i>
           <template #title>菜单管理</template>
         </el-menu-item>
+        <el-menu-item index="/meta-mappings">
+          <i class="ri-swap-box-line ri-lg"></i>
+          <template #title>Meta映射</template>
+        </el-menu-item>
         <el-menu-item index="/visits">
           <i class="ri-file-list-3-line ri-lg"></i>
           <template #title>访问日志</template>

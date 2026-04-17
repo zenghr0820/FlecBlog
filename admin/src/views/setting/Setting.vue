@@ -249,7 +249,7 @@ const loadConfigs = async (group: SettingGroupType) => {
   Object.entries(data).forEach(([key, value]) => {
     // 将键名中的分组前缀去掉，例如将 'basic.author' 转换为 'author'
     const shortKey = key.replace(`${group}.`, '')
-    configs[shortKey] = value
+    configs[shortKey] = String(value ?? '')
   })
 
   return configs
@@ -324,9 +324,16 @@ const loadBlogConfigs = async () => {
       versionsList: configs.versionsList || [],
       unionsList: configs.unionsList || [],
       about_story: configs.about_story || '',
-      moments_size: Number(configs.moments_size) || 30,
-      message_content: configs.message_content || '',
-      home_layout: configs.home_layout || 'waterfall'
+      custom_head: configs.custom_head || '',
+      custom_body: configs.custom_body || '',
+      emojis: configs.emojis || '',
+      font: configs.font || '',
+      markdownContainersList: [] as Array<{
+        name: string
+        target: string
+        params: string
+        system: string
+      }>
     })
 
     // 解析 JSON 字段
@@ -765,7 +772,7 @@ watch(
 // 导入成功回调
 const handleImportSuccess = () => {
   loadAllConfigs()
-}
+  }
 
 // 页面加载时加载所有配置
 onMounted(() => {

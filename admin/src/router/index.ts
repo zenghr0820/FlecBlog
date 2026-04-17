@@ -68,6 +68,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '菜单管理', requiresAuth: true }
       },
       {
+        path: 'meta-mappings',
+        name: 'MetaMappings',
+        component: () => import('@/views/metaMapping/MetaMappingList.vue'),
+        meta: { title: 'Meta映射', requiresAuth: true }
+      },
+      {
         path: 'visits',
         name: 'Visits',
         component: () => import('@/views/visit/VisitList.vue'),
