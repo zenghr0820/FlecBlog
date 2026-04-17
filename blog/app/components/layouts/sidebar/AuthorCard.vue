@@ -59,7 +59,7 @@ onMounted(async () => {
         <div class="num">{{ tagsTotal }}</div>
       </router-link>
     </div>
-    <a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/willow-god">
+    <a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/zenghr0820">
       <i class="fab fa-github"></i>
       <span>Follow Me 🛫</span>
     </a>
