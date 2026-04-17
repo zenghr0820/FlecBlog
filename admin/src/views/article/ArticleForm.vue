@@ -1032,7 +1032,7 @@ onBeforeRouteLeave(async (to, from, next) => {
     top: 0;
     z-index: 100;
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    //backdrop-filter: blur(10px);
     border-bottom: 1px solid #e4e7ed;
     padding: 12px 24px;
     display: flex;
@@ -1227,7 +1227,7 @@ onBeforeRouteLeave(async (to, from, next) => {
   // 加载状态优化
   :deep(.el-loading-mask) {
     background-color: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(4px);
+    //backdrop-filter: blur(4px);
   }
 
   // 封面上传容器

@@ -1,35 +1,58 @@
 <template>
   <div class="image-uploader">
-    <div class="uploader-container" :style="{ width, height }">
-      <el-upload
-        class="uploader-box"
-        :show-file-list="false"
-        :http-request="handleUpload"
-        accept="image/*"
-        :disabled="disabled"
-      >
-        <img v-if="imageUrl" :src="imageUrl" class="preview-image" />
-        <div v-else class="upload-placeholder">
-          <el-icon :size="40">
-            <Plus />
+    <div class="uploader-wrapper" :style="{ width }">
+      <!-- 图片预览区域 -->
+      <div class="preview-container" :style="{ height }">
+        <el-upload
+          class="uploader-box"
+          :show-file-list="false"
+          :http-request="handleUpload"
+          accept="image/*"
+          :disabled="disabled"
+        >
+          <img v-if="imageUrl" :src="imageUrl" class="preview-image" />
+          <div v-else class="upload-placeholder">
+            <el-icon :size="40">
+              <Plus />
+            </el-icon>
+          </div>
+        </el-upload>
+
+        <div
+          v-if="imageUrl && !disabled"
+          class="delete-btn"
+          @click.stop="handleDelete"
+          title="删除"
+        >
+          <el-icon>
+            <Delete />
           </el-icon>
         </div>
-      </el-upload>
+      </div>
 
-      <div v-if="imageUrl && !disabled" class="delete-btn" @click.stop="handleDelete" title="删除">
-        <el-icon>
-          <Delete />
-        </el-icon>
+      <!-- URL 输入框 -->
+      <div class="url-input-container">
+        <el-input
+          v-model="inputUrl"
+          placeholder="或直接输入图片URL"
+          :disabled="disabled"
+          clearable
+          @change="handleUrlChange"
+        >
+          <template #prefix>
+            <el-icon><Link /></el-icon>
+          </template>
+        </el-input>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { ElMessage, type UploadRequestOptions } from 'element-plus';
-import { Plus, Delete } from '@element-plus/icons-vue';
-import { uploadFile } from '@/api/file';
+import { ref, computed, watch } from 'vue'
+import { ElMessage, type UploadRequestOptions } from 'element-plus'
+import { Plus, Delete, Link } from '@element-plus/icons-vue'
+import { uploadFile } from '@/api/file'
 
 export interface ImageUploaderProps {
   modelValue?: string; // 图片 URL
@@ -50,15 +73,28 @@ const emit = defineEmits<{
   'update:modelValue': [value: string];
 }>();
 
-const pendingFile = ref<File | null>(null); // 待上传的文件
-const previewUrl = ref<string>(''); // 本地预览 URL
+const pendingFile = ref<File | null>(null) // 待上传的文件
+const previewUrl = ref<string>('') // 本地预览 URL
+const inputUrl = ref<string>('') // URL 输入框的值
 
 // 图片 URL（本地预览或已上传）
 const imageUrl = computed(() => {
   // 如果有本地预览，优先显示本地预览
-  if (previewUrl.value) return previewUrl.value;
-  return props.modelValue || '';
-});
+  if (previewUrl.value) return previewUrl.value
+  return props.modelValue || ''
+})
+
+// 监听 modelValue 变化，同步到输入框
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    // 只有当不是本地预览时才更新输入框
+    if (!previewUrl.value) {
+      inputUrl.value = newVal || ''
+    }
+  },
+  { immediate: true }
+)
 
 // 上传处理（延迟上传：只做本地预览）
 const handleUpload = async (options: UploadRequestOptions): Promise<void> => {
@@ -80,11 +116,29 @@ const handleUpload = async (options: UploadRequestOptions): Promise<void> => {
   }
 
   // 保存文件和创建本地预览
-  pendingFile.value = file;
-  previewUrl.value = URL.createObjectURL(file);
+  pendingFile.value = file
+  previewUrl.value = URL.createObjectURL(file)
+  
+  // 清空 URL 输入框（因为使用了文件上传）
+  inputUrl.value = ''
 
-  return Promise.resolve();
-};
+  return Promise.resolve()
+}
+
+// URL 输入框变化处理
+const handleUrlChange = (value: string) => {
+  if (props.disabled) return
+  
+  // 清理本地预览
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+    previewUrl.value = ''
+  }
+  pendingFile.value = null
+  
+  // 直接更新值
+  emit('update:modelValue', value || '')
+}
 
 // 删除文件
 const handleDelete = () => {
@@ -95,9 +149,10 @@ const handleDelete = () => {
     URL.revokeObjectURL(previewUrl.value);
     previewUrl.value = '';
   }
-  pendingFile.value = null;
-  emit('update:modelValue', '');
-};
+  pendingFile.value = null
+  inputUrl.value = ''
+  emit('update:modelValue', '')
+}
 
 // 暴露上传方法供父组件调用
 const uploadPendingFile = async (): Promise<string | null> => {
@@ -112,7 +167,10 @@ const uploadPendingFile = async (): Promise<string | null> => {
       URL.revokeObjectURL(previewUrl.value);
       previewUrl.value = '';
     }
-    pendingFile.value = null;
+    pendingFile.value = null
+    
+    // 更新 URL 输入框
+    inputUrl.value = result.file_url
 
     // 更新值
     emit('update:modelValue', result.file_url);
@@ -147,34 +205,44 @@ defineExpose({
 .image-uploader {
   display: inline-block;
 
-  .uploader-container {
-    position: relative;
-    display: inline-block;
+  .uploader-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 
-    .delete-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      z-index: 10;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      background: rgba(0, 0, 0, 0.5);
-      border-radius: 4px;
-      transition: all 0.2s;
+    .preview-container {
+      position: relative;
+      display: inline-block;
 
-      .el-icon {
-        color: #fff;
-        font-size: 16px;
+      .delete-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 10;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 4px;
+        transition: all 0.2s;
+
+        .el-icon {
+          color: #fff;
+          font-size: 16px;
+        }
+
+        &:hover {
+          background: rgba(245, 108, 108, 0.9);
+          transform: scale(1.1);
+        }
       }
+    }
 
-      &:hover {
-        background: rgba(245, 108, 108, 0.9);
-        transform: scale(1.1);
-      }
+    .url-input-container {
+      width: 100%;
     }
   }
 

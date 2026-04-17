@@ -234,6 +234,10 @@ const handleReplyClick = () => {
   margin-bottom: 10px;
   margin-top: 5px;
   gap: 8px;
+
+  span{
+    padding: 2px 0px;
+  }
 }
 
 .comment-author {
@@ -288,12 +292,14 @@ const handleReplyClick = () => {
 }
 
 .comment-meta {
-  color: var(--theme-meta-color);
+  color: var(--flec-comment-meta-color);
+  background-color: var(--flec-comment-meta-bg);
   font-size: 0.85rem;
   white-space: nowrap;
-  line-height: 1;
   position: relative;
-  padding-left: 12px;
+  line-height: 17px;
+  border-radius: 3px;
+  padding: 0 12px !important;
 
   &::before {
     content: '·';

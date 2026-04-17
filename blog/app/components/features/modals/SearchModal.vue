@@ -41,9 +41,10 @@ const close = () => {
 const search = async (newPage = 1) => {
   const searchTerm = keyword.value.trim();
   if (!searchTerm) {
-    articles.value = [];
-    total.value = 0;
-    return;
+    articles.value = []
+    total.value = 0
+    page.value = 1
+    return
   }
 
   loading.value = true;
@@ -52,13 +53,13 @@ const search = async (newPage = 1) => {
   try {
     const data = await searchArticles(searchTerm, {
       page: newPage,
-      page_size: pageSize,
-    });
-    articles.value = data.list;
-    total.value = data.total;
+      page_size: pageSize
+    })
+    articles.value = data.list || []
+    total.value = data.total || 0
   } catch (error) {
-    articles.value = [];
-    total.value = 0;
+    articles.value = []
+    total.value = 0
   } finally {
     loading.value = false;
   }
@@ -115,11 +116,18 @@ watch(
           </div>
 
           <!-- 结果区域 -->
-          <div v-if="hasSearched" class="results">
+          <div class="results">
+            <!-- 未输入关键词提示 -->
+            <div v-if="!hasSearched" class="empty">
+              <i class="ri-search-line"></i>
+              <p>输入关键词开始搜索</p>
+            </div>
+
             <!-- 加载中 -->
-            <div v-if="loading" class="loading">
+            <div v-else-if="loading" class="loading">
               <i class="ri-loader-4-line spin"></i>
             </div>
+
             <!-- 有结果 -->
             <template v-else-if="articles.length > 0">
               <NuxtLink
@@ -151,6 +159,7 @@ watch(
                 </button>
               </div>
             </template>
+
             <!-- 无结果 -->
             <div v-else class="empty">
               <i class="ri-search-line"></i>
@@ -168,7 +177,7 @@ watch(
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
+  //backdrop-filter: blur(8px);
   display: flex;
   align-items: flex-start;
   padding: 100px 20px;

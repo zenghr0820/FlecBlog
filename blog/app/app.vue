@@ -49,9 +49,11 @@ const { data: globalData } = await useAsyncData('global-data', async () => {
     return processed;
   };
 
+  const blogProcessed = processConfig(blogConfigData, 'blog')
+
   return {
     basicConfig: processConfig(basicConfigData, 'basic'),
-    blogConfig: processConfig(blogConfigData, 'blog'),
+    blogConfig: blogProcessed,
     oauthConfig: processConfig(oauthConfigData, 'oauth'),
     uploadConfig: processConfig(uploadConfigData, 'upload'),
     menus: menusData || [],
@@ -79,6 +81,21 @@ if (globalData.value) {
   if (globalData.value.tagsTotal !== undefined) {
     tagsTotal.value = globalData.value.tagsTotal;
   }
+
+  if (typeof globalThis !== 'undefined') {
+    const containers =
+      globalData.value.blogConfig.markdown_containers || ''
+    if (containers) {
+      try {
+        ;(globalThis as any).__FLEC_MARKDOWN_CONTAINERS__ =
+          JSON.parse(containers)
+      } catch {
+        ;(globalThis as any).__FLEC_MARKDOWN_CONTAINERS__ = []
+      }
+    } else {
+      ;(globalThis as any).__FLEC_MARKDOWN_CONTAINERS__ = []
+    }
+  }
 }
 
 // 全局路由切换时触发邮箱绑定提示
@@ -87,8 +104,18 @@ router.afterEach(() => {
   triggerGlobal();
 });
 
-// 背景图片
-const bgImage = computed(() => blogConfig.value.background_image || '/bg.webp');
+// 背景图片 - 根据主题动态切换（使用 CSS + data-theme，避免刷新时 SSR/水合导致的回退）
+const bgStyle = computed<Record<string, string>>(() => {
+  const common = blogConfig.value.background_image || ''
+  const light = blogConfig.value.background_image_light || common || '/bg-light.webp'
+  const dark = blogConfig.value.background_image_dark || common || '/bg-dark.webp'
+
+  // 用 CSS 变量承载 url(...)，由 [data-theme] 选择器决定使用哪一个
+  return {
+    '--web-bg-light': `url("${light}")`,
+    '--web-bg-dark': `url("${dark}")`
+  }
+})
 
 // 刷新时恢复滚动位置
 onMounted(() => {
@@ -188,25 +215,28 @@ useHead({
 </script>
 
 <template>
-  <!-- 背景图片 -->
-  <div class="web_bg" :style="{ backgroundImage: `url(${bgImage})` }"></div>
+    <!-- 背景图片 -->
+    <div class="web_bg" :style="bgStyle"></div>
 
-  <!-- Nuxt 布局和页面系统 -->
-  <NuxtLayout>
-    <NuxtPage />
-  </NuxtLayout>
+    <!-- Nuxt 布局和页面系统 -->
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
 
-  <!-- Toast 消息提示 -->
-  <UiToast v-for="toast in toasts" :key="toast.id" v-bind="toast" />
+    <!-- Toast 消息提示 -->
+    <UiToast v-for="toast in toasts" :key="toast.id" v-bind="toast" />
 
-  <!-- 登录弹窗 -->
-  <FeaturesModalsLoginModal v-model="showLoginModal" />
+    <!-- 登录弹窗 -->
+    <FeaturesModalsLoginModal v-model="showLoginModal" />
 
-  <!-- 邮箱绑定弹窗 -->
-  <FeaturesModalsBindEmailModal v-model="showBindEmailModal" @success="onBindSuccess" />
+    <!-- 邮箱绑定弹窗 -->
+    <FeaturesModalsBindEmailModal
+      v-model="showBindEmailModal"
+      @success="onBindSuccess"
+    />
 
-  <!-- 右键菜单 -->
-  <UiContextMenu />
+    <!-- 右键菜单 -->
+    <UiContextMenu />
 </template>
 
 <style scoped>
@@ -218,13 +248,10 @@ useHead({
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
+  background-image: var(--web-bg-light);
 }
 
-[data-theme='dark'] .web_bg::before {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-color: #121212b0;
-  content: '';
+[data-theme='dark'] .web_bg {
+  background-image: var(--web-bg-dark);
 }
 </style>

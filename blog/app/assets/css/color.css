@@ -3,18 +3,28 @@
   /* 主题色 */
   --theme-color: #49B1F5;
   --theme-meta-color: #666666;
+  --global-bg: #fff;
 
   /* 基础颜色 */
   --font-color: #4c4948;
   --font-light-color: #ffffff;
+  --white: #ffffff;
+  --mark-bg: rgba(0, 0, 0, 0.3);
+  --light-grey: #eee;
 
   /* 卡片和背景 */
-  --flec-card-bg: #ffffffd0;
+  --flec-card-bg: rgba(255, 255, 255, 0.7);
   --flec-page-bg: #ffffff66;
-  --flec-btn: #49B1F5;
-  --flec-btn-hover: #78c2f4ff;
+  --flec-btn: rgba(31, 105, 179, 0.852);
+  --flec-btn-color: #fff;
+  --flec-btn-hover: #00c4b6;
   --flec-heavy-bg: #f5f5f5;
-  --flec-border: #e0e0e0;
+  --flec-border: rgba(60, 60, 67, 0.8);
+  --flec-card-box-shadow: 0 3px 8px 6px rgba(7, 17, 27, 0.09);
+
+  --author-card-bg: linear-gradient(-45deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.7));
+
+  --author-card-bg-before: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.7)), url(https://p.liiiu.cn/i/2025/03/15/67d5a327bad6c.webp);
 
   /* 导航栏 */
   --flec-nav-font: #eeeeee;
@@ -22,9 +32,10 @@
   --flec-nav-fixed-font: #4c4948;
   --flec-nav-fixed-font-hover: #33302f;
   --flec-nav-focus: #49B1F5;
-  --flec-nav-bg: #fffffff2;
+  --flec-nav-bg: rgba(255, 255, 255, .8);
   --flec-nav-menu-bg: #f6f8fa;
-  --flec-nav-menu-bg-hover: #49B1F5;
+  --flec-nav-menu-bg-hover: rgba(31, 105, 179, 0.852);
+  --flec-menu-child-bg: rgba(255, 255, 255, 0.8);
 
   /* 页脚 */
   --flec-footer-icon: #121212;
@@ -33,13 +44,16 @@
   --flec-footer-font: #121212;
   --flec-footer-font-hover: #ffffff;
   --flec-footer-font-bg-hover: #49b1f5b3;
+  --flec-footer-font-content-bg: #ffffffd0;
+  --flec-footer-content-bg: linear-gradient(to top, #ffffffd0 65%, #ffffff66 90%);
+  --flec-footer-bottom-bg: #ffffffd0;
 
   /* 动态说说 */
   --flec-moment-font: #4c4948;
   --flec-moment-title: #333;
   --flec-moment-date: #4c4948;
   --flec-moment-divider: #eee;
-  --flec-moment-card-bg: #f6f6f6;
+  --flec-moment-card-bg: rgba(255, 255, 255, 0.7);
 
   /* 订阅页面 */
   --flec-subscribe-button: #222;
@@ -51,28 +65,50 @@
   --flec-subscribe-wechat: #27c125;
   --flec-subscribe-mail: #425aef;
   --flec-subscribe-rss: #e38100;
+
+  --flec-comment-bg: #ffffffd0;
+  --flec-comment-meta-color: #697182;
+  --flec-comment-meta-bg: #f3f4f5;
+
+  /* 登录界面 */
+  --flec-login-bg: #ffffffd0;
+  --flec-float-btn: rgba(31,105,179,0.852);
 }
 
 /* 暗色主题 */
 [data-theme='dark'] {
-  --font-color: #ffffffb3;
+  --font-color: rgba(255,255,255,0.9);
   --font-light-color: #ffffffb3;
+  --white: rgba(255, 255, 255, 0.9);
+  --mark-bg: rgba(0, 0, 0, 0.6);
+  --light-grey: rgba(255, 255, 255, 0.7);
+  --global-bg: #0d0d0d;
 
-  --flec-card-bg: #121212b0;
-  --flec-page-bg: #00000000;
-  --flec-btn: #1f1f1f;
-  --flec-btn-hover: #787878;
+  --flec-card-bg: rgba(35, 37, 58, 0.8);
+  --flec-page-bg: rgba(35, 37, 58, 0.8);
+  --flec-btn: #0083ff;
+  --flec-btn-color: rgba(255, 255, 255, 0.7); 
+  --flec-btn-hover: #00c4b6;
   --flec-heavy-bg: #1f1f1f;
-  --flec-border: #3a3a3a;
+  --flec-border: #a1a2b8;
+  --flec-card-border: 1px solid #42444a;
+  --flec-card-box-shadow: 0 3px 8px 6px rgba(7, 17, 27, 0.09);
+  --flec-card-hover-box-shadow: 0 3px 8px 6px rgba(7, 17, 27, 0.2);
+  --author-card-bg: linear-gradient(-45deg, rgba(24, 40, 72, 0.6), rgba(35, 37, 58, 0.5), rgba(35, 37, 58, 0.5), rgba(24, 40, 72, 0.6));
+  --author-card-bg-before: linear-gradient(to bottom, rgba(24, 40, 72, 0.1), rgba(35, 37, 58, 0.3), rgba(35, 37, 58, 0.6), rgba(24, 40, 72, 0.7)), url(https://p.liiiu.cn/i/2025/03/15/67d5a327bad6c.webp);
 
-  --flec-nav-font: #b8b8b8;
+  --flec-nav-font: rgba(255, 255, 255, 0.7);
   --flec-nav-font-hover: #cfcfcf;
   --flec-nav-fixed-font: #b8b8b8;
   --flec-nav-fixed-font-hover: #cfcfcf;
-  --flec-nav-focus: #cfcfcf;
-  --flec-nav-bg: #000000ee;
+  --flec-nav-focus: #49B1F5;
+  --flec-nav-bg: rgba(18, 18, 18, .8);
+  --flec-nav-shadow: rgba(133, 133, 133, 0) 0px 5px 6px -5px;
   --flec-nav-menu-bg: #121212cc;
-  --flec-nav-menu-bg-hover: #363636;
+  --flec-nav-menu-bg-hover: #1f1f1f;
+  --flec-menu-child-bg: rgba(18, 18, 18, 0.8);
+  /* 波浪css */
+  
 
   --flec-footer-icon: #b8b8b8;
   --flec-footer-icon-hover: #555;
@@ -80,12 +116,14 @@
   --flec-footer-font: #b8b8b8;
   --flec-footer-font-hover: #eee;
   --flec-footer-font-bg-hover: #383838;
+  --flec-footer-content-bg: linear-gradient(to top, #121212b0 65%, #00000000 90%);
+  --flec-footer-bottom-bg: #121212b0;
 
   --flec-moment-font: #b8b8b8;
   --flec-moment-title: #ddd;
   --flec-moment-date: #bbb;
   --flec-moment-divider: #555;
-  --flec-moment-card-bg: #222;
+  --flec-moment-card-bg: #2d2d2d;
 
   --flec-subscribe-button: #9f9f9f;
   --flec-subscribe-blue: #425aef;
@@ -96,4 +134,12 @@
   --flec-subscribe-wechat: #28c125bb;
   --flec-subscribe-mail: #425aefbb;
   --flec-subscribe-rss: #e38100bb;
+
+  --flec-comment-bg: #2d2d2d;
+  --flec-comment-meta-color: rgba(255,255,255,0.7);
+  --flec-comment-meta-bg: #46494e;
+
+   /* 登录界面 */
+  --flec-login-bg: #2d2d2d;
+  --flec-float-btn: #1f1f1f;
 }

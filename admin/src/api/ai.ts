@@ -13,8 +13,10 @@ import type {
  * @param data 文章内容
  * @returns Promise<AISummaryResponse>
  */
-export function generateSummary(data: AISummaryRequest): Promise<AISummaryResponse> {
-  return request.post('/admin/ai/summary', data);
+export function generateSummary(
+  data: AISummaryRequest
+): Promise<AISummaryResponse> {
+  return request.post('/admin/ai/summary', data, { timeout: 60000 });
 }
 
 /**
@@ -22,8 +24,10 @@ export function generateSummary(data: AISummaryRequest): Promise<AISummaryRespon
  * @param data 文章内容
  * @returns Promise<AIAISummaryResponse>
  */
-export function generateAISummary(data: AIAISummaryRequest): Promise<AIAISummaryResponse> {
-  return request.post('/admin/ai/ai-summary', data);
+export function generateAISummary(
+  data: AIAISummaryRequest
+): Promise<AIAISummaryResponse> {
+  return request.post('/admin/ai/ai-summary', data, { timeout: 60000 });
 }
 
 /**
@@ -32,7 +36,7 @@ export function generateAISummary(data: AIAISummaryRequest): Promise<AIAISummary
  * @returns Promise<AITitleResponse>
  */
 export function generateTitle(data: AITitleRequest): Promise<AITitleResponse> {
-  return request.post('/admin/ai/title', data);
+  return request.post('/admin/ai/title', data, { timeout: 60000 });
 }
 
 /**
@@ -45,5 +49,5 @@ export function testAIConfig(data: {
   api_key: string;
   model: string;
 }): Promise<void> {
-  return request.post('/admin/ai/test', data);
+  return request.post('/admin/ai/test', data, { timeout: 15000 });
 }

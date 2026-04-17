@@ -3,6 +3,7 @@ package v1
 import (
 	"io"
 	"strconv"
+	"strings"
 
 	"flec_blog/internal/dto"
 	"flec_blog/internal/service"
@@ -19,6 +20,31 @@ type CommentController struct {
 // NewCommentController 创建评论控制器
 func NewCommentController(commentService *service.CommentService) *CommentController {
 	return &CommentController{commentService: commentService}
+}
+
+// formatValidationError 格式化验证错误，返回友好的中文提示
+func formatValidationError(err error) string {
+	errMsg := err.Error()
+	
+	// 处理常见的验证错误
+	if strings.Contains(errMsg, "Content") && strings.Contains(errMsg, "max") {
+		return "评论内容不能超过 500 个字符"
+	}
+	if strings.Contains(errMsg, "Content") && strings.Contains(errMsg, "min") {
+		return "评论内容不能为空"
+	}
+	if strings.Contains(errMsg, "Nickname") && strings.Contains(errMsg, "min") {
+		return "昵称至少需要 2 个字符"
+	}
+	if strings.Contains(errMsg, "Nickname") && strings.Contains(errMsg, "max") {
+		return "昵称不能超过 32 个字符"
+	}
+	if strings.Contains(errMsg, "Email") {
+		return "请输入正确的邮箱格式"
+	}
+	
+	// 默认返回原始错误信息
+	return errMsg
 }
 
 // ============ 前台接口 ============
@@ -67,7 +93,7 @@ func (c *CommentController) ListForWeb(ctx *gin.Context) {
 func (c *CommentController) Create(ctx *gin.Context) {
 	var req dto.CreateCommentRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.ValidateFailed(ctx, err.Error())
+		response.ValidateFailed(ctx, formatValidationError(err))
 		return
 	}
 
@@ -116,13 +142,13 @@ func (c *CommentController) Create(ctx *gin.Context) {
 func (c *CommentController) Update(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
 	if err != nil {
-		response.ValidateFailed(ctx, err.Error())
+		response.ValidateFailed(ctx, "无效的评论 ID")
 		return
 	}
 
 	var req dto.UpdateCommentRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.ValidateFailed(ctx, err.Error())
+		response.ValidateFailed(ctx, formatValidationError(err))
 		return
 	}
 

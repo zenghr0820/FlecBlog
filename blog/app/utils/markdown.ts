@@ -75,15 +75,21 @@ hljs.registerLanguage('diff', diff);
  * @returns 标签名和参数数组
  */
 function extractTagAndParams(line: string): { tag: string; params: string[] } {
-  const match = line.match(/^:::(\w+)(.*)$/);
-  if (!match) return { tag: '', params: [] };
-  const tag = match[1] || '';
-  const paramsString = match[2]?.trim() || '';
+  const match = line.match(/^:::\s*(\w+)?(.*)$/)
+  if (!match) return { tag: '', params: [] }
+
+  let tag = match[1] || ''
+  const paramsString = match[2]?.trim() || ''
 
   // 简单按空格分割参数
   const params = paramsString ? paramsString.split(/\s+/).filter(p => p && p !== ':::') : [];
 
-  return { tag, params };
+  if (!tag && params.length > 0) {
+    tag = params[0]
+    return { tag, params: params.slice(1) }
+  }
+
+  return { tag, params }
 }
 
 /**
@@ -391,9 +397,12 @@ md.renderer.rules.fence = (tokens, idx) => {
 // 使用 anchor 插件生成标题 ID
 md.use(anchor, {
   slugify: generateHeadingId,
-  permalink: false,
-  level: [1, 2, 3, 4, 5, 6],
-});
+  permalink: true, // 启用永久链接
+  permalinkClass: 'headerlink', // <--- 这里设置你的自定义 Class
+  permalinkSymbol: '', // 链接符号
+  permalinkBefore: true, // 符号在标题前
+  level: [2, 3, 4, 5, 6]
+})
 
 // 使用任务列表插件
 md.use(taskLists, {
@@ -443,11 +452,46 @@ md.renderer.rules.table_close = function (tokens, idx, options, env, self) {
   return defaultTableClose(tokens, idx, options, env, self) + '</div>';
 };
 
-// ========== 自定义块插件 ==========
+type MarkdownContainerMapping = {
+  name?: string
+  target?: string
+  params?: string | string[]
+  enabled?: boolean
+}
 
-/**
- * 自定义块插件
- */
+function getContainerMappingsFromGlobal(): MarkdownContainerMapping[] {
+  if (typeof globalThis === 'undefined') return []
+  const raw = (globalThis as any).__FLEC_MARKDOWN_CONTAINERS__
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw
+  return []
+}
+
+function normalizeBlockTag(
+  tag: string,
+  params: string[]
+): { tag: string; params: string[] } {
+  const mappings = getContainerMappingsFromGlobal()
+  const lower = tag.toLowerCase()
+  const mapping = mappings.find((item) => {
+    if (!item || typeof item.name !== 'string') return false
+    if (item.enabled === false) return false
+    return item.name.toLowerCase() === lower && typeof item.target === 'string'
+  })
+  if (!mapping || !mapping.target) return { tag, params }
+  const baseParams: string[] = []
+  if (Array.isArray(mapping.params)) {
+    for (const p of mapping.params) {
+      if (typeof p === 'string' && p.trim()) baseParams.push(p.trim())
+    }
+  } else if (typeof mapping.params === 'string' && mapping.params.trim()) {
+    baseParams.push(
+      ...mapping.params.split(/\s+/).filter((p: string) => p && p !== ':::')
+    )
+  }
+  return { tag: mapping.target, params: [...baseParams, ...params] }
+}
+
 function customBlocksPlugin(md: MarkdownIt) {
   // 块级规则
   md.block.ruler.before('fence', 'custom_blocks', (state, startLine, endLine, silent) => {
@@ -489,25 +533,30 @@ function customBlocksPlugin(md: MarkdownIt) {
       return false;
     }
 
-    // 处理块级标签
-    const { tag, params } = extractTagAndParams(lineText);
-    if (!tag) return false;
+      let { tag, params } = extractTagAndParams(lineText)
+      ;({ tag, params } = normalizeBlockTag(tag, params))
+      if (!tag) return false
 
-    // 查找结束标签
-    const endTagFull = `end${tag}`;
-    let nextLine = startLine + 1;
-    let foundEnd = false;
-    let contentLines: string[] = [];
+      // 查找结束标签
+      const endTagFull = `end${tag}`
+      let nextLine = startLine + 1
+      let foundEnd = false
+      let contentLines: string[] = []
 
     // 特殊处理 tabs
     if (tag === 'tabs') {
       const tabsData: Array<{ name: string; content: string }> = [];
       let currentTab: { name: string; content: string } | null = null;
 
-      while (nextLine < endLine) {
-        const linePos = state.bMarks[nextLine] ?? 0;
-        const lineMax = state.eMarks[nextLine] ?? 0;
-        const line = state.src.slice(linePos, lineMax).trim();
+        while (nextLine < endLine) {
+          const linePos = state.bMarks[nextLine] ?? 0
+          const lineMax = state.eMarks[nextLine] ?? 0
+          const line = state.src.slice(linePos, lineMax).trim()
+
+          if (line === ':::') {
+            foundEnd = true
+            break
+          }
 
         if (line.startsWith(':::endtabs')) {
           foundEnd = true;
@@ -560,15 +609,19 @@ function customBlocksPlugin(md: MarkdownIt) {
       return false;
     }
 
-    // 特殊处理 photo
-    if (tag === 'photo') {
-      const rows: string[][] = [];
-      let currentRow: string[] = [];
+      if (tag === 'photo') {
+        const rows: string[][] = []
+        let currentRow: string[] = []
 
       while (nextLine < endLine) {
         const linePos = (state.bMarks[nextLine] ?? 0) + (state.tShift[nextLine] ?? 0);
         const lineMax = state.eMarks[nextLine] ?? 0;
         const line = state.src.slice(linePos, lineMax).trim();
+
+          if (line === ':::') {
+            foundEnd = true
+            break
+          }
 
         if (line === ':::endphoto') {
           foundEnd = true;
@@ -617,7 +670,7 @@ function customBlocksPlugin(md: MarkdownIt) {
       const lineMax = state.eMarks[nextLine] ?? 0;
       const line = state.src.slice(linePos, lineMax).trim();
 
-      if (line === `:::${endTagFull}`) {
+      if (line === ':::' || line === `:::${endTagFull}`) {
         foundEnd = true;
         break;
       }

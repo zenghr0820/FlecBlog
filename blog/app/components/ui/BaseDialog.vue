@@ -74,7 +74,7 @@ const handleConfirm = () => {
 }
 
 .dialog-container {
-  background-color: var(--flec-card-bg);
+  background-color: var(--flec-login-bg);
   border-radius: 12px;
   width: 100%;
   max-width: var(--dialog-width, 480px);

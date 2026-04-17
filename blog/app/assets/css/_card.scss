@@ -1,0 +1,278 @@
+// ==================== 作者个人卡片样式系统 ====================
+.is-center {
+    text-align: center;
+}
+
+#sidebar .card-widget {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 15px;
+    padding: 20px 24px
+}
+
+@media screen and (max-width: 900px) {
+    #sidebar .card-widget:not(#card-toc) {
+        display:none
+    }
+}
+
+#sidebar .card-widget:last-child {
+    margin-bottom: 0
+}
+
+#sidebar .card-info {
+    z-index: 1;
+    position: relative;
+    background: var(--author-card-bg)
+}
+
+#sidebar .card-info .author-info-name {
+    margin-top: 10px
+}
+
+#sidebar .card-info .avatar-img {
+    margin-top: 50px
+}
+
+#sidebar .card-info .author-info-detail {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    width: calc(100% - 40px);
+    height: 34px;
+    position: absolute;
+    overflow: hidden;
+    left: 50%;
+    -webkit-transform: translate(-50%,0);
+    -moz-transform: translate(-50%,0);
+    -o-transform: translate(-50%,0);
+    -ms-transform: translate(-50%,0);
+    transform: translate(-50%,0);
+    font-size: 14px;
+    padding: 2px 15px;
+    border-radius: 20px;
+    -webkit-transition: width .5s ease-in-out,height .5s ease-in-out,border-radius .5s ease-in-out,padding .5s ease-in-out,background .5s ease-in-out;
+    -moz-transition: width .5s ease-in-out,height .5s ease-in-out,border-radius .5s ease-in-out,padding .5s ease-in-out,background .5s ease-in-out;
+    -o-transition: width .5s ease-in-out,height .5s ease-in-out,border-radius .5s ease-in-out,padding .5s ease-in-out,background .5s ease-in-out;
+    -ms-transition: width .5s ease-in-out,height .5s ease-in-out,border-radius .5s ease-in-out,padding .5s ease-in-out,background .5s ease-in-out;
+    transition: width .5s ease-in-out,height .5s ease-in-out,border-radius .5s ease-in-out,padding .5s ease-in-out,background .5s ease-in-out
+}
+
+#sidebar .card-info .author-info-detail .author-info-hello {
+    border-radius: 20px;
+    width: 135px;
+    background: var(--flec-card-bg);
+    margin: 0 auto;
+    -webkit-transition: background .5s ease-in-out,border .5s ease-in-out;
+    -moz-transition: background .5s ease-in-out,border .5s ease-in-out;
+    -o-transition: background .5s ease-in-out,border .5s ease-in-out;
+    -ms-transition: background .5s ease-in-out,border .5s ease-in-out;
+    transition: background .5s ease-in-out,border .5s ease-in-out
+}
+
+#sidebar .card-info .author-info-detail author-info-desc {
+    margin: 0 12px;
+    font-weight: 600
+}
+
+#sidebar .card-info:hover::before {
+    opacity: 1;
+    -ms-filter: none;
+    filter: none
+}
+
+#sidebar .card-info:hover .avatar-img {
+    -webkit-transform: translate(-90%,-85%) scale(.4) rotate(-20deg);
+    -moz-transform: translate(-90%,-85%) scale(.4) rotate(-20deg);
+    -o-transform: translate(-90%,-85%) scale(.4) rotate(-20deg);
+    -ms-transform: translate(-90%,-85%) scale(.4) rotate(-20deg);
+    transform: translate(-90%,-85%) scale(.4) rotate(-20deg)
+}
+
+#sidebar .card-info:hover .author-info-detail {
+    background: var(--flec-card-bg);
+    height: 165px;
+    border-radius: 10px;
+    padding: 10px 15px
+}
+
+#sidebar .card-info:hover .author-info-detail .author-info-hello {
+    background: 0 0;
+    border: none
+}
+
+#sidebar .card-info::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--author-card-bg-before);
+    background-size: cover;
+    background-repeat: no-repeat;
+    opacity: .5;
+    z-index: -1;
+    -webkit-transition: opacity .8s;
+    -moz-transition: opacity .8s;
+    -o-transition: opacity .8s;
+    -ms-transition: opacity .8s;
+    transition: opacity .8s
+}
+
+#sidebar .card-info .author-info-name {
+    font-weight: 500;
+    font-size: 1.57em
+}
+
+#sidebar .card-info .author-info-description {
+    margin-top: -.42em
+}
+
+#sidebar .card-info .site-data {
+    margin: 14px 0 4px
+}
+
+#sidebar .card-info .card-info-social-icons {
+    margin: 6px 0 -6px
+}
+
+#sidebar .card-info .card-info-social-icons .social-icon {
+    margin: 0 10px;
+    color: var(--font-color);
+    font-size: 1.4em
+}
+
+#sidebar .card-info .card-info-social-icons i {
+    -webkit-transition: all .3s;
+    -moz-transition: all .3s;
+    -o-transition: all .3s;
+    -ms-transition: all .3s;
+    transition: all .3s
+}
+
+#sidebar .card-info .card-info-social-icons i:hover {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    transform: rotate(360deg)
+}
+
+#sidebar .card-info #card-info-btn {
+    display: block;
+    margin-top: 14px;
+    background-color: var(--flec-btn);
+    color: var(--flec-btn-color);
+    text-align: center;
+    line-height: 2.4;
+    border-radius: 20px
+}
+
+#sidebar .card-info #card-info-btn:hover {
+    background-color: var(--flec-btn-hover)
+}
+
+#sidebar .card-info #card-info-btn span {
+    padding-left: 10px
+}
+#aside .card-announcement .item-headline i {
+    color: #e03131;
+}
+@keyframes ri-megaphone-fill {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.ri-megaphone-fill {
+  animation: ri-megaphone-fill 1.2s ease-in-out infinite;
+}
+
+// ========作者头像样式==========
+.avatar-img {
+    position: relative;
+    margin: 0 auto;
+    width: 110px;
+    height: 110px;
+    -webkit-transition: -webkit-transform .5s,opacity .5s ease,filter .5s ease;
+    -moz-transition: -moz-transform .5s,opacity .5s ease,filter .5s ease;
+    -o-transition: -o-transform .5s,opacity .5s ease,filter .5s ease;
+    -ms-transition: -ms-transform .5s,opacity .5s ease,filter .5s ease;
+    transition: transform .5s,opacity .5s ease,filter .5s ease
+}
+
+.avatar-img img {
+    border: 6px solid var(--white);
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    -webkit-transition: filter 375ms ease-in .2s;
+    -moz-transition: filter 375ms ease-in .2s;
+    -o-transition: filter 375ms ease-in .2s;
+    -ms-transition: filter 375ms ease-in .2s;
+    transition: filter 375ms ease-in .2s;
+    object-fit: cover
+}
+
+.avatar-img .mood-icon {
+    width: 38px;
+    height: 38px;
+    border: 6px solid var(--white);
+    border-radius: 50%;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    z-index: 1
+}
+
+.site-data {
+    display: table;
+    width: 100%;
+    table-layout: fixed
+}
+
+.site-data>a {
+    display: table-cell
+}
+
+.site-data>a div {
+    -webkit-transition: all .3s;
+    -moz-transition: all .3s;
+    -o-transition: all .3s;
+    -ms-transition: all .3s;
+    transition: all .3s
+}
+
+.site-data>a:hover div {
+    color: #2679cc!important
+}
+
+.site-data>a .headline {
+    color: var(--font-color)
+}
+
+.site-data>a .length-num {
+    margin-top: -.32em;
+    color: var(--text-highlight-color);
+    font-size: 1.4em
+}
+
+// 社交栏
+.card-info-icons { 
+    margin: 6px 0 -6px;
+
+    .icon {
+        margin: 0 10px;
+        color: var(--font-color);
+        font-size: 1.4em;
+
+        i {
+            transition: all .3s;
+
+            &:hover {
+                transform: rotate(360deg);
+            }
+        }
+    }
+}

@@ -186,27 +186,13 @@ export function useMenus() {
   const filterByType = (type: string) =>
     menus.value.filter(menu => menu.type === type).sort((a, b) => a.sort - b.sort);
 
-  const flatNavigationMenus = computed(() => {
-    const result: Menu[] = [];
-    const flatten = (items: Menu[]) => {
-      items.forEach(item => {
-        if (item.type === 'navigation') {
-          result.push(item);
-          if (item.children?.length) flatten(item.children);
-        }
-      });
-    };
-    flatten(filterByType('navigation'));
-    return result;
-  });
-
   return {
     menus,
     navigationMenus: computed(() => filterByType('navigation')),
     footerMenus: computed(() => filterByType('footer')),
     aggregateMenus: computed(() => filterByType('aggregate')),
-    flatNavigationMenus,
-  };
+    flatNavigationMenus: computed(() => filterByType('navigation'))
+  }
 }
 
 export function useMoments() {
@@ -394,7 +380,8 @@ export function useSysConfig() {
     moments_size: '30',
     message_content: '',
     home_layout: 'waterfall',
-  }));
+    markdown_containers: ''
+  }))
 
   const oauthConfig = useState<Record<string, string>>('sysconfig-oauth', () => ({
     'github.enabled': 'false',

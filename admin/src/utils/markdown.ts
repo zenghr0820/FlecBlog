@@ -27,17 +27,22 @@ import hljs from 'highlight.js';
  * @returns 标签名和参数数组
  */
 function extractTagAndParams(line: string): { tag: string; params: string[] } {
-  const match = line.match(/^:::(\w+)(.*)$/);
+  const match = line.match(/^:::\s*(\w+)?(.*)$/)
 
   if (!match) {
     return { tag: '', params: [] };
   }
 
-  const tag = match[1] || '';
-  const paramsString = match[2]?.trim() || '';
+  let tag = match[1] || ''
+  const paramsString = match[2]?.trim() || ''
 
   // 简单按空格分割参数
   const params = paramsString ? paramsString.split(/\s+/).filter(p => p && p !== ':::') : [];
+
+  if (!tag && params.length > 0) {
+    tag = params[0]
+    return { tag, params: params.slice(1) }
+  }
 
   return { tag, params };
 }
@@ -169,7 +174,87 @@ function renderAnchoredText(
       );
       return `<span class="sync-text-anchor"${attrs}>${escapeHtml(chunk.text)}</span>`;
     })
-    .join('');
+    .join(''); 
+}
+
+type MarkdownContainerMapping = {
+  name?: string
+  target?: string
+  params?: string | string[]
+  enabled?: boolean
+}
+
+function getContainerMappingsFromGlobal(): MarkdownContainerMapping[] {
+  if (typeof globalThis === 'undefined') return []
+  const raw = (globalThis as any).__FLEC_MARKDOWN_CONTAINERS__
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw
+  return []
+}
+
+function normalizeBlockTag(
+  tag: string,
+  params: string[]
+): { tag: string; params: string[] } {
+  const mappings = getContainerMappingsFromGlobal()
+  const lower = tag.toLowerCase()
+  const mapping = mappings.find((item) => {
+    if (!item || typeof item.name !== 'string') return false
+    if (item.enabled === false) return false
+    return item.name.toLowerCase() === lower && typeof item.target === 'string'
+  })
+  if (!mapping || !mapping.target) return { tag, params }
+  const baseParams: string[] = []
+  if (Array.isArray(mapping.params)) {
+    for (const p of mapping.params) {
+      if (typeof p === 'string' && p.trim()) baseParams.push(p.trim())
+    }
+  } else if (typeof mapping.params === 'string' && mapping.params.trim()) {
+    baseParams.push(
+      ...mapping.params.split(/\s+/).filter((p: string) => p && p !== ':::')
+    )
+  }
+  return { tag: mapping.target, params: [...baseParams, ...params] }
+}
+
+type MarkdownContainerMapping = {
+  name?: string
+  target?: string
+  params?: string | string[]
+  enabled?: boolean
+}
+
+function getContainerMappingsFromGlobal(): MarkdownContainerMapping[] {
+  if (typeof globalThis === 'undefined') return []
+  const raw = (globalThis as any).__FLEC_MARKDOWN_CONTAINERS__
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw
+  return []
+}
+
+function normalizeBlockTag(
+  tag: string,
+  params: string[]
+): { tag: string; params: string[] } {
+  const mappings = getContainerMappingsFromGlobal()
+  const lower = tag.toLowerCase()
+  const mapping = mappings.find((item) => {
+    if (!item || typeof item.name !== 'string') return false
+    if (item.enabled === false) return false
+    return item.name.toLowerCase() === lower && typeof item.target === 'string'
+  })
+  if (!mapping || !mapping.target) return { tag, params }
+  const baseParams: string[] = []
+  if (Array.isArray(mapping.params)) {
+    for (const p of mapping.params) {
+      if (typeof p === 'string' && p.trim()) baseParams.push(p.trim())
+    }
+  } else if (typeof mapping.params === 'string' && mapping.params.trim()) {
+    baseParams.push(
+      ...mapping.params.split(/\s+/).filter((p: string) => p && p !== ':::')
+    )
+  }
+  return { tag: mapping.target, params: [...baseParams, ...params] }
 }
 
 // ========== 自定义块渲染函数 ==========
@@ -562,9 +647,9 @@ function customBlocksPlugin(md: MarkdownIt) {
       return false;
     }
 
-    // 处理块级标签
-    const { tag, params } = extractTagAndParams(lineText);
-    if (!tag) return false;
+      let { tag, params } = extractTagAndParams(lineText)
+      ;({ tag, params } = normalizeBlockTag(tag, params))
+      if (!tag) return false
 
     // 查找结束标签
     const endTagFull = `end${tag}`;
@@ -577,10 +662,15 @@ function customBlocksPlugin(md: MarkdownIt) {
       const tabsData: Array<{ name: string; content: string }> = [];
       let currentTab: { name: string; content: string } | null = null;
 
-      while (nextLine < endLine) {
-        const linePos = state.bMarks[nextLine] ?? 0;
-        const lineMax = state.eMarks[nextLine] ?? 0;
-        const line = state.src.slice(linePos, lineMax).trim();
+        while (nextLine < endLine) {
+          const linePos = state.bMarks[nextLine] ?? 0
+          const lineMax = state.eMarks[nextLine] ?? 0
+          const line = state.src.slice(linePos, lineMax).trim()
+
+          if (line === ':::') {
+            foundEnd = true
+            break
+          }
 
         if (line.startsWith(':::endtabs')) {
           foundEnd = true;
@@ -642,15 +732,20 @@ function customBlocksPlugin(md: MarkdownIt) {
       return false;
     }
 
-    // 特殊处理 photo
-    if (tag === 'photo') {
-      const rows: string[][] = [];
-      let currentRow: string[] = [];
+      if (tag === 'photo') {
+        const rows: string[][] = []
+        let currentRow: string[] = []
 
-      while (nextLine < endLine) {
-        const linePos = (state.bMarks[nextLine] ?? 0) + (state.tShift[nextLine] ?? 0);
-        const lineMax = state.eMarks[nextLine] ?? 0;
-        const line = state.src.slice(linePos, lineMax).trim();
+        while (nextLine < endLine) {
+          const linePos =
+            (state.bMarks[nextLine] ?? 0) + (state.tShift[nextLine] ?? 0)
+          const lineMax = state.eMarks[nextLine] ?? 0
+          const line = state.src.slice(linePos, lineMax).trim()
+
+          if (line === ':::') {
+            foundEnd = true
+            break
+          }
 
         if (line === ':::endphoto') {
           foundEnd = true;
@@ -693,16 +788,15 @@ function customBlocksPlugin(md: MarkdownIt) {
       return false;
     }
 
-    // 处理其他块级标签（note, fold）
-    while (nextLine < endLine) {
-      const linePos = state.bMarks[nextLine] ?? 0;
-      const lineMax = state.eMarks[nextLine] ?? 0;
-      const line = state.src.slice(linePos, lineMax).trim();
+      while (nextLine < endLine) {
+        const linePos = state.bMarks[nextLine] ?? 0
+        const lineMax = state.eMarks[nextLine] ?? 0
+        const line = state.src.slice(linePos, lineMax).trim()
 
-      if (line === `:::${endTagFull}`) {
-        foundEnd = true;
-        break;
-      }
+        if (line === ':::' || line === `:::${endTagFull}`) {
+          foundEnd = true
+          break
+        }
 
       contentLines.push(state.src.slice(linePos, lineMax));
       nextLine++;

@@ -70,8 +70,17 @@ const secondaryBtn = computed(() =>
   isUserInfoFilled.value
     ? { text: '登录', icon: 'ri-login-box-line' }
     : { text: '发送', icon: 'ri-send-plane-fill' }
-);
-const renderedMarkdown = computed(() => renderSimpleMarkdown(commentContent.value));
+)
+const renderedMarkdown = computed(() =>
+  renderSimpleMarkdown(commentContent.value)
+)
+
+// 评论字符计数
+const MAX_COMMENT_LENGTH = 500
+const commentLength = computed(() => commentContent.value.length)
+const remainingChars = computed(() => MAX_COMMENT_LENGTH - commentLength.value)
+const isOverLimit = computed(() => remainingChars.value < 0)
+
 const guestPrivacyNotice = [
   '游客无需注册即可评论。',
   '你提交的昵称、邮箱、网址和评论内容会保存在服务端，用于展示评论身份、接收回复及必要的安全审计。',
@@ -125,8 +134,17 @@ const validateForm = () => {
   }
 
   if (!commentContent.value.trim()) {
-    errors.value.content = '请输入评论内容';
-    return false;
+    errors.value.content = '请输入评论内容'
+    autoClearError('content')
+    return false
+  }
+
+  // 验证评论长度（后端限制为 500 字符）
+  const contentLength = commentContent.value.trim().length
+  if (contentLength > 500) {
+    errors.value.content = `评论内容不能超过 500 个字符（当前 ${contentLength} 个字符）`
+    autoClearError('content')
+    return false
   }
 
   return true;
@@ -134,16 +152,15 @@ const validateForm = () => {
 
 // 清除特定字段的错误
 const clearError = (field: 'nickname' | 'email' | 'website' | 'content') => {
-  errors.value[field] = '';
-};
+  errors.value[field] = ''
+}
 
-/**
- * 处理文本框输入事件
- */
-const handleTextareaInput = () => {
-  clearError('content');
-  resetTextareaHeight();
-};
+// 自动清除错误提示（3秒后）
+const autoClearError = (field: 'nickname' | 'email' | 'website' | 'content') => {
+  setTimeout(() => {
+    errors.value[field] = ''
+  }, 3000)
+}
 
 // 事件处理
 const handleSubmitComment = async () => {
@@ -197,7 +214,8 @@ const handleSubmitComment = async () => {
 
     if (isLoggedIn.value) triggerOnComment();
   } catch (error: any) {
-    errors.value.email = error.message || error.response?.data?.message || '评论发表失败';
+    const errorMsg = error.response?._data?.message || '评论发表失败'
+    info(errorMsg)
   } finally {
     isSubmitting.value = false;
   }
@@ -432,18 +450,18 @@ onUnmounted(() => {
         data-lenis-prevent
         @input="handleTextareaInput"
         @paste="handlePaste"
+        @wheel.stop.passive
+        @touchmove.stop.passive
       />
-      <transition name="fade">
-        <div v-if="errors.content" class="error-tooltip content-error">{{ errors.content }}</div>
-      </transition>
-      <!-- 字符数提示，超过450字后显示 -->
-      <div
-        v-if="commentContent.length > 450"
-        class="char-count"
-        :class="{ 'near-limit': commentContent.length > 480 }"
-      >
-        {{ commentContent.length }}/500
+      <!-- 字符计数器 -->
+      <div class="char-counter" :class="{ 'over-limit': isOverLimit }">
+        <span>{{ remainingChars }}</span> / {{ MAX_COMMENT_LENGTH }}
       </div>
+      <transition name="fade">
+        <div v-if="errors.content" class="error-tooltip content-error">
+          {{ errors.content }}
+        </div>
+      </transition>
       <transition name="expand">
         <div
           v-if="showPreview"
@@ -563,7 +581,8 @@ onUnmounted(() => {
 
 .comment-input {
   margin-bottom: 30px;
-  background: var(--flec-card-bg);
+  background: var(--flec-comment-bg);
+  box-shadow: var(--flec-card-box-shadow);
   border-radius: 8px;
   padding: 16px;
   display: flex;
@@ -758,23 +777,9 @@ textarea {
 .editor-container {
   position: relative;
   width: 100%;
-}
-
-// 字符数提示样式
-.char-count {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  font-size: 0.75rem;
-  color: var(--theme-meta-color);
-  padding: 6px;
-  border-radius: 4px;
-  pointer-events: none;
-
-  &.near-limit {
-    color: #ef4444;
-    font-weight: 500;
-  }
+  
+  // 确保容器不会干扰内部元素的滚动
+  overflow: visible;
 }
 
 textarea {
@@ -782,8 +787,8 @@ textarea {
   padding: 10px 12px;
   font-size: 0.95rem;
   line-height: 1.6;
-  resize: none;
-  min-height: 60px;
+  resize: vertical;
+  min-height: 120px;
   max-height: 300px;
   overflow-y: auto;
   // 隐藏滚动条但保持可滚动
@@ -800,6 +805,21 @@ textarea {
     &:focus {
       border-color: #ef4444;
     }
+  }
+}
+
+.char-counter {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 0.75rem;
+  color: var(--theme-meta-color);
+  user-select: none;
+  pointer-events: none;
+
+  &.over-limit {
+    color: #ef4444;
+    font-weight: 600;
   }
 }
 
@@ -981,6 +1001,7 @@ textarea {
   border: none;
   border-radius: 6px;
   background: var(--flec-btn);
+  box-shadow: var(--flec-card-box-shadow);
   color: var(--font-light-color);
   font-size: 0.9rem;
   font-weight: 500;

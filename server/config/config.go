@@ -56,23 +56,25 @@ type BasicConfig struct {
 
 // BlogConfig 博客配置（从数据库动态加载）
 type BlogConfig struct {
-	Title           string // 博客标题
-	Subtitle        string // 博客副标题
-	Slogan          string // 博客标语
-	Description     string // 博客描述
-	Keywords        string // 博客关键词
-	Established     string // 建站日期
-	Favicon         string // 网站Favicon
-	BackgroundImage string // 背景图片
-	Screenshot      string // 站点截图
-	Announcement    string // 公告内容
-	CustomHead      string // 自定义 Head 代码
-	CustomBody      string // 自定义 Body 代码
-	Emojis          string // 表情包配置
-	Font            string // 字体配置（URL|字体名称）
-	MomentsSize     int    // 动态列表每页数量
-	MessageContent  string // 留言信内容
-	HomeLayout      string // 首页布局（waterfall/single_column）
+	Title                string // 博客标题
+	Subtitle             string // 博客副标题
+	Slogan               string // 博客标语
+	Description          string // 博客描述
+	Keywords             string // 博客关键词
+	Established          string // 建站日期
+	Favicon              string // 网站Favicon
+	BackgroundImage      string // 背景图片
+	BackgroundImageLight string // 浅色主题背景图片
+	BackgroundImageDark  string // 深色主题背景图片
+	Screenshot           string // 站点截图
+	Announcement         string // 公告内容
+	CustomHead           string // 自定义 Head 代码
+	CustomBody           string // 自定义 Body 代码
+	Emojis               string // 表情包配置
+	Font                 string // 字体配置（URL|字体名称）
+	MomentsSize          int    // 动态列表每页数量
+	MessageContent       string // 留言信内容
+	HomeLayout           string // 首页布局（waterfall/single_column）
 }
 
 // NotificationConfig 通知配置（从数据库动态加载）

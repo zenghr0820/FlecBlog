@@ -62,10 +62,10 @@
         />
       </el-form-item>
 
-      <el-form-item label="背景图片">
+      <el-form-item label="背景图片(浅色)">
         <ImageUploader
-          ref="backgroundUploaderRef"
-          v-model="form.background_image"
+          ref="backgroundLightUploaderRef"
+          v-model="form.background_image_light"
           upload-type="博客背景"
           width="213px"
           height="120px"
@@ -73,6 +73,19 @@
         />
       </el-form-item>
 
+      <el-form-item label="背景图片(深色)">
+        <ImageUploader
+          ref="backgroundDarkUploaderRef"
+          v-model="form.background_image_dark"
+          upload-type="博客背景"
+          width="213px"
+          height="120px"
+          :disabled="loading"
+        />
+      </el-form-item>
+    </div>
+
+    <div class="image-row">
       <el-form-item label="站点截图">
         <ImageUploader
           ref="screenshotUploaderRef"
@@ -372,6 +385,22 @@
         :disabled="loading"
       />
     </el-form-item>
+
+    <el-divider content-position="left">Markdown 容器映射</el-divider>
+
+    <el-form-item label="容器别名">
+      <JsonListEditor
+        v-model="form.markdownContainersList"
+        :fields="markdownContainerFields"
+        :default-item="{
+          name: '',
+          target: 'note',
+          params: '',
+          system: 'vuepress'
+        }"
+        :disabled="loading"
+      />
+    </el-form-item>
   </el-form>
 </template>
 
@@ -391,11 +420,13 @@ interface BlogFormData {
   established: string;
 
   // 全局样式
-  favicon: string;
-  background_image: string;
-  screenshot: string;
-  announcement: string;
-  typingTextsList: Array<{ value: string }>;
+  favicon: string
+  background_image: string // 已废弃，保留兼容
+  background_image_light: string // 浅色主题背景图片
+  background_image_dark: string // 深色主题背景图片
+  screenshot: string
+  announcement: string
+  typingTextsList: Array<{ value: string }>
 
   // 社交媒体
   sidebarSocialList: Array<{ name: string; url: string; icon: string }>;
@@ -415,22 +446,28 @@ interface BlogFormData {
   home_layout: string;
 
   // 关于页面配置
-  about_describe: string;
-  about_describe_tips: string;
-  about_exhibition: string;
-  profileList: Array<{ label: string; value: string; color: string }>;
-  about_personality: string;
-  mottoMainList: string[];
-  about_motto_sub: string;
-  socializeList: Array<{ name: string; url: string }>;
-  creationList: Array<{ name: string; url: string }>;
-  versionsList: Array<{ name: string; version: string }>;
-  unionsList: Array<{ name: string; url: string }>;
-  about_story: string;
-  custom_head: string;
-  custom_body: string;
-  emojis: string;
-  font: string;
+  about_describe: string
+  about_describe_tips: string
+  about_exhibition: string
+  profileList: Array<{ label: string; value: string; color: string }>
+  about_personality: string
+  mottoMainList: string[]
+  about_motto_sub: string
+  socializeList: Array<{ name: string; url: string }>
+  creationList: Array<{ name: string; url: string }>
+  versionsList: Array<{ name: string; version: string }>
+  unionsList: Array<{ name: string; url: string }>
+  about_story: string
+  custom_head: string
+  custom_body: string
+  emojis: string
+  font: string
+  markdownContainersList: Array<{
+    name: string
+    target: string
+    params: string
+    system: string
+  }>
 }
 
 const form = defineModel<BlogFormData>('form', { required: true });
@@ -440,10 +477,11 @@ defineProps<{
 }>();
 
 // 图片上传器引用
-const faviconUploaderRef = ref<InstanceType<typeof ImageUploader>>();
-const backgroundUploaderRef = ref<InstanceType<typeof ImageUploader>>();
-const screenshotUploaderRef = ref<InstanceType<typeof ImageUploader>>();
-const aboutExhibitionUploaderRef = ref<InstanceType<typeof ImageUploader>>();
+const faviconUploaderRef = ref<InstanceType<typeof ImageUploader>>()
+const backgroundLightUploaderRef = ref<InstanceType<typeof ImageUploader>>()
+const backgroundDarkUploaderRef = ref<InstanceType<typeof ImageUploader>>()
+const screenshotUploaderRef = ref<InstanceType<typeof ImageUploader>>()
+const aboutExhibitionUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 
 // 预设的常用社交平台图标
 const commonIcons = [
@@ -527,9 +565,44 @@ const footerLinksFields: FieldConfig[] = [
     key: 'url',
     type: 'text',
     placeholder: '链接地址 (/开头为内链)',
-    style: 'flex: 1; margin: 0 8px',
+    style: 'flex: 1; margin: 0 8px'
+  }
+]
+
+const markdownContainerFields: FieldConfig[] = [
+  {
+    key: 'name',
+    type: 'text',
+    placeholder: '外部容器名（例如 tip）',
+    style: 'width: 140px'
   },
-];
+  {
+    key: 'target',
+    type: 'select',
+    placeholder: '内部类型',
+    style: 'width: 140px',
+    options: [
+      { label: 'note 提示框', value: 'note' },
+      { label: 'fold 折叠块', value: 'fold' },
+      { label: 'tabs 标签页', value: 'tabs' },
+      { label: 'photo 照片墙', value: 'photo' },
+      { label: 'link 链接卡片', value: 'link' },
+      { label: 'video 视频', value: 'video' }
+    ]
+  },
+  {
+    key: 'params',
+    type: 'text',
+    placeholder: '默认参数（空格分隔）',
+    style: 'flex: 1; margin: 0 8px'
+  },
+  {
+    key: 'system',
+    type: 'text',
+    placeholder: '来源系统（可选，如 vuepress）',
+    style: 'width: 160px'
+  }
+]
 
 const nameUrlFields: FieldConfig[] = [
   { key: 'name', type: 'text', placeholder: '平台名称', style: 'width: 120px' },
@@ -583,7 +656,8 @@ const handleFontSiteCommand = (url: string) => {
 // 暴露上传器引用给父组件
 defineExpose({
   faviconUploaderRef,
-  backgroundUploaderRef,
+  backgroundLightUploaderRef,
+  backgroundDarkUploaderRef,
   screenshotUploaderRef,
   aboutExhibitionUploaderRef,
 });
