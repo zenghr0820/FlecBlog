@@ -70,17 +70,8 @@ const secondaryBtn = computed(() =>
   isUserInfoFilled.value
     ? { text: '登录', icon: 'ri-login-box-line' }
     : { text: '发送', icon: 'ri-send-plane-fill' }
-)
-const renderedMarkdown = computed(() =>
-  renderSimpleMarkdown(commentContent.value)
-)
-
-// 评论字符计数
-const MAX_COMMENT_LENGTH = 500
-const commentLength = computed(() => commentContent.value.length)
-const remainingChars = computed(() => MAX_COMMENT_LENGTH - commentLength.value)
-const isOverLimit = computed(() => remainingChars.value < 0)
-
+);
+const renderedMarkdown = computed(() => renderSimpleMarkdown(commentContent.value));
 const guestPrivacyNotice = [
   '游客无需注册即可评论。',
   '你提交的昵称、邮箱、网址和评论内容会保存在服务端，用于展示评论身份、接收回复及必要的安全审计。',
@@ -101,6 +92,12 @@ const resetToDefaultHeight = () => {
   if (textareaRef.value) {
     textareaRef.value.style.height = 'auto';
   }
+};
+
+// 处理 textarea 输入事件，自动调整高度
+const handleTextareaInput = () => {
+  clearError("content");
+  resetTextareaHeight();
 };
 
 const validateForm = () => {
@@ -450,18 +447,20 @@ onUnmounted(() => {
         data-lenis-prevent
         @input="handleTextareaInput"
         @paste="handlePaste"
-        @wheel.stop.passive
-        @touchmove.stop.passive
       />
-      <!-- 字符计数器 -->
-      <div class="char-counter" :class="{ 'over-limit': isOverLimit }">
-        <span>{{ remainingChars }}</span> / {{ MAX_COMMENT_LENGTH }}
-      </div>
       <transition name="fade">
         <div v-if="errors.content" class="error-tooltip content-error">
           {{ errors.content }}
         </div>
       </transition>
+      <!-- 字符数提示，超过450字后显示 -->
+      <div
+        v-if="commentContent.length > 450"
+        class="char-count"
+        :class="{ 'near-limit': commentContent.length > 480 }"
+      >
+        {{ commentContent.length }}/500
+      </div>
       <transition name="expand">
         <div
           v-if="showPreview"
@@ -787,8 +786,8 @@ textarea {
   padding: 10px 12px;
   font-size: 0.95rem;
   line-height: 1.6;
-  resize: vertical;
-  min-height: 120px;
+  resize: none;
+  min-height: 60px;
   max-height: 300px;
   overflow-y: auto;
   // 隐藏滚动条但保持可滚动
@@ -808,7 +807,7 @@ textarea {
   }
 }
 
-.char-counter {
+.char-count {
   position: absolute;
   bottom: 8px;
   right: 12px;
@@ -817,7 +816,7 @@ textarea {
   user-select: none;
   pointer-events: none;
 
-  &.over-limit {
+  &.near-limit {
     color: #ef4444;
     font-weight: 600;
   }
