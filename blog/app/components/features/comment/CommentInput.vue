@@ -377,194 +377,196 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="comment-input" :class="{ 'reply-mode': isReplyMode }">
-    <template v-if="!isLoggedIn">
-      <div class="user-info-row">
-        <div class="input-wrapper">
-          <input
-            v-model="nickname"
-            type="text"
-            placeholder="昵称 *"
-            :disabled="isSubmitting"
-            :class="{ error: errors.nickname }"
-            @input="clearError('nickname')"
-          />
-          <transition name="fade">
-            <div v-if="errors.nickname" class="error-tooltip">{{ errors.nickname }}</div>
-          </transition>
-        </div>
-        <div class="input-wrapper">
-          <input
-            v-model="email"
-            type="email"
-            placeholder="邮箱 *"
-            :disabled="isSubmitting"
-            :class="{ error: errors.email }"
-            @input="clearError('email')"
-          />
-          <transition name="fade">
-            <div v-if="errors.email" class="error-tooltip">{{ errors.email }}</div>
-          </transition>
-        </div>
-        <div class="input-wrapper policy-input">
-          <input
-            v-model="website"
-            type="url"
-            placeholder="网址"
-            :disabled="isSubmitting"
-            :class="{ error: errors.website }"
-            @input="clearError('website')"
-          />
-          <div class="guest-policy-tip">
-            <button
-              type="button"
-              class="guest-policy-trigger"
-              aria-label="游客评论信息说明"
-              title="游客评论信息说明"
-            >
-              <i class="ri-information-line"></i>
-            </button>
-            <div class="guest-policy-tooltip" role="note">
-              <p v-for="line in guestPrivacyNotice" :key="line">{{ line }}</p>
-            </div>
-          </div>
-          <transition name="fade">
-            <div v-if="errors.website" class="error-tooltip">{{ errors.website }}</div>
-          </transition>
-        </div>
-      </div>
-    </template>
-
-    <div class="editor-container">
-      <textarea
-        ref="textareaRef"
-        v-model="commentContent"
-        placeholder="写下你的评论...支持 Markdown 语法"
-        rows="3"
-        maxlength="500"
-        :disabled="isSubmitting"
-        :class="{ error: errors.content }"
-        data-lenis-prevent
-        @input="handleTextareaInput"
-        @paste="handlePaste"
-      />
-      <transition name="fade">
-        <div v-if="errors.content" class="error-tooltip content-error">
-          {{ errors.content }}
-        </div>
-      </transition>
-      <!-- 字符数提示，超过450字后显示 -->
-      <div
-        v-if="commentContent.length > 450"
-        class="char-count"
-        :class="{ 'near-limit': commentContent.length > 480 }"
-      >
-        {{ commentContent.length }}/500
-      </div>
-      <transition name="expand">
-        <div
-          v-if="showPreview"
-          class="preview-area markdown-body"
-          v-html="renderedMarkdown || '<p class=\'empty-hint\'>暂无内容</p>'"
-        ></div>
-      </transition>
-    </div>
-
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <div v-if="isReplyMode" class="reply-tag">
-          <span class="reply-tag-text">回复 {{ replyTo }}</span>
-          <button
-            class="reply-tag-close"
-            @click="handleCancelReply"
-            :disabled="isSubmitting"
-            aria-label="取消回复"
-          >
-            <i class="ri-close-line"></i>
-          </button>
-        </div>
-        <div class="emoji-wrapper">
-          <button
-            ref="emojiButtonRef"
-            class="tool-btn"
-            @click="toggleEmojiPicker"
-            title="表情"
-            aria-label="插入表情"
-            :disabled="isSubmitting || isUploading"
-            :class="{ active: showEmojiPicker }"
-          >
-            <i class="ri-emotion-line"></i>
-          </button>
-        </div>
-        <transition name="fade-scale">
-          <FeaturesCommentEmojiPicker
-            v-if="showEmojiPicker"
-            ref="emojiPickerRef"
-            class="emoji-picker-portal"
-            @select="handleEmojiSelect"
-          />
-        </transition>
-        <button
-          class="tool-btn"
-          @click="handleImageUpload"
-          title="图片"
-          aria-label="上传图片"
-          :disabled="isSubmitting || isUploading"
-          :class="{ uploading: isUploading }"
-        >
-          <i :class="isUploading ? 'ri-loader-4-line rotating' : 'ri-image-line'"></i>
-        </button>
-        <input
-          ref="fileInputRef"
-          type="file"
-          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-          style="display: none"
-          @change="handleFileSelect"
-        />
-        <button
-          class="tool-btn"
-          @click="togglePreview"
-          :title="showPreview ? '编辑' : 'Markdown预览'"
-          :aria-label="showPreview ? '切换到编辑模式' : '切换到预览模式'"
-          :class="{ active: showPreview }"
-          :disabled="isSubmitting || isUploading"
-        >
-          <i :class="showPreview ? 'ri-edit-line' : 'ri-eye-line'"></i>
-        </button>
-      </div>
-      <div ref="buttonGroupRef" class="button-group">
-        <button
-          class="submit-btn main-btn"
-          @click="handleMainAction"
-          :disabled="isSubmitting"
-          :aria-label="mainBtn.text"
-        >
-          <i :class="mainBtn.icon"></i>{{ mainBtn.text }}
-        </button>
-        <template v-if="!isLoggedIn">
-          <button
-            class="submit-btn expand-btn"
-            @click="toggleExpandedBtn"
-            :disabled="isSubmitting"
-            aria-label="更多选项"
-          >
-            <i class="ri-more-2-fill"></i>
-          </button>
-          <transition name="slide-fade">
-            <button
-              v-if="showExpandedBtn"
-              class="submit-btn secondary-btn"
-              @click="handleSecondaryAction"
+  <ClientOnly>
+    <div class="comment-input" :class="{ 'reply-mode': isReplyMode }">
+      <template v-if="!isLoggedIn">
+        <div class="user-info-row">
+          <div class="input-wrapper">
+            <input
+              v-model="nickname"
+              type="text"
+              placeholder="昵称 *"
               :disabled="isSubmitting"
-              :aria-label="secondaryBtn.text"
+              :class="{ error: errors.nickname }"
+              @input="clearError('nickname')"
+            />
+            <transition name="fade">
+              <div v-if="errors.nickname" class="error-tooltip">{{ errors.nickname }}</div>
+            </transition>
+          </div>
+          <div class="input-wrapper">
+            <input
+              v-model="email"
+              type="email"
+              placeholder="邮箱 *"
+              :disabled="isSubmitting"
+              :class="{ error: errors.email }"
+              @input="clearError('email')"
+            />
+            <transition name="fade">
+              <div v-if="errors.email" class="error-tooltip">{{ errors.email }}</div>
+            </transition>
+          </div>
+          <div class="input-wrapper policy-input">
+            <input
+              v-model="website"
+              type="url"
+              placeholder="网址"
+              :disabled="isSubmitting"
+              :class="{ error: errors.website }"
+              @input="clearError('website')"
+            />
+            <div class="guest-policy-tip">
+              <button
+                type="button"
+                class="guest-policy-trigger"
+                aria-label="游客评论信息说明"
+                title="游客评论信息说明"
+              >
+                <i class="ri-information-line"></i>
+              </button>
+              <div class="guest-policy-tooltip" role="note">
+                <p v-for="line in guestPrivacyNotice" :key="line">{{ line }}</p>
+              </div>
+            </div>
+            <transition name="fade">
+              <div v-if="errors.website" class="error-tooltip">{{ errors.website }}</div>
+            </transition>
+          </div>
+        </div>
+      </template>
+
+      <div class="editor-container">
+        <textarea
+          ref="textareaRef"
+          v-model="commentContent"
+          placeholder="写下你的评论...支持 Markdown 语法"
+          rows="3"
+          maxlength="500"
+          :disabled="isSubmitting"
+          :class="{ error: errors.content }"
+          data-lenis-prevent
+          @input="handleTextareaInput"
+          @paste="handlePaste"
+        />
+        <transition name="fade">
+          <div v-if="errors.content" class="error-tooltip content-error">
+            {{ errors.content }}
+          </div>
+        </transition>
+        <!-- 字符数提示，超过450字后显示 -->
+        <div
+          v-if="commentContent.length > 450"
+          class="char-count"
+          :class="{ 'near-limit': commentContent.length > 480 }"
+        >
+          {{ commentContent.length }}/500
+        </div>
+        <transition name="expand">
+          <div
+            v-if="showPreview"
+            class="preview-area markdown-body"
+            v-html="renderedMarkdown || '<p class=\'empty-hint\'>暂无内容</p>'"
+          ></div>
+        </transition>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div v-if="isReplyMode" class="reply-tag">
+            <span class="reply-tag-text">回复 {{ replyTo }}</span>
+            <button
+              class="reply-tag-close"
+              @click="handleCancelReply"
+              :disabled="isSubmitting"
+              aria-label="取消回复"
             >
-              <i :class="secondaryBtn.icon"></i>{{ secondaryBtn.text }}
+              <i class="ri-close-line"></i>
             </button>
+          </div>
+          <div class="emoji-wrapper">
+            <button
+              ref="emojiButtonRef"
+              class="tool-btn"
+              @click="toggleEmojiPicker"
+              title="表情"
+              aria-label="插入表情"
+              :disabled="isSubmitting || isUploading"
+              :class="{ active: showEmojiPicker }"
+            >
+              <i class="ri-emotion-line"></i>
+            </button>
+          </div>
+          <transition name="fade-scale">
+            <FeaturesCommentEmojiPicker
+              v-if="showEmojiPicker"
+              ref="emojiPickerRef"
+              class="emoji-picker-portal"
+              @select="handleEmojiSelect"
+            />
           </transition>
-        </template>
+          <button
+            class="tool-btn"
+            @click="handleImageUpload"
+            title="图片"
+            aria-label="上传图片"
+            :disabled="isSubmitting || isUploading"
+            :class="{ uploading: isUploading }"
+          >
+            <i :class="isUploading ? 'ri-loader-4-line rotating' : 'ri-image-line'"></i>
+          </button>
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+            style="display: none"
+            @change="handleFileSelect"
+          />
+          <button
+            class="tool-btn"
+            @click="togglePreview"
+            :title="showPreview ? '编辑' : 'Markdown预览'"
+            :aria-label="showPreview ? '切换到编辑模式' : '切换到预览模式'"
+            :class="{ active: showPreview }"
+            :disabled="isSubmitting || isUploading"
+          >
+            <i :class="showPreview ? 'ri-edit-line' : 'ri-eye-line'"></i>
+          </button>
+        </div>
+        <div ref="buttonGroupRef" class="button-group">
+          <button
+            class="submit-btn main-btn"
+            @click="handleMainAction"
+            :disabled="isSubmitting"
+            :aria-label="mainBtn.text"
+          >
+            <i :class="mainBtn.icon"></i>{{ mainBtn.text }}
+          </button>
+          <template v-if="!isLoggedIn">
+            <button
+              class="submit-btn expand-btn"
+              @click="toggleExpandedBtn"
+              :disabled="isSubmitting"
+              aria-label="更多选项"
+            >
+              <i class="ri-more-2-fill"></i>
+            </button>
+            <transition name="slide-fade">
+              <button
+                v-if="showExpandedBtn"
+                class="submit-btn secondary-btn"
+                @click="handleSecondaryAction"
+                :disabled="isSubmitting"
+                :aria-label="secondaryBtn.text"
+              >
+                <i :class="secondaryBtn.icon"></i>{{ secondaryBtn.text }}
+              </button>
+            </transition>
+          </template>
+        </div>
       </div>
     </div>
-  </div>
+  </ClientOnly>
 </template>
 
 <style lang="scss" scoped>

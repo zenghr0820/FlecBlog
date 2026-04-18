@@ -41,10 +41,11 @@ const goToCategory = () => {
     :style="{ backgroundImage: article?.cover ? `url(${article.cover})` : 'none' }"
   >
     <div v-if="article" class="post-info">
-      <h1 class="post-title">{{ article.title }}</h1>
+      <ClientOnly><h1 class="post-title">{{ article.title }}</h1></ClientOnly>
 
       <!-- 移动端：合并为一行 -->
       <div class="post-meta post-meta-mobile">
+        <ClientOnly>
         <span class="post-meta-item">
           <i class="ri-calendar-line"></i>
           <span>发表于 {{ formatFriendly(article.publish_time) }}</span>
@@ -77,45 +78,50 @@ const goToCategory = () => {
           <i class="ri-message-3-line"></i>
           <span>评论数: {{ commentCount }}</span>
         </span>
+        </ClientOnly>
       </div>
 
       <!-- 桌面端：分两行显示 -->
       <div class="post-meta-desktop">
         <div class="post-meta">
-          <span class="post-meta-item">
-            <i class="ri-calendar-line"></i>
-            <span>发表于 {{ formatFriendly(article.publish_time) }}</span>
-          </span>
-          <span v-if="article.update_time" class="post-meta-item">
-            <i class="ri-refresh-line"></i>
-            <span>更新于 {{ formatFriendly(article.update_time) }}</span>
-          </span>
-          <span v-if="article.location" class="post-meta-item">
-            <i class="ri-map-pin-line"></i>
-            <span>{{ article.location }}</span>
-          </span>
-          <span v-if="article.category" class="post-meta-item clickable" @click="goToCategory">
-            <i class="ri-folder-line"></i>
-            <span>{{ article.category.name }}</span>
-          </span>
+          <ClientOnly>
+            <span class="post-meta-item">
+              <i class="ri-calendar-line"></i>
+              <span>发表于 {{ formatFriendly(article.publish_time) }}</span>
+            </span>
+            <span v-if="article.update_time" class="post-meta-item">
+              <i class="ri-refresh-line"></i>
+              <span>更新于 {{ formatFriendly(article.update_time) }}</span>
+            </span>
+            <span v-if="article.location" class="post-meta-item">
+              <i class="ri-map-pin-line"></i>
+              <span>{{ article.location }}</span>
+            </span>
+            <span v-if="article.category" class="post-meta-item clickable" @click="goToCategory">
+              <i class="ri-folder-line"></i>
+              <span>{{ article.category.name }}</span>
+            </span>
+          </ClientOnly>
         </div>
         <div class="post-meta">
-          <span class="post-meta-item">
-            <i class="ri-file-word-line"></i>
-            <span>总字数: {{ wordCount }}</span>
-          </span>
-          <span class="post-meta-item">
-            <i class="ri-time-line"></i>
-            <span>阅读时长: {{ readingTime }}分钟</span>
-          </span>
-          <span class="post-meta-item">
-            <i class="ri-eye-line"></i>
-            <span>浏览量: {{ article.view_count }}</span>
-          </span>
-          <span class="post-meta-item clickable" @click="scrollToElement('.comment-input')">
-            <i class="ri-message-3-line"></i>
-            <span>评论数: {{ commentCount }}</span>
-          </span>
+          <ClientOnly>
+            <span class="post-meta-item">
+              <i class="ri-file-word-line"></i>
+              <span>总字数: {{ wordCount }}</span>
+            </span>
+            <span class="post-meta-item">
+              <i class="ri-time-line"></i>
+              <span>阅读时长: {{ readingTime }}分钟</span>
+            </span>
+            <span class="post-meta-item">
+              <i class="ri-eye-line"></i>
+              <span>浏览量: {{ article.view_count }}</span>
+            </span>
+            <span class="post-meta-item clickable" @click="scrollToElement('.comment-input')">
+              <i class="ri-message-3-line"></i>
+              <span>评论数: {{ commentCount }}</span>
+            </span>
+          </ClientOnly>
         </div>
       </div>
     </div>

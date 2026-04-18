@@ -63,6 +63,7 @@ const isEmpty = computed(() => {
     <h1 class="page-title">友链</h1>
 
     <div class="friend-sections">
+      <ClientOnly>
       <!-- 友链分组 -->
       <section
         v-for="group in friendGroups"
@@ -123,7 +124,7 @@ const isEmpty = computed(() => {
           </span>
         </div>
       </section>
-
+      </ClientOnly>
       <!-- 空状态-->
       <div v-if="isEmpty" class="empty-state">
         <i class="ri-links-line"></i>

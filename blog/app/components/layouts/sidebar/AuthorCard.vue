@@ -39,18 +39,20 @@ onMounted(async () => {
     </div>
     <div class="author-info-name">{{ basicConfig.author }}</div>
     <div class="site-data">
-      <router-link to="/archive" :aria-label="`查看全部 ${articlesTotal} 篇文章`">
-        <div class="headline">文章</div>
-        <div class="num">{{ articlesTotal }}</div>
-      </router-link>
-      <router-link to="/categories" :aria-label="`查看全部 ${categoriesTotal} 个分类`">
-        <div class="headline">分类</div>
-        <div class="num">{{ categoriesTotal }}</div>
-      </router-link>
-      <router-link to="/tags" :aria-label="`查看全部 ${tagsTotal} 个标签`">
-        <div class="headline">标签</div>
-        <div class="num">{{ tagsTotal }}</div>
-      </router-link>
+      <ClientOnly>
+        <router-link to="/archive" :aria-label="`查看全部 ${articlesTotal} 篇文章`">
+          <div class="headline">文章</div>
+          <div class="num">{{ articlesTotal }}</div>
+        </router-link>
+        <router-link to="/categories" :aria-label="`查看全部 ${categoriesTotal} 个分类`">
+          <div class="headline">分类</div>
+          <div class="num">{{ categoriesTotal }}</div>
+        </router-link>
+        <router-link to="/tags" :aria-label="`查看全部 ${tagsTotal} 个标签`">
+          <div class="headline">标签</div>
+          <div class="num">{{ tagsTotal }}</div>
+        </router-link>
+      </ClientOnly>
     </div>
     <a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/zenghr0820">
       <i class="fab fa-github"></i>

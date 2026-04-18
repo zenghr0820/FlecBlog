@@ -403,47 +403,49 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="ctx" @after-enter="addListeners" @after-leave="rmListeners">
-      <div v-if="isVisible" ref="menuRef" class="ctx-menu" :style="style" @click.stop>
-        <!-- 导航按钮组 -->
-        <div class="group small">
-          <button
-            v-for="b in navBtns"
-            :key="b.id"
-            class="item icon"
-            :title="b.tooltip"
-            @click="b.action"
+  <ClientOnly>
+    <Teleport to="body">
+      <Transition name="ctx" @after-enter="addListeners" @after-leave="rmListeners">
+        <div v-if="isVisible" ref="menuRef" class="ctx-menu" :style="style" @click.stop>
+          <!-- 导航按钮组 -->
+          <div class="group small">
+            <button
+              v-for="b in navBtns"
+              :key="b.id"
+              class="item icon"
+              :title="b.tooltip"
+              @click="b.action"
+            >
+              <i :class="b.icon"></i>
+            </button>
+          </div>
+          <!-- 动态菜单组（链接、媒体、文本、输入框） -->
+          <div
+            v-for="items in [linkItems, mediaItems, textItems, inputItems]"
+            v-show="items.length"
+            :key="items[0]?.id"
+            class="group line"
           >
-            <i :class="b.icon"></i>
-          </button>
-        </div>
-        <!-- 动态菜单组（链接、媒体、文本、输入框） -->
-        <div
-          v-for="items in [linkItems, mediaItems, textItems, inputItems]"
-          v-show="items.length"
-          :key="items[0]?.id"
-          class="group line"
-        >
-          <div v-for="i in items" :key="i.id" class="item" @click="click(i)">
-            <i :class="i.icon"></i><span>{{ i.label }}</span>
+            <div v-for="i in items" :key="i.id" class="item" @click="click(i)">
+              <i :class="i.icon"></i><span>{{ i.label }}</span>
+            </div>
+          </div>
+          <!-- 快速跳转 -->
+          <div class="group line">
+            <div v-for="i in jumpItems" :key="i.id" class="item" @click="click(i)">
+              <i :class="i.icon"></i><span>{{ i.label }}</span>
+            </div>
+          </div>
+          <!-- 工具菜单 -->
+          <div class="group line">
+            <div v-for="i in toolItems" :key="i.id" class="item" @click="click(i)">
+              <i :class="i.icon"></i><span>{{ i.label }}</span>
+            </div>
           </div>
         </div>
-        <!-- 快速跳转 -->
-        <div class="group line">
-          <div v-for="i in jumpItems" :key="i.id" class="item" @click="click(i)">
-            <i :class="i.icon"></i><span>{{ i.label }}</span>
-          </div>
-        </div>
-        <!-- 工具菜单 -->
-        <div class="group line">
-          <div v-for="i in toolItems" :key="i.id" class="item" @click="click(i)">
-            <i :class="i.icon"></i><span>{{ i.label }}</span>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+      </Transition>
+    </Teleport>
+  </ClientOnly>
 </template>
 
 <style lang="scss" scoped>

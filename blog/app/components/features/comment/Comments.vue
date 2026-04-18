@@ -176,13 +176,9 @@ provideCommentContext({
       </h3>
     </div>
 
-    <!-- 评论输入框 -->
     <CommentInput />
 
-    <!-- 评论列表 -->
     <CommentList v-if="emojiMapLoaded && hasComments" :comments="flatComments" />
-
-    <!-- 无评论状态 -->
     <CommentEmpty v-else-if="emojiMapLoaded && !hasComments" />
   </div>
 </template>
@@ -218,7 +214,6 @@ provideCommentContext({
   }
 }
 
-// 响应式设计
 @media screen and (max-width: 768px) {
   .comments-section {
     margin-top: 30px;
@@ -236,7 +231,6 @@ provideCommentContext({
 </style>
 
 <style lang="scss">
-// Markdown 样式 - 评论模块共用（不使用 scoped，让子组件可以使用）
 .comments-section .markdown-body {
   font-family: inherit;
 
@@ -300,7 +294,6 @@ provideCommentContext({
     max-width: 100%;
   }
 
-  // 表情图片样式
   .emoji-image {
     display: inline-block;
     width: 36px;

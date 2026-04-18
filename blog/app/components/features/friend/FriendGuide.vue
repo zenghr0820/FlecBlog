@@ -186,6 +186,7 @@ watch(showForm, newValue => {
       <button :class="{ active: activeTab === 'table' }" @click="activeTab = 'table'">通用</button>
     </div>
 
+<ClientOnly>
     <div class="tab-content">
       <div v-show="activeTab === 'yaml'" class="code-block">
         <button class="copy-btn" @click="copySiteInfo('yaml')">复制</button>
@@ -229,6 +230,7 @@ watch(showForm, newValue => {
         </table>
       </div>
     </div>
+</ClientOnly>
   </div>
 
   <!-- 快速申请 -->

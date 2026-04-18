@@ -130,12 +130,12 @@ const formatWords = (words: string) => {
     <!-- 个人介绍 -->
     <div class="Personal-Introduction">
       <div class="PI-box-left">
-        <h1 class="title">你好11！</h1>
+        <h1 class="title">你好！</h1>
         <div v-if="info.author" class="title">我是 {{ info.author }}</div>
         <div v-if="info.describe" class="describe">{{ info.describe }}</div>
         <span v-if="info.describeTips" class="describe-tips">{{ info.describeTips }}</span>
         <div class="PI-button">
-          <a href="#one">博主信息11</a>
+          <a href="#one">博主信息</a>
           <a href="#two">本站信息</a>
         </div>
       </div>
@@ -417,6 +417,7 @@ const formatWords = (words: string) => {
     }
   }
 
+  // 个人介绍
   .Personal-Introduction {
     display: flex;
     justify-content: space-between;
@@ -481,6 +482,7 @@ const formatWords = (words: string) => {
     }
   }
 
+  // 博主信息
   #one {
     margin-top: 32px;
     display: flex;
@@ -538,6 +540,7 @@ const formatWords = (words: string) => {
     }
   }
 
+  // 性格与座右铭
   .Philosophical {
     margin-top: 16px;
     min-height: 240px;
@@ -569,6 +572,7 @@ const formatWords = (words: string) => {
     }
   }
 
+  // 联系方式与创作平台
   .Platform {
     margin-top: 16px;
     display: flex;
@@ -594,6 +598,7 @@ const formatWords = (words: string) => {
     }
   }
 
+  // 本站信息
   #two {
     margin-top: 32px;
     display: flex;
@@ -648,6 +653,7 @@ const formatWords = (words: string) => {
     }
   }
 
+  // 访问统计与站长联盟
   .data {
     margin-top: 16px;
     display: flex;
@@ -727,6 +733,7 @@ const formatWords = (words: string) => {
     }
   }
 
+  // 心路历程
   .content {
     margin-top: 16px;
     padding: 2.25rem 2rem;
@@ -741,6 +748,7 @@ const formatWords = (words: string) => {
   }
 }
 
+// 响应式设计
 @media screen and (max-width: 1024px) {
   #about-page {
     padding: 30px;

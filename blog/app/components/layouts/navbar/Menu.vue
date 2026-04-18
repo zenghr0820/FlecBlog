@@ -22,38 +22,40 @@ const displayTitle = computed(() => {
 <template>
   <div class="nav-menu">
     <div class="menu-items" :class="{ hide: isScrollingDown && isFixed }">
-      <template v-for="menu in flatNavigationMenus" :key="menu.id">
-        <!-- 有子菜单的菜单项 -->
-        <div v-if="menu.children && menu.children.length > 0" class="menu-item dropdown">
-          <a v-if="menu.url" :href="menu.url" class="brighten" :aria-label="menu.title">
+    <ClientOnly>
+        <template v-for="menu in flatNavigationMenus" :key="menu.id">
+          <!-- 有子菜单的菜单项 -->
+          <div v-if="menu.children && menu.children.length > 0" class="menu-item dropdown">
+            <a v-if="menu.url" :href="menu.url" class="brighten" :aria-label="menu.title">
+              <i v-if="menu.icon" :class="menu.icon"></i>
+              <span>{{ menu.title }}</span>
+              <i class="ri-arrow-down-s-line arrow-icon"></i>
+            </a>
+
+            <span v-else class="brighten menu-label">
+              <i v-if="menu.icon" :class="menu.icon"></i>
+              <span>{{ menu.title }}</span>
+              <i class="ri-arrow-down-s-line arrow-icon"></i>
+            </span>
+
+            <!-- 下拉菜单 -->
+            <ul class="dropdown-menu">
+              <li v-for="child in menu.children" :key="child.id">
+                <a :href="child.url" :aria-label="child.title">
+                  <i v-if="child.icon" :class="child.icon"></i>
+                  <span>{{ child.title }}</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- 无子菜单的菜单项 -->
+          <a v-else :href="menu.url" class="brighten" :aria-label="menu.title">
             <i v-if="menu.icon" :class="menu.icon"></i>
             <span>{{ menu.title }}</span>
-            <i class="ri-arrow-down-s-line arrow-icon"></i>
           </a>
-
-          <span v-else class="brighten menu-label">
-            <i v-if="menu.icon" :class="menu.icon"></i>
-            <span>{{ menu.title }}</span>
-            <i class="ri-arrow-down-s-line arrow-icon"></i>
-          </span>
-
-          <!-- 下拉菜单 -->
-          <ul class="dropdown-menu">
-            <li v-for="child in menu.children" :key="child.id">
-              <a :href="child.url" :aria-label="child.title">
-                <i v-if="child.icon" :class="child.icon"></i>
-                <span>{{ child.title }}</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <!-- 无子菜单的菜单项 -->
-        <a v-else :href="menu.url" class="brighten" :aria-label="menu.title">
-          <i v-if="menu.icon" :class="menu.icon"></i>
-          <span>{{ menu.title }}</span>
-        </a>
-      </template>
+        </template>
+    </ClientOnly>
     </div>
     <div class="scroll-title" :class="{ show: isScrollingDown && isFixed }">
       <a
@@ -62,7 +64,9 @@ const displayTitle = computed(() => {
         @click.prevent="scrollToTop"
         aria-label="回到顶部"
       >
-        <span class="title" aria-hidden="true">{{ displayTitle }}</span>
+        <ClientOnly>
+          <span class="title" aria-hidden="true">{{ displayTitle }}</span>
+        </ClientOnly>
       </a>
     </div>
   </div>

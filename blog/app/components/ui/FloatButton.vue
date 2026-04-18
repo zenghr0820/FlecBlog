@@ -1,63 +1,65 @@
 <template>
   <!-- 悬浮按钮组 -->
-  <Transition name="fade">
-    <div v-show="visible" class="float-button-group">
-      <!-- 主题切换按钮 -->
-      <div class="float-button theme-toggle" @click="toggleTheme" title="切换主题">
-        <i class="ri-moon-line theme-icon-moon"></i>
-        <i class="ri-sun-line theme-icon-sun"></i>
+  <ClientOnly>
+    <Transition name="fade">
+      <div v-show="visible" class="float-button-group">
+        <!-- 主题切换按钮 -->
+        <div class="float-button theme-toggle" @click="toggleTheme" title="切换主题">
+          <i class="ri-moon-line theme-icon-moon"></i>
+          <i class="ri-sun-line theme-icon-sun"></i>
+        </div>
+
+        <!-- 阅读模式按钮（仅文章页显示） -->
+        <div v-if="isArticlePage" class="float-button" @click="toggleReadingMode" title="阅读模式">
+          <i class="ri-book-open-line"></i>
+        </div>
+
+        <!-- 目录按钮（仅移动端文章页显示） -->
+        <div
+          v-if="isArticlePage && isMobile"
+          class="float-button"
+          @click="showMobileToc = true"
+          title="目录"
+        >
+          <i class="ri-list-unordered"></i>
+        </div>
+
+        <!-- 跳转到评论区按钮（仅文章页显示） -->
+        <div
+          v-if="isArticlePage"
+          class="float-button"
+          @click="scrollToElement('.comment-input')"
+          title="跳转评论区"
+        >
+          <i class="ri-message-3-line"></i>
+        </div>
+
+        <!-- 回到顶部按钮 -->
+        <div
+          class="float-button scroll-to-top"
+          @click="scrollToTop"
+          @mouseenter="isHovering = true"
+          @mouseleave="isHovering = false"
+          title="回到顶部"
+        >
+          <Transition name="content-fade" mode="out-in">
+            <i v-if="isHovering" key="arrow" class="ri-arrow-up-line"></i>
+            <span v-else key="progress" class="progress-text">{{ readingProgress }}</span>
+          </Transition>
+        </div>
       </div>
+    </Transition>
 
-      <!-- 阅读模式按钮（仅文章页显示） -->
-      <div v-if="isArticlePage" class="float-button" @click="toggleReadingMode" title="阅读模式">
-        <i class="ri-book-open-line"></i>
+    <!-- 移动端目录抽屉 -->
+    <UiMobileToc :visible="showMobileToc" @close="showMobileToc = false" />
+
+    <!-- 阅读模式退出按钮 -->
+    <Transition name="fade">
+      <div v-if="isReadingMode" class="reading-exit" @click="toggleReadingMode" title="退出阅读模式">
+        <i class="ri-logout-box-r-line"></i>
       </div>
-
-      <!-- 目录按钮（仅移动端文章页显示） -->
-      <div
-        v-if="isArticlePage && isMobile"
-        class="float-button"
-        @click="showMobileToc = true"
-        title="目录"
-      >
-        <i class="ri-list-unordered"></i>
-      </div>
-
-      <!-- 跳转到评论区按钮（仅文章页显示） -->
-      <div
-        v-if="isArticlePage"
-        class="float-button"
-        @click="scrollToElement('.comment-input')"
-        title="跳转评论区"
-      >
-        <i class="ri-message-3-line"></i>
-      </div>
-
-      <!-- 回到顶部按钮 -->
-      <div
-        class="float-button scroll-to-top"
-        @click="scrollToTop"
-        @mouseenter="isHovering = true"
-        @mouseleave="isHovering = false"
-        title="回到顶部"
-      >
-        <Transition name="content-fade" mode="out-in">
-          <i v-if="isHovering" key="arrow" class="ri-arrow-up-line"></i>
-          <span v-else key="progress" class="progress-text">{{ readingProgress }}</span>
-        </Transition>
-      </div>
-    </div>
-  </Transition>
-
-  <!-- 移动端目录抽屉 -->
-  <UiMobileToc :visible="showMobileToc" @close="showMobileToc = false" />
-
-  <!-- 阅读模式退出按钮 -->
-  <Transition name="fade">
-    <div v-if="isReadingMode" class="reading-exit" @click="toggleReadingMode" title="退出阅读模式">
-      <i class="ri-logout-box-r-line"></i>
-    </div>
-  </Transition>
+    </Transition>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">

@@ -103,33 +103,35 @@ onMounted(() => {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="toc-popover">
-      <div v-if="visible && hasToc" ref="tocPopoverRef" class="mobile-toc-popover">
-        <div class="toc-header">
-          <div class="header-left">
-            <i class="ri-menu-line"></i>
-            <span>目录</span>
+  <ClientOnly>
+    <Teleport to="body">
+      <Transition name="toc-popover">
+        <div v-if="visible && hasToc" ref="tocPopoverRef" class="mobile-toc-popover">
+          <div class="toc-header">
+            <div class="header-left">
+              <i class="ri-menu-line"></i>
+              <span>目录</span>
+            </div>
+            <span class="toc-count">{{ toc.length }}</span>
           </div>
-          <span class="toc-count">{{ toc.length }}</span>
-        </div>
 
-        <nav ref="tocListRef" class="toc-list" aria-label="文章目录">
-          <button
-            v-for="item in toc"
-            :key="item.id"
-            :data-toc-id="item.id"
-            :class="['toc-item', `toc-level-${item.level}`, { active: activeId === item.id }]"
-            @click="scrollToHeading(item.id)"
-            :aria-label="`跳转到 ${item.text}`"
-            :aria-current="activeId === item.id ? 'location' : undefined"
-          >
-            <span class="toc-text">{{ item.text }}</span>
-          </button>
-        </nav>
-      </div>
-    </Transition>
-  </Teleport>
+          <nav ref="tocListRef" class="toc-list" aria-label="文章目录">
+            <button
+              v-for="item in toc"
+              :key="item.id"
+              :data-toc-id="item.id"
+              :class="['toc-item', `toc-level-${item.level}`, { active: activeId === item.id }]"
+              @click="scrollToHeading(item.id)"
+              :aria-label="`跳转到 ${item.text}`"
+              :aria-current="activeId === item.id ? 'location' : undefined"
+            >
+              <span class="toc-text">{{ item.text }}</span>
+            </button>
+          </nav>
+        </div>
+      </Transition>
+    </Teleport>
+  </ClientOnly>
 </template>
 
 <style lang="scss" scoped>

@@ -49,59 +49,61 @@ onMounted(loadEmojis);
 </script>
 
 <template>
-  <div class="emoji-picker">
-    <div v-if="loading" class="emoji-state">
-      <i class="ri-loader-4-line rotating"></i>
-      <span>加载中...</span>
-    </div>
-
-    <div v-else-if="error" class="emoji-state">
-      <i class="ri-emotion-unhappy-line"></i>
-      <span>{{ error }}</span>
-    </div>
-
-    <template v-else>
-      <div class="emoji-tabs">
-        <button
-          v-for="(group, index) in emojiGroups"
-          :key="index"
-          class="emoji-tab"
-          :class="{ active: activeTab === index }"
-          @click="activeTab = index"
-        >
-          {{ group.name }}
-        </button>
+  <ClientOnly>
+    <div class="emoji-picker">
+      <div v-if="loading" class="emoji-state">
+        <i class="ri-loader-4-line rotating"></i>
+        <span>加载中...</span>
       </div>
 
-      <div class="emoji-content" @wheel.stop>
-        <div
-          v-for="(group, index) in emojiGroups"
-          v-show="activeTab === index"
-          :key="index"
-          class="emoji-group"
-          :class="{
-            'emoji-group-image': group.type === 'image',
-            'emoji-group-emoticon': group.type === 'emoticon',
-          }"
-        >
+      <div v-else-if="error" class="emoji-state">
+        <i class="ri-emotion-unhappy-line"></i>
+        <span>{{ error }}</span>
+      </div>
+
+      <template v-else>
+        <div class="emoji-tabs">
           <button
-            v-for="item in group.items"
-            :key="item.key"
-            class="emoji-item"
-            :class="{
-              'emoji-image': group.type === 'image',
-              'emoji-emoticon': group.type === 'emoticon',
-            }"
-            :title="item.key"
-            @click="selectEmoji(item, group.type)"
+            v-for="(group, index) in emojiGroups"
+            :key="index"
+            class="emoji-tab"
+            :class="{ active: activeTab === index }"
+            @click="activeTab = index"
           >
-            <img v-if="group.type === 'image'" :src="item.val" :alt="item.key" />
-            <span v-else>{{ item.val }}</span>
+            {{ group.name }}
           </button>
         </div>
-      </div>
-    </template>
-  </div>
+
+        <div class="emoji-content" @wheel.stop>
+          <div
+            v-for="(group, index) in emojiGroups"
+            v-show="activeTab === index"
+            :key="index"
+            class="emoji-group"
+            :class="{
+              'emoji-group-image': group.type === 'image',
+              'emoji-group-emoticon': group.type === 'emoticon',
+            }"
+          >
+            <button
+              v-for="item in group.items"
+              :key="item.key"
+              class="emoji-item"
+              :class="{
+                'emoji-image': group.type === 'image',
+                'emoji-emoticon': group.type === 'emoticon',
+              }"
+              :title="item.key"
+              @click="selectEmoji(item, group.type)"
+            >
+              <img v-if="group.type === 'image'" :src="item.val" :alt="item.key" />
+              <span v-else>{{ item.val }}</span>
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </ClientOnly>
 </template>
 
 <style lang="scss" scoped>
