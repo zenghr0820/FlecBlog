@@ -14,6 +14,11 @@ const props = withDefaults(defineProps<Props>(), {
   closeOnClickOutside: true,
 });
 
+// 禁用非 props 属性的透传,避免 Teleport 根节点警告
+defineOptions({
+  inheritAttrs: false,
+});
+
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
   confirm: [];

@@ -416,10 +416,11 @@ md.renderer.rules.fence = (tokens, idx) => {
 // 使用 anchor 插件生成标题 ID
 md.use(anchor, {
   slugify: generateHeadingId,
-  permalink: true, // 启用永久链接
-  permalinkClass: 'headerlink', // <--- 这里设置你的自定义 Class
-  permalinkSymbol: '', // 链接符号
-  permalinkBefore: true, // 符号在标题前
+  permalink: {
+    class: 'headerlink',      // 这里设置你的自定义 Class
+    symbol: '',               // 链接符号
+    placement: 'before',      // 符号在标题前
+  },
   level: [2, 3, 4, 5, 6]
 })
 

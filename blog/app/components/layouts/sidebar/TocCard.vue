@@ -9,8 +9,6 @@ const toc = computed<TocItem[]>(() => {
   return extractToc(currentArticle.value.content);
 });
 
-console.log(toc.value);
-
 // 判断是否有目录项
 const hasToc = computed(() => toc.value.length > 0);
 
@@ -76,6 +74,7 @@ onMounted(() => {
 </script>
 
 <template>
+<ClientOnly>
   <div class="card-widget" v-if="hasToc">
     <div class="item-headline">
       <i class="ri-list-unordered"></i>
@@ -96,6 +95,7 @@ onMounted(() => {
       </button>
     </nav>
   </div>
+</ClientOnly>
 </template>
 
 <style lang="scss" scoped>

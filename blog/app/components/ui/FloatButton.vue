@@ -260,7 +260,6 @@ html[data-reading-mode='true'] {
     color: var(--reading-text) !important;
   }
 
-  // 简化头部
   .post-header {
     background: none !important;
     margin-top: 0 !important;
@@ -280,7 +279,6 @@ html[data-reading-mode='true'] {
     }
   }
 
-  // 简化内容区
   .page-main {
     padding: 0 !important;
   }
@@ -301,7 +299,6 @@ html[data-reading-mode='true'] {
     padding: 0 0 60px !important;
   }
 
-  // 响应式
   @media (max-width: 900px) {
     .main-layout {
       padding: 0 20px !important;

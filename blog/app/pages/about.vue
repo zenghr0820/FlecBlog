@@ -417,7 +417,6 @@ const formatWords = (words: string) => {
     }
   }
 
-  // 个人介绍
   .Personal-Introduction {
     display: flex;
     justify-content: space-between;
@@ -482,7 +481,6 @@ const formatWords = (words: string) => {
     }
   }
 
-  // 博主信息
   #one {
     margin-top: 32px;
     display: flex;
@@ -540,7 +538,6 @@ const formatWords = (words: string) => {
     }
   }
 
-  // 性格与座右铭
   .Philosophical {
     margin-top: 16px;
     min-height: 240px;
@@ -572,7 +569,6 @@ const formatWords = (words: string) => {
     }
   }
 
-  // 联系方式与创作平台
   .Platform {
     margin-top: 16px;
     display: flex;
@@ -598,7 +594,6 @@ const formatWords = (words: string) => {
     }
   }
 
-  // 本站信息
   #two {
     margin-top: 32px;
     display: flex;
@@ -653,7 +648,6 @@ const formatWords = (words: string) => {
     }
   }
 
-  // 访问统计与站长联盟
   .data {
     margin-top: 16px;
     display: flex;
@@ -733,7 +727,6 @@ const formatWords = (words: string) => {
     }
   }
 
-  // 心路历程
   .content {
     margin-top: 16px;
     padding: 2.25rem 2rem;
@@ -748,7 +741,6 @@ const formatWords = (words: string) => {
   }
 }
 
-// 响应式设计
 @media screen and (max-width: 1024px) {
   #about-page {
     padding: 30px;

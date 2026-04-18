@@ -29,13 +29,11 @@ export default defineEventHandler(async (event) => {
       icons: [
         {
           src: blog.favicon || '/favicon.ico',
-          sizes: '192x192',
-          type: 'image/png'
+          type: blog.favicon?.endsWith('.png') ? 'image/png' : 'image/x-icon'
         },
         {
           src: blog.favicon || '/favicon.ico',
-          sizes: '512x512',
-          type: 'image/png'
+          type: blog.favicon?.endsWith('.png') ? 'image/png' : 'image/x-icon'
         }
       ]
     }
