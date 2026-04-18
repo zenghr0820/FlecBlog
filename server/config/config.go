@@ -66,6 +66,7 @@ type BlogConfig struct {
 	BackgroundImage      string // 背景图片
 	BackgroundImageLight string // 浅色主题背景图片
 	BackgroundImageDark  string // 深色主题背景图片
+	AuthorCardBg         string // 作者卡片背景图片
 	Screenshot           string // 站点截图
 	Announcement         string // 公告内容
 	CustomHead           string // 自定义 Head 代码

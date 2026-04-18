@@ -137,6 +137,7 @@ const blogForm = ref({
   background_image: '', // 已废弃，保留兼容
   background_image_light: '', // 浅色主题背景图片
   background_image_dark: '', // 深色主题背景图片
+  author_card_bg: '', // 作者卡片背景图片
   screenshot: '',
   announcement: '',
   typingTextsList: [] as Array<{ value: string }>,
@@ -283,6 +284,7 @@ const loadBlogConfigs = async () => {
       background_image: configs.background_image || '', // 已废弃，保留兼容
       background_image_light: configs.background_image_light || '', // 浅色主题背景图片
       background_image_dark: configs.background_image_dark || '', // 深色主题背景图片
+      author_card_bg: configs.author_card_bg || '', // 作者卡片背景图片
       screenshot: configs.screenshot || '',
       announcement: configs.announcement || '',
       typingTextsList: configs.typingTextsList || [],
@@ -555,6 +557,16 @@ const handleSave = async () => {
           })
       )
     }
+    // 作者卡片背景图片上传
+    if (blogUploaders.authorCardBgUploaderRef?.getPendingCount()) {
+      uploadPromises.push(
+        blogUploaders.authorCardBgUploaderRef
+          .uploadPendingFile()
+          .then((url) => {
+            if (url) blogForm.value.author_card_bg = url
+          })
+      )
+    }
     if (blogUploaders.screenshotUploaderRef?.getPendingCount()) {
       uploadPromises.push(
         blogUploaders.screenshotUploaderRef
@@ -612,6 +624,7 @@ const handleSave = async () => {
         'blog.background_image': blogForm.value.background_image, // 已废弃，保留兼容
         'blog.background_image_light': blogForm.value.background_image_light, // 浅色主题背景图片
         'blog.background_image_dark': blogForm.value.background_image_dark, // 深色主题背景图片
+        'blog.author_card_bg': blogForm.value.author_card_bg, // 作者卡片背景图片
         'blog.screenshot': blogForm.value.screenshot,
         'blog.announcement': blogForm.value.announcement,
       'blog.typing_texts': JSON.stringify(

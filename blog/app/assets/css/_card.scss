@@ -121,6 +121,11 @@
     transition: opacity .8s
 }
 
+// 支持动态配置的作者卡片背景图片
+#sidebar .card-info[style*="--author-card-bg-url"]::before {
+    background-image: var(--author-card-bg-before), var(--author-card-bg-url);
+}
+
 #sidebar .card-info .author-info-name {
     font-weight: 500;
     font-size: 1.57em

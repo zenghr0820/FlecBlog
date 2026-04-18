@@ -44,6 +44,7 @@ const (
 	KeyBlogBackgroundImage      = "blog.background_image"       // 背景图片
 	KeyBlogBackgroundImageLight = "blog.background_image_light" // 浅色主题背景图片
 	KeyBlogBackgroundImageDark  = "blog.background_image_dark"  // 深色主题背景图片
+	KeyBlogAuthorCardBg         = "blog.author_card_bg"         // 作者卡片背景图片
 	KeyBlogScreenshot           = "blog.screenshot"             // 站点截图
 	KeyBlogAnnouncement         = "blog.announcement"           // 公告内容
 	KeyBlogTypingTexts          = "blog.typing_texts"           // 打字机效果文本（JSON数组）
@@ -257,6 +258,7 @@ func (s *SettingService) UpdateGroup(group string, updates map[string]string) er
 			handleImageChange(KeyBlogBackgroundImage)
 			handleImageChange(KeyBlogBackgroundImageLight)
 			handleImageChange(KeyBlogBackgroundImageDark)
+			handleImageChange(KeyBlogAuthorCardBg)
 			handleImageChange(KeyBlogAboutExhibition)
 			handleImageChange(KeyBlogScreenshot)
 		}
@@ -361,6 +363,9 @@ func (s *SettingService) ApplyDatabaseConfig(cfg *config.Config) error {
 		}
 		if v, ok := blogSettings[KeyBlogBackgroundImageDark]; ok && v != "" {
 			cfg.Blog.BackgroundImageDark = v
+		}
+		if v, ok := blogSettings[KeyBlogAuthorCardBg]; ok && v != "" {
+			cfg.Blog.AuthorCardBg = v
 		}
 		if v, ok := blogSettings[KeyBlogScreenshot]; ok && v != "" {
 			cfg.Blog.Screenshot = v

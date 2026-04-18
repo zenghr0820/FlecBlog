@@ -18,6 +18,9 @@ var reconciledSettingImageKeys = []string{
 	KeyBasicAuthorPhoto,
 	KeyBlogFavicon,
 	KeyBlogBackgroundImage,
+	KeyBlogBackgroundImageLight,
+	KeyBlogBackgroundImageDark,
+	KeyBlogAuthorCardBg,
 	KeyBlogAboutExhibition,
 	KeyBlogScreenshot,
 }

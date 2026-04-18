@@ -86,6 +86,17 @@
     </div>
 
     <div class="image-row">
+      <el-form-item label="作者卡片背景">
+        <ImageUploader
+          ref="authorCardBgUploaderRef"
+          v-model="form.author_card_bg"
+          upload-type="博客背景"
+          width="213px"
+          height="120px"
+          :disabled="loading"
+        />
+      </el-form-item>
+
       <el-form-item label="站点截图">
         <ImageUploader
           ref="screenshotUploaderRef"
@@ -424,6 +435,7 @@ interface BlogFormData {
   background_image: string // 已废弃，保留兼容
   background_image_light: string // 浅色主题背景图片
   background_image_dark: string // 深色主题背景图片
+  author_card_bg: string // 作者卡片背景图片
   screenshot: string
   announcement: string
   typingTextsList: Array<{ value: string }>
@@ -480,6 +492,7 @@ defineProps<{
 const faviconUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 const backgroundLightUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 const backgroundDarkUploaderRef = ref<InstanceType<typeof ImageUploader>>()
+const authorCardBgUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 const screenshotUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 const aboutExhibitionUploaderRef = ref<InstanceType<typeof ImageUploader>>()
 
@@ -658,6 +671,7 @@ defineExpose({
   faviconUploaderRef,
   backgroundLightUploaderRef,
   backgroundDarkUploaderRef,
+  authorCardBgUploaderRef,
   screenshotUploaderRef,
   aboutExhibitionUploaderRef,
 });

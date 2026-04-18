@@ -5,6 +5,11 @@ const avatarUrl = computed(() => basicConfig.value.author_avatar || '/avatar.web
 const { total: categoriesTotal } = useCategories();
 const { total: tagsTotal } = useTags();
 
+// 作者卡片背景图片URL
+const authorCardBgUrl = computed(() => {
+  return blogConfig.value.author_card_bg || '/author_bg.webp'
+});
+
 const parseJSON = <T = any,>(jsonStr: string | undefined, fallback: T): T => {
   try {
     return jsonStr ? JSON.parse(jsonStr) : fallback;
@@ -29,7 +34,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="card-widget card-info is-center">
+  <div class="card-widget card-info is-center" :style="{ '--author-card-bg-url': authorCardBgUrl ? `url(${authorCardBgUrl})` : 'none' }">
     <div class="author-info-detail">
       <p class="author-info-hello">👋 欢迎光临！</p>
       <p class="author-info-desc">{{ basicConfig.author_desc }}</p>

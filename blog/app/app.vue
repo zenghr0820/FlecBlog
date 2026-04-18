@@ -107,8 +107,8 @@ router.afterEach(() => {
 // 背景图片 - 根据主题动态切换（使用 CSS + data-theme，避免刷新时 SSR/水合导致的回退）
 const bgStyle = computed<Record<string, string>>(() => {
   const common = blogConfig.value.background_image || ''
-  const light = blogConfig.value.background_image_light || common || '/bg-light.webp'
-  const dark = blogConfig.value.background_image_dark || common || '/bg-dark.webp'
+  const light = blogConfig.value.background_image_light || common || '/bg.webp'
+  const dark = blogConfig.value.background_image_dark || common || '/bg.webp'
 
   // 用 CSS 变量承载 url(...)，由 [data-theme] 选择器决定使用哪一个
   return {
