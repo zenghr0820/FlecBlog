@@ -9,6 +9,8 @@ const toc = computed<TocItem[]>(() => {
   return extractToc(currentArticle.value.content);
 });
 
+console.log(toc.value);
+
 // 判断是否有目录项
 const hasToc = computed(() => toc.value.length > 0);
 
@@ -43,34 +45,26 @@ const scrollToHeading = (id: string) => {
 
 // 监听滚动，高亮当前阅读项
 const handleScroll = () => {
-  const referencePoint = 64; // 参考线位置（距视口顶部64px）
+  const referencePoint = 100; // 参考线位置（距视口顶部64px）
   const headings = toc.value;
 
-  if (headings.length === 0) return;
+  // 逆序查找：第一个 top 小于等于参考点的标题就是当前激活项
+  let currentId = headings[0]?.id;
 
-  let closestHeading: TocItem | undefined = undefined;
-  let closestDistance = Infinity;
-
-  // 找到距离参考线最近的标题
-  for (const heading of headings) {
-    const element = document.getElementById(heading.id);
-    if (!element) continue;
-
-    const rect = element.getBoundingClientRect();
-    const distanceToReference = Math.abs(rect.top - referencePoint);
-
-    // 只考虑在参考线上方或稍微下方的标题（不超过50px�?    // 且距离参考线最近的
-    if (rect.top <= referencePoint + 50 && distanceToReference < closestDistance) {
-      closestDistance = distanceToReference;
-      closestHeading = heading;
+  for (let i = headings.length - 1; i >= 0; i--) {
+    const element = document.getElementById(headings[i].id);
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      if (rect.top <= referencePoint) {
+        currentId = headings[i].id;
+        break; 
+      }
     }
   }
 
-  // 如果找到了，激活它；否则激活第一个标题
-  const targetHeading = closestHeading || headings[0];
-  if (targetHeading && targetHeading.id !== activeId.value) {
-    activeId.value = targetHeading.id;
-    scrollTocToActive(targetHeading.id);
+  if (currentId !== activeId.value) {
+    activeId.value = currentId;
+    scrollTocToActive(currentId);
   }
 };
 

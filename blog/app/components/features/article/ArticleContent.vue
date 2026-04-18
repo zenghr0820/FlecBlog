@@ -41,6 +41,7 @@ const renderedContent = computed(() => {
   if (!props.content) return '';
   // 引用 emojiMap 触发重新渲染
   emojiMap.value;
+  resetHeadingIdCounter()  // 每次渲染前重置
   return renderMarkdown(props.content);
 });
 

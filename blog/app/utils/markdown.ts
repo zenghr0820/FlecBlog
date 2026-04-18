@@ -111,13 +111,32 @@ function simpleHash(str: string): string {
   return Math.abs(hash).toString(36);
 }
 
+// 标题 ID 计数器
+const headingIdCounter: Record<string, number> = {};
+
+/**
+ * 重置标题 ID 计数器(在渲染新文章前调用)
+ */
+export function resetHeadingIdCounter(): void {
+  Object.keys(headingIdCounter).forEach(key => delete headingIdCounter[key]);
+}
+
 // 生成标题 ID（支持中文）
 function generateHeadingId(text: string): string {
-  const id = text
+  const baseId = text
     .toLowerCase()
     .replace(/[^\u4e00-\u9fa5a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return id || `heading-${simpleHash(text)}`;
+  const id = baseId || `heading-${simpleHash(text)}`;
+
+  // 处理重复 ID
+  if (headingIdCounter[id] !== undefined) {
+    headingIdCounter[id]++;
+    return `${id}-${headingIdCounter[id]}`;
+  } else {
+    headingIdCounter[id] = 0;
+    return id;
+  }
 }
 
 // ========== 自定义块渲染函数 ==========
@@ -984,6 +1003,9 @@ export function extractToc(markdown: string): TocItem[] {
   cleanedMarkdown = cleanedMarkdown.replace(/^:::audio\s+.*?:::$/gm, '');
 
   const headings: TocItem[] = [];
+  
+  // 清除计数器
+  resetHeadingIdCounter();
 
   for (const line of cleanedMarkdown.split('\n')) {
     const match = line.match(/^(#{1,6})\s+(.+)$/);
