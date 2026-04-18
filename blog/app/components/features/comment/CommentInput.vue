@@ -9,7 +9,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { success, info } = useToast();
+const { success, info, error: showError } = useToast();
 const { triggerOnComment } = useBindEmail();
 
 // 获取评论上下文
@@ -214,8 +214,8 @@ const handleSubmitComment = async () => {
 
     if (isLoggedIn.value) triggerOnComment();
   } catch (error: any) {
-    const errorMsg = error.response?._data?.message || '评论发表失败'
-    info(errorMsg)
+    const errorMsg = error?.data?.message || '评论发表失败'
+    showError(errorMsg)
   } finally {
     isSubmitting.value = false;
   }

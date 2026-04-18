@@ -55,7 +55,21 @@ export async function apiRequest<T = any>(
   }
 
   try {
-    return await $fetch<T>(url, { ...options, baseURL: config.public.apiUrl, headers } as any);
+    const response = await $fetch<ApiResponse>(url, { ...options, baseURL: config.public.apiUrl, headers } as any);
+     // 检查业务错误码（后端返回 HTTP 200 但 code !== 0 的情况）
+    if (response && typeof response === 'object' && 'code' in response) {
+      if (response.code !== 0) {
+        // 创建错误对象，包含业务错误信息
+        const error: any = new Error(response.message || '请求失败');
+        error.data = response;
+        error.statusCode = response.code;
+        throw error;
+      }
+      return response as T;
+    }
+    
+    // 如果不是标准 ApiResponse 格式，直接返回
+    return response as T;
   } catch (error: any) {
     // 401 自动刷新 token
     if (error?.response?.status === 401 && !options._retry && refreshTokenRef.value) {
